@@ -55,6 +55,22 @@ class KeystrokeParser:
                     return [log['string']]
         return [log['string'] for log in self.logs]
     
+    def print_all_strings(self, identifier=None, truncate=True) -> None:
+        """
+        Function to print all strings in the logs.
+        """
+        if identifier is not None:
+            isPresent = self.check_membership(identifier)
+            if isPresent == False:
+                print("ID invalid, no strings found.")
+                return
+        string_list = self.get_all_strings(identifier)
+        print(f"Number of strings: {len(string_list)}")
+        for curr_string in string_list:
+            if truncate == True and len(curr_string) > 20:
+                curr_string = curr_string[:20] + "...[truncated]"
+            print(curr_string)
+
     def get_only_times(self, identifier=None) -> list:
         """
         Function to return a list of all times in the logs.

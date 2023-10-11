@@ -3,8 +3,8 @@ import time
 import numpy as np
 DEFAULT_DELAY_MEAN = 0.07
 DEFAULT_DELAY_STANDARD_DEVIATION = 0.02
-MAX_WORDS = 50
-MIN_DELAY = 0.035
+MAX_WORDS = 30
+MIN_DELAY = 0.03
 
 LOG_SIMULATION = False
 ALLOW_ENTER_AND_TAB = True
@@ -18,9 +18,10 @@ if ALLOW_ENTER_AND_TAB:
 else:
     SPECIAL_KEYS = {' ': Key.space}
 
-# sample_string = """Today, there are some endangered animals on Earth. It means that we can find only a few of them around us. Some examples are whales, pandas, tigers and Asian elephants. Humans destroy the natural homes of the animals in the forests, lakes, and plains. When the number of people on Earth increases, they need more place for living. They cut down trees and destroy lakes. They make homes and roads instead. Then the animals won't have a place to live. They will die out. The Iranian cheetah is among these animals. This wild animal lives only in the plains of Iran. Now there are only a few Iranian cheetahs alive. If people take care of them, there is hope for this beautiful animal to live. Recently, families pay more attention to nature, students learn about saving wildlife, and some hunters don't go hunting anymore. In this way, the number of cheetahs is going to increase in the future."""
-sample_string = """1 2 3 4 \n 5 6 7 8 9 
-10 11 12 13 14 15."""
+sample_string = """Today, there are some endangered animals on Earth. It means that we can find only a few of them around us. Some examples are whales, pandas, tigers and Asian elephants. Humans destroy the natural homes of the animals in the forests, lakes, and plains. When the number of people on Earth increases, they need more place for living. They cut down trees and destroy lakes. They make homes and roads instead. Then the animals won't have a place to live. They will die out. The Iranian cheetah is among these animals. This wild animal lives only in the plains of Iran. Now there are only a few Iranian cheetahs alive. If people take care of them, there is hope for this beautiful animal to live. Recently, families pay more attention to nature, students learn about saving wildlife, and some hunters don't go hunting anymore. In this way, the number of cheetahs is going to increase in the future."""
+# sample_string = """1 2 3 4 
+# 5 6 7 8
+# 9 10 11 12 13 14 15."""
 def words_from_string(string: str) -> list:
     return string.split()
 
@@ -70,10 +71,9 @@ def simulate_keystrokes(string: str, delay_mean: float, delay_standard_deviation
             continue
         time_diff = delay1 + delay2
         keystrokes.append((key_as_string, time_diff))
-        print(f"Typed: {key_as_string} | Delay: {time_diff}")
     return keystrokes
 
-def main(input_string=None):
+def main(input_string=None, log = LOG_SIMULATION):
     if input_string is None:
         input_string = sample_string
     # words = words_from_string(input_string)
@@ -81,7 +81,7 @@ def main(input_string=None):
     if keystrokes == []:
         print('Error: no keystrokes')
         return
-    if LOG_SIMULATION:
+    if log:
         print('Simulation complete. Logging keystrokes...')
         from keystrokeLogger import KeystrokeLogger
         logger = KeystrokeLogger()
