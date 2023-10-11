@@ -3,10 +3,11 @@ import time
 import numpy as np
 DEFAULT_DELAY_MEAN = 0.07
 DEFAULT_DELAY_STANDARD_DEVIATION = 0.02
-MAX_WORDS = 500
+MAX_WORDS = 50
 MIN_DELAY = 0.035
 
-ALLOW_ENTER_AND_TAB = False
+LOG_SIMULATION = False
+ALLOW_ENTER_AND_TAB = True
 
 if ALLOW_ENTER_AND_TAB:
     SPECIAL_KEYS = {
@@ -50,9 +51,9 @@ def simulate_keystrokes(string: str, delay_mean: float, delay_standard_deviation
         try:
             time.sleep(delay1)
             if char in SPECIAL_KEYS:
+                special_key = SPECIAL_KEYS[char]
                 key_as_string = str(special_key)
                 word_count += 1
-                special_key = SPECIAL_KEYS[char]
                 keyboard.press(special_key)
                 keyboard.release(special_key)
                 # Add delay after a special key
@@ -68,14 +69,26 @@ def simulate_keystrokes(string: str, delay_mean: float, delay_standard_deviation
             print(f"An error occurred while typing the character: {e}")
             continue
         time_diff = delay1 + delay2
-        print(f"Typed: {char} | Delay: {time_diff}")
+        keystrokes.append((key_as_string, time_diff))
+        print(f"Typed: {key_as_string} | Delay: {time_diff}")
+    return keystrokes
 
 def main(input_string=None):
     if input_string is None:
         input_string = sample_string
     # words = words_from_string(input_string)
-    simulate_keystrokes(input_string, delay_mean=DEFAULT_DELAY_MEAN, delay_standard_deviation=DEFAULT_DELAY_STANDARD_DEVIATION)
-
+    keystrokes = simulate_keystrokes(input_string, delay_mean=DEFAULT_DELAY_MEAN, delay_standard_deviation=DEFAULT_DELAY_STANDARD_DEVIATION)
+    if keystrokes == []:
+        print('Error: no keystrokes')
+        return
+    if LOG_SIMULATION:
+        print('Simulation complete. Logging keystrokes...')
+        from keystrokeLogger import KeystrokeLogger
+        logger = KeystrokeLogger()
+        logger.set_internal_log(keystrokes, input_string)
+        success = logger.save_log()
+        if success:
+            print('Success!')
 if __name__ == "__main__":
     import sys
     length = len(sys.argv)
