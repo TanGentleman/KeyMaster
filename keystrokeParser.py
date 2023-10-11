@@ -60,31 +60,39 @@ class KeystrokeParser:
         Function to return the average time between keystrokes for a given log.
         """
         times = []
+        keystrokes = []
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent == False:
                 return None
-            
-        for log in self.logs:
-
-            if log['id'] != identifier and log['string'] != identifier:
-                continue
-            # If the time is greater than 1 second, exclude it from the average
-            times.extend([keystroke[1] for keystroke in log['keystrokes'] if keystroke[1] < OUTLIER_CUTOFF])
-
+            keystrokes = self.get_all_keystrokes(identifier)
+            times = [keystroke[1] for keystroke in keystrokes if keystroke[1] < OUTLIER_CUTOFF]
+        else:
+            keystrokes = self.get_all_keystrokes()
+            times = [keystroke[1] for keystroke in keystrokes if keystroke[1] < OUTLIER_CUTOFF]
         if len(times) == 0:
+            print ("No keystrokes found.")
             return 0
         return round(sum(times) / len(times), 4)
 
-    def get_std_deviation(self, identifier):
+    def get_std_deviation(self, identifier=None):
         """
         Function to return the standard deviation of the time between keystrokes for a given log.
         """
-        for log in self.logs:
-            if log['id'] == identifier or log['string'] == identifier:
-                times = [keystroke[1] for keystroke in log['keystrokes'] if keystroke[1] < OUTLIER_CUTOFF]
-                return round(statistics.stdev(times), 4)
-        return None
+        times = []
+        if identifier is not None:
+            isPresent = self.check_membership(identifier)
+            if isPresent == False:
+                return None
+            keystrokes = self.get_all_keystrokes(identifier)
+            times = [keystroke[1] for keystroke in keystrokes if keystroke[1] < OUTLIER_CUTOFF]
+        else:
+            keystrokes = self.get_all_keystrokes()
+            times = [keystroke[1] for keystroke in keystrokes if keystroke[1] < OUTLIER_CUTOFF]
+        if len(times) < 2:
+            print ("Not enough keystrokes to calculate standard deviation.")
+            return 0
+        return round(statistics.stdev(times), 4)
     
     def visualize_keystroke_times(self):
         """
@@ -106,9 +114,7 @@ class KeystrokeParser:
         plt.bar(characters, times)
         plt.xlabel('Characters')
         plt.ylabel('Average Keystroke Time')
-        
         plt.title('Average Keystroke Time for Each Character')
-        
         plt.show()
 
     def get_all_keystrokes(self, identifier=None):
@@ -120,7 +126,13 @@ class KeystrokeParser:
         """
         keystrokes = []
         for log in self.logs:
-            keystrokes.extend(log['keystrokes'])
+            if identifier is not None:
+                if log['id'] == identifier or log['string'] == identifier:
+                    keystrokes.extend(log['keystrokes'])
+                    return keystrokes
+            else:
+                keystrokes.extend(log['keystrokes'])
+            
         return keystrokes
 
     def calculate_average_keystroke_times(self, keystrokes, excludeOutliers=True):
@@ -152,8 +164,6 @@ class KeystrokeParser:
         return character_times
 
 
-    
-
 def test_with_substring(substring):
     parser = KeystrokeParser()
     # logger = KeystrokeLogger()
@@ -174,11 +184,13 @@ if __name__ == "__main__":
     logger = KeystrokeLogger()
     # print(parser.check_membership("1 2 3 4 5"))
     # print(parser.get_all_strings())
-    # print(parser.get_highest_keystroke_times())
-    test_word = "cheetah"
+    print(parser.get_highest_keystroke_times())
+    # test_word = "lakes"
     # test_with_substring(test_word)
-    # parser.visualize_keystroke_times()
-    time = parser.get_average_time()
-    print(f"Average time between keystrokes: {time}")
-    # std_dev = parser.get_std_deviation(id)
+    # count = len(parser.get_all_strings())
+    # print(f"Number of logs: {count}")
+    # time = parser.get_average_time()
+    # print(f"Average time between keystrokes: {time}")
+    # std_dev = parser.get_std_deviation()
     # print(f"Standard deviation: {std_dev}")
+    # parser.visualize_keystroke_times()

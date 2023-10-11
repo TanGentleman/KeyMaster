@@ -5,7 +5,7 @@ import uuid
 
 MAX_WORDS = 158
 speedHack = True
-speedMultiplier = 4
+speedMultiplier = 2
 
 special_keys = {
     'Key.space': Key.space,
@@ -29,8 +29,6 @@ special_keys = {
 #   }
 # ]
 
-
-
 class KeystrokeLogger:
     def __init__(self):
         self.keystrokes = []
@@ -44,6 +42,8 @@ class KeystrokeLogger:
         """
         current_time = time.time()
         time_diff = current_time - self.prev_time
+        if time_diff > 3:
+            time_diff = 3 + (time_diff / 1000)
         time_diff = round(time_diff, 4)  # Round to 4 decimal places
         key_str = str(keypress)
 
@@ -79,6 +79,7 @@ class KeystrokeLogger:
         Function to handle key release events.
         """
         if key == Key.esc:
+            print('')
             return False
 
     def start_listener(self):
@@ -129,7 +130,12 @@ class KeystrokeLogger:
             keystrokes = self.keystrokes
 
         keyboard = Controller()
-
+        try:
+            with Listener(on_release=self.on_release) as listener:
+                print(f"Listener started. The simulation will start when you press ESC.")
+                listener.join()
+        except Exception as e:
+            print(f"An error occurred: {e}")
         for key, time_diff in keystrokes:
             # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from time_diff
             if speedHack:
@@ -170,5 +176,5 @@ if __name__ == "__main__":
     logger = KeystrokeLogger()
     logger.start_listener()
     logger.save_log()
-    # print("\nLog saved. Now simulating keystrokes...\n")
-    # logger.simulate_keystrokes()
+    print("\nLog saved. Now simulating keystrokes...\n")
+    logger.simulate_keystrokes()
