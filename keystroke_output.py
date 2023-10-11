@@ -2,7 +2,7 @@ from pynput.keyboard import Controller, Key
 import time
 import numpy as np
 DEFAULT_DELAY_MEAN = 0.07
-DEFAULT_DELAY_STANDARD_DEVIATION = 0.015
+DEFAULT_DELAY_STANDARD_DEVIATION = 0.02
 # Sample keystrokes
 # keystrokes = [
 #     ('h', 0.1),
@@ -30,7 +30,11 @@ def simulate_keystrokes(words: list, delay_mean: float, delay_standard_deviation
         # Add more special keys here
     }
     def get_delay(speed_by_multiple:float=None) -> float:
-        return np.random.normal(delay_mean/(speed_by_multiple or 1), delay_standard_deviation/(speed_by_multiple or 1))
+        delay = np.random.normal(delay_mean/(speed_by_multiple or 1), delay_standard_deviation/(speed_by_multiple or 1))
+        if delay < 0:
+            delay = 0 - delay
+        return delay
+    
     for word in words:
         for char in word:
             delay = get_delay(1.5)
@@ -47,8 +51,6 @@ def simulate_keystrokes(words: list, delay_mean: float, delay_standard_deviation
 
         # Add a random delay after each word
         delay = get_delay(2)
-        if delay < 0:
-            delay = 0 - delay
         try:
             time.sleep(delay)
             keyboard.type(' ')

@@ -6,13 +6,15 @@ def test_with_substring(substring):
     # logger = KeystrokeLogger()
     id = parser.id_from_substring(substring)
     if id:
+        print(parser.get_all_strings(id))
+        highest_times = parser.get_highest_keystroke_times()
+        print(f"Highest times: {highest_times}")
         avg_time = parser.get_average_time(id)
         print(f"Average time between keystrokes: {avg_time}")
         std_dev = parser.get_std_deviation(id)
         print(f"Standard deviation: {std_dev}")
         # visualize
-        # print(parser.get_all_strings(id))
-        # parser.visualize_keystroke_times()
+        parser.visualize_keystroke_times()
     else:
         print(f"No phrase found with the keyword: {substring}")
 
@@ -45,21 +47,11 @@ def test_parser_methods():
     parser.visualize_keystroke_times(excludeOutliers=True)
 
 def fooling_around():
-    parser = KeystrokeParser()
-    logger = KeystrokeLogger()
-    string_list = parser.get_all_strings()
-    for curr_string in string_list:
-        if len(curr_string) > 100:
-            curr_string = curr_string[:100] + "...[truncated]"
-        print(curr_string)
-    avg_time = parser.get_average_time()
-    print(f"Average time between keystrokes: {avg_time}")
-    std_dev = parser.get_std_deviation()
-    print(f"Standard deviation: {std_dev}")
+    test_with_substring("Medicare")
 
 def main():
-    # fooling_around()
-    test_parser_methods()
+    fooling_around()
+    # test_parser_methods()
 
 if __name__ == "__main__":
     # parser = KeystrokeParser()
