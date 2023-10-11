@@ -4,16 +4,16 @@ import json
 import uuid
 
 MAX_WORDS = 158
-speedHack = True
-speedMultiplier = 2
-
-special_keys = {
+SPEEDHACK = True
+SPEEDMULTIPLIER = 2
+BANNED_KEYS = ["'√'"]
+SPECIAL_KEYS = {
     'Key.space': Key.space,
-    'Key.enter': Key.enter,
     'Key.backspace': Key.backspace,
     'Key.shift': Key.shift,
     'Key.caps_lock': Key.caps_lock,
     'Key.tab': Key.tab,
+    # 'Key.enter': Key.enter,
     # 'Key.esc': Key.esc,
     # Add other keys as needed
 }
@@ -40,25 +40,36 @@ class KeystrokeLogger:
         """
         Function to handle key press events.
         """
+        def is_key_valid(keypress):
+            """
+            Function to check if the key is valid.
+            """
+            key_as_string = str(keypress)
+            if key_as_string in BANNED_KEYS:
+                return False
+            elif key_as_string in SPECIAL_KEYS:
+                return True
+            elif hasattr(keypress, 'char'):
+                return True
+            return False
         current_time = time.time()
         time_diff = current_time - self.prev_time
         if time_diff > 3:
             time_diff = 3 + (time_diff / 1000)
         time_diff = round(time_diff, 4)  # Round to 4 decimal places
-        key_str = str(keypress)
 
-        # Handle apostrophe key
-        if key_str == "\"'\"":
-            key_str = "'\''"
-        if (key_str in special_keys) or (hasattr(keypress, 'char')):
-            self.keystrokes.append((key_str, time_diff))
+        if is_key_valid(keypress):
+            key_as_string = str(keypress)
+
+            # Handle apostrophe key
+            if key_as_string == "\"'\"":
+                key_as_string = "'\''"
+            self.keystrokes.append((key_as_string, time_diff))
             self.prev_time = current_time
 
             # Append typed character to the string
             if hasattr(keypress, 'char'):
                 self.typed_string += keypress.char
-                if (keypress.char.isprintable() == False):
-                    print('Found a non-printable character that counts as a char!')
             elif keypress == Key.space:
                 self.typed_string += ' '
                 self.word_count += 1
@@ -93,13 +104,13 @@ class KeystrokeLogger:
         except Exception as e:
             print(f"An error occurred: {e}")
 
-    def save_log(self):
+    def save_log(self) -> bool:
         """
         Function to save the log to a file.
         """
         if self.typed_string == "":
             print("No keystrokes to save.")
-            return
+            return False
         # Create a unique ID
         unique_id = str(uuid.uuid4())
 
@@ -121,7 +132,8 @@ class KeystrokeLogger:
         except FileNotFoundError:
             with open('keystrokes.json', 'w') as f:
                 json.dump([log], f)
-
+        return True
+    
     def simulate_keystrokes(self, keystrokes=None):
         """
         Function to simulate the keystrokes with the same timing.
@@ -138,15 +150,15 @@ class KeystrokeLogger:
             print(f"An error occurred: {e}")
         for key, time_diff in keystrokes:
             # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from time_diff
-            if speedHack:
-                time_diff = time_diff / speedMultiplier
+            if SPEEDHACK:
+                time_diff = time_diff / SPEEDMULTIPLIER
             if time_diff > 3:
                 time_diff = 3 + (time_diff / 1000)
             try:
                 time.sleep(time_diff)  # Wait for the time difference between keystrokes
-                if key in special_keys:
-                    keyboard.press(special_keys[key])
-                    keyboard.release(special_keys[key])
+                if key in SPECIAL_KEYS:
+                    keyboard.press(SPECIAL_KEYS[key])
+                    keyboard.release(SPECIAL_KEYS[key])
                 elif key == "'\''":
                     keyboard.type("'")  # Type the apostrophe
                 else:
@@ -175,6 +187,7 @@ class KeystrokeLogger:
 if __name__ == "__main__":
     logger = KeystrokeLogger()
     logger.start_listener()
-    logger.save_log()
-    print("\nLog saved. Now simulating keystrokes...\n")
-    logger.simulate_keystrokes()
+    success = logger.save_log()
+    if success:
+        print("\nLog saved. Now simulating keystrokes...\n")
+        logger.simulate_keystrokes()

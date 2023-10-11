@@ -1,5 +1,4 @@
 import json
-from keystrokeLogger import KeystrokeLogger
 import statistics
 import matplotlib.pyplot as plt
 OUTLIER_CUTOFF = 0.6
@@ -8,7 +7,7 @@ class KeystrokeParser:
         self.filename = filename
         self.logs = self.load_logs()
 
-    def load_logs(self):
+    def load_logs(self) -> list:
         """
         Function to load logs from the file.
         """
@@ -22,7 +21,7 @@ class KeystrokeParser:
             print(f"An error occurred: {e}")
             return []
 
-    def check_membership(self, identifier):
+    def check_membership(self, identifier) -> bool:
         """
         Function to check if a log with the given UUID or exact string exists.
         """
@@ -31,13 +30,29 @@ class KeystrokeParser:
                 return True
         return False
 
-    def get_all_strings(self):
+    def id_from_substring(self, keyword) -> str or None:
+        """
+        Function to return the ID of the first string that contains a given substring.
+        """
+        for log in self.logs:
+            if keyword in log['string']:
+                return log['id']
+        return None
+
+    def get_all_strings(self, identifier=None) -> list:
         """
         Function to return a list of all strings in the logs.
         """
+        if identifier is not None:
+            isPresent = self.check_membership(identifier)
+            if isPresent == False:
+                return []
+            for log in self.logs:
+                if log['id'] == identifier or log['string'] == identifier:
+                    return [log['string']]
         return [log['string'] for log in self.logs]
 
-    def get_highest_keystroke_times(self):
+    def get_highest_keystroke_times(self) -> list:
         """
         Function to return the highest times it took for keystrokes.
         """
@@ -47,15 +62,7 @@ class KeystrokeParser:
             highest_times.append(max(times) if times else 0)
         return highest_times
     
-    def id_from_substring(self, keyword):
-        """
-        Function to return the ID of the first string that contains a given substring.
-        """
-        for log in self.logs:
-            if keyword in log['string']:
-                return log['id']
-        return None
-    def get_average_time(self, identifier=None):
+    def get_average_time(self, identifier=None) -> float or None:
         """
         Function to return the average time between keystrokes for a given log.
         """
@@ -75,7 +82,7 @@ class KeystrokeParser:
             return 0
         return round(sum(times) / len(times), 4)
 
-    def get_std_deviation(self, identifier=None):
+    def get_std_deviation(self, identifier=None) -> float or None:
         """
         Function to return the standard deviation of the time between keystrokes for a given log.
         """
@@ -94,19 +101,17 @@ class KeystrokeParser:
             return 0
         return round(statistics.stdev(times), 4)
     
-    def visualize_keystroke_times(self):
+    def visualize_keystroke_times(self, keystrokes=None, excludeOutliers=True) -> None:
         """
         Plots the average keystroke time for each character based on the keystrokes in the logs.
-
-        Returns:
-            None
         """
-        keystrokes = self.get_all_keystrokes()
+        if keystrokes is None:
+            keystrokes = self.get_all_keystrokes()
         if not keystrokes:
             print("No keystrokes found.")
             return
 
-        character_times = self.calculate_average_keystroke_times(keystrokes)
+        character_times = self.calculate_average_keystroke_times(keystrokes, excludeOutliers)
 
         characters = list(character_times.keys())
         times = list(character_times.values())
@@ -117,7 +122,7 @@ class KeystrokeParser:
         plt.title('Average Keystroke Time for Each Character')
         plt.show()
 
-    def get_all_keystrokes(self, identifier=None):
+    def get_all_keystrokes(self, identifier=None) -> list:
         """
         Returns a list of all keystrokes in the logs.
 
@@ -135,7 +140,7 @@ class KeystrokeParser:
             
         return keystrokes
 
-    def calculate_average_keystroke_times(self, keystrokes, excludeOutliers=True):
+    def calculate_average_keystroke_times(self, keystrokes=None, excludeOutliers=True) -> dict:
         """
         Calculates the average keystroke time for each character based on the provided keystrokes.
 
@@ -147,7 +152,8 @@ class KeystrokeParser:
         """
         character_times = {}
         character_counts = {}
-
+        if keystrokes is None:
+            keystrokes = self.get_all_keystrokes()
         for key, time in keystrokes:
             if excludeOutliers and time > OUTLIER_CUTOFF:
                 continue
@@ -163,34 +169,6 @@ class KeystrokeParser:
 
         return character_times
 
-
-def test_with_substring(substring):
-    parser = KeystrokeParser()
-    # logger = KeystrokeLogger()
-    id = parser.id_from_substring(substring)
-    if id:
-        time = parser.get_average_time(id)
-        print(f"Average time between keystrokes: {time}")
-        std_dev = parser.get_std_deviation(id)
-        print(f"Standard deviation: {std_dev}")
-        # visualize
-        parser.visualize_keystroke_times()
-    else:
-        print(f"No phrase found with the keyword: {substring}")
-
-    
 if __name__ == "__main__":
     parser = KeystrokeParser()
-    logger = KeystrokeLogger()
-    # print(parser.check_membership("1 2 3 4 5"))
-    # print(parser.get_all_strings())
-    print(parser.get_highest_keystroke_times())
-    # test_word = "lakes"
-    # test_with_substring(test_word)
-    # count = len(parser.get_all_strings())
-    # print(f"Number of logs: {count}")
-    # time = parser.get_average_time()
-    # print(f"Average time between keystrokes: {time}")
-    # std_dev = parser.get_std_deviation()
-    # print(f"Standard deviation: {std_dev}")
-    # parser.visualize_keystroke_times()
+    print(parser.check_membership("1 2 3 4 5"))

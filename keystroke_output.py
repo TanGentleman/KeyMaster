@@ -14,28 +14,14 @@ DEFAULT_DELAY_STANDARD_DEVIATION = 0.015
 #     ('r', 0.1),
 #     ('e', 0.1),
 # ]
-# simulate_keystrokes(keystrokes)
-# sample_string = """causa provincia empiezo banana pero derecho en para
-# polvo alguien los platos del para todos los alamos
-# natural es casa juicio español de estadia estado imagen
-# de los alas en unas derrota derecho manita orden
-# olmos pepino ordenanza alzas algo estos estoy de las
-# esa mis darle al los miembros más activos en las
-# porque al no estar en pericia control de la lista de
-# """
-sample_string = """Today, there are some endangered animals on Earth. It means that we can find only a few of them around us. Some examples are whales, pandas, tigers and Asian elephants. Humans destroy the natural homes of the animals in the forests, lakes, and plains. When the number of people on Earth increases, they need more place for living. They cut down trees and destroy lakes. They make homes and roads instead. Then the animals won't have a place to live. They will die out. The Iranian cheetah is among these animals. This wild animal lives only in the plains of Iran. Now there are only a few Iranian cheetahs alive. If people take care of them, there is hope for this beautiful animal to live. Recently, families pay more attention to nature, students learn about saving wildlife, and some hunters don't go hunting anymore. In this way, the number of cheetahs is going to increase in the future."""
-# sample_string = """the animals in the forests, lakes, and plains."""
-sample_string = """selam dostum kardeşim arkadaşım etmek almak bulmak görmek çizmek sen youtube nasıl melez kemirgen saç baş baraka tombul şişman"""
-sample_string = """How surprised he'll be when he
-finds out who l am! But l'e better
-tale him his fan and gloves that is,
-if I can kick a little! Alas! it was
-scratching"""
-def words_from_string(string: str):
+# sample_string = """Today, there are some endangered animals on Earth. It means that we can find only a few of them around us. Some examples are whales, pandas, tigers and Asian elephants. Humans destroy the natural homes of the animals in the forests, lakes, and plains. When the number of people on Earth increases, they need more place for living. They cut down trees and destroy lakes. They make homes and roads instead. Then the animals won't have a place to live. They will die out. The Iranian cheetah is among these animals. This wild animal lives only in the plains of Iran. Now there are only a few Iranian cheetahs alive. If people take care of them, there is hope for this beautiful animal to live. Recently, families pay more attention to nature, students learn about saving wildlife, and some hunters don't go hunting anymore. In this way, the number of cheetahs is going to increase in the future."""
+sample_string = """the animals in the forests, lakes, and plains."""
+
+def words_from_string(string: str) -> list:
     return string.split()
 
 
-def simulate_keystrokes(words, delay_mean, delay_standard_deviation):
+def simulate_keystrokes(words: list, delay_mean: float, delay_standard_deviation: float):
     keyboard = Controller()
     special_keys = {
         '\n': Key.enter,
@@ -43,10 +29,11 @@ def simulate_keystrokes(words, delay_mean, delay_standard_deviation):
         ' ': Key.space,
         # Add more special keys here
     }
-
+    def get_delay(speed_by_multiple:float=None) -> float:
+        return np.random.normal(delay_mean/(speed_by_multiple or 1), delay_standard_deviation/(speed_by_multiple or 1))
     for word in words:
         for char in word:
-            delay = np.random.normal(delay_mean, delay_standard_deviation)
+            delay = get_delay(1.5)
             try:
                 time.sleep(delay)
                 if char in special_keys:
@@ -59,7 +46,7 @@ def simulate_keystrokes(words, delay_mean, delay_standard_deviation):
                 continue  # Continue with the next character
 
         # Add a random delay after each word
-        delay = np.random.normal(delay_mean/3, delay_standard_deviation/3)
+        delay = get_delay(2)
         if delay < 0:
             delay = 0 - delay
         try:
