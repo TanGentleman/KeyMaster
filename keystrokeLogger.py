@@ -3,7 +3,7 @@ import time
 import json
 import uuid
 
-MAX_WORDS = 158
+MAX_WORDS = 50
 SPEEDHACK = True
 SPEEDMULTIPLIER = 2
 BANNED_KEYS = ["'√'"]
@@ -12,12 +12,11 @@ SPECIAL_KEYS = {
     'Key.backspace': Key.backspace,
     'Key.shift': Key.shift,
     'Key.caps_lock': Key.caps_lock,
-    'Key.tab': Key.tab,
+    # 'Key.tab': Key.tab,
     # 'Key.enter': Key.enter,
     # 'Key.esc': Key.esc,
     # Add other keys as needed
 }
-
 ### JSON FORMAT FROM keystrokes.json
 # [
 #   {
@@ -76,13 +75,18 @@ class KeystrokeLogger:
             elif keypress == Key.space:
                 self.typed_string += ' '
                 self.word_count += 1
-            elif keypress == Key.enter:
-                self.typed_string += '\n'
             # logic for backspaces, including if going back on a space
             elif keypress == Key.backspace:
                 self.typed_string = self.typed_string[:-1]
                 if len(self.typed_string) > 0 and self.typed_string[-1]  == ' ':
                     self.word_count -= 1
+            ## Enter/Tab not valid logged keys, this may technically affect correctness of word count if used in lieu of space
+            # elif keypress == Key.enter:
+            #     self.typed_string += '\n'
+            #     self.word_count += 1
+            # elif keypress == Key.tab:
+            #     self.typed_string += '\t'
+            #     self.word_count += 1
 
             # Stop listener when max words have been typed
             if self.word_count == MAX_WORDS:
@@ -107,12 +111,38 @@ class KeystrokeLogger:
         except Exception as e:
             print(f"An error occurred: {e}")
 
+    def is_log_legit(self, keystrokes, input_string) -> bool:
+        # Make sure keystrokes is validly typed
+        # Make sure input_string is validly typed
+        for key, time_diff in keystrokes:
+            if type(key) != str or type(time_diff) != float:
+                return False
+        if type(input_string) != str:
+            return False
+        return True
+
+    def set_internal_log(self, keystrokes, input_string):
+        """
+        Function to set the internal log.
+        """
+        ### MUST CHECK VALIDITY OF THESE!
+        if self.is_log_legit(keystrokes, input_string) == False:
+            print("Invalid log. Internal log not set")
+            return False
+        self.keystrokes = keystrokes
+        self.typed_string = input_string
+        self.word_count = input_string.count(' ')
+        ## OR should it be self.word_count = input_string.count(' ')
+        ## I can make a case 
+
     def save_log(self, reset=False) -> bool:
         """
         Function to save the log to a file.
         """
         if self.typed_string == "":
             print("No keystrokes to save.")
+            if reset:
+                self.reset()
             return False
         # Create a unique ID
         unique_id = str(uuid.uuid4())
@@ -172,7 +202,7 @@ class KeystrokeLogger:
                 print(f"An error occurred: {e}")
                 break
 
-    def simulate_from_log(self, identifier):
+    def simulate_from_id(self, identifier):
         """
         Function to load a log given a UUID or a string.
         """
