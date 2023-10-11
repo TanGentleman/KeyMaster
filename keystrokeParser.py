@@ -1,9 +1,10 @@
 import json
 import statistics
 import matplotlib.pyplot as plt
-OUTLIER_CUTOFF = 0.6
+OUTLIER_CUTOFF = 0.8
+LOG_FILENAME = 'keystrokes.json'
 class KeystrokeParser:
-    def __init__(self, filename='keystrokes.json'):
+    def __init__(self, filename=LOG_FILENAME):
         self.filename = filename
         self.logs = self.load_logs()
 
@@ -35,7 +36,7 @@ class KeystrokeParser:
         Function to return the ID of the first string that contains a given substring.
         """
         for log in self.logs:
-            if keyword in log['string']:
+            if keyword == log['string'] or keyword in log['string']:
                 return log['id']
         return None
 
@@ -52,10 +53,20 @@ class KeystrokeParser:
                     return [log['string']]
         return [log['string'] for log in self.logs]
 
-    def get_highest_keystroke_times(self) -> list:
+    def get_highest_keystroke_times(self, identifier=None) -> list:
         """
         Function to return the highest times it took for keystrokes.
         """
+        if identifier is not None:
+            isPresent = self.check_membership(identifier)
+            if isPresent == False:
+                return []
+            for log in self.logs:
+                if log['id'] == identifier or log['string'] == identifier:
+                    times = [keystroke[1] for keystroke in log['keystrokes']]
+                    return [max(times) if times else 0]
+            print("I should never get here, right?")
+            return []
         highest_times = []
         for log in self.logs:
             times = [keystroke[1] for keystroke in log['keystrokes']]
@@ -92,7 +103,16 @@ class KeystrokeParser:
             if isPresent == False:
                 return None
             keystrokes = self.get_all_keystrokes(identifier)
-            times = [keystroke[1] for keystroke in keystrokes if keystroke[1] < OUTLIER_CUTOFF]
+            times = []
+            outlier_count = 0
+            # expanded
+            for (_, time) in keystrokes:
+                if time < OUTLIER_CUTOFF:
+                    times.append(time)
+                else:
+                    outlier_count += 1
+            if outlier_count > 0:
+                print(f"Removed {outlier_count} outliers.")
         else:
             keystrokes = self.get_all_keystrokes()
             times = [keystroke[1] for keystroke in keystrokes if keystroke[1] < OUTLIER_CUTOFF]
@@ -119,7 +139,7 @@ class KeystrokeParser:
         plt.bar(characters, times)
         plt.xlabel('Characters')
         plt.ylabel('Average Keystroke Time')
-        plt.title('Average Keystroke Time for Each Character')
+        plt.title('Average Keystroke Time for Each Character\n(Excluding Outliers)')
         plt.show()
 
     def get_all_keystrokes(self, identifier=None) -> list:

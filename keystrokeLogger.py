@@ -31,6 +31,9 @@ SPECIAL_KEYS = {
 
 class KeystrokeLogger:
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.keystrokes = []
         self.typed_string = ""
         self.prev_time = time.time()
@@ -78,7 +81,7 @@ class KeystrokeLogger:
             # logic for backspaces, including if going back on a space
             elif keypress == Key.backspace:
                 self.typed_string = self.typed_string[:-1]
-                if self.typed_string[-1] == ' ':
+                if len(self.typed_string) > 0 and self.typed_string[-1]  == ' ':
                     self.word_count -= 1
 
             # Stop listener when max words have been typed
@@ -104,7 +107,7 @@ class KeystrokeLogger:
         except Exception as e:
             print(f"An error occurred: {e}")
 
-    def save_log(self) -> bool:
+    def save_log(self, reset=False) -> bool:
         """
         Function to save the log to a file.
         """
@@ -132,6 +135,8 @@ class KeystrokeLogger:
         except FileNotFoundError:
             with open('keystrokes.json', 'w') as f:
                 json.dump([log], f)
+        if reset:
+            self.reset()
         return True
     
     def simulate_keystrokes(self, keystrokes=None):
