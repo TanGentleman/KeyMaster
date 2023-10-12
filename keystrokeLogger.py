@@ -30,15 +30,29 @@ SPECIAL_KEYS = {
 # ]
 
 class KeystrokeLogger:
+    """
+    A class used to log keystrokes and calculate delays between each keypress.
+    """
+
     def __init__(self, filename=ABSOLUTE_FILENAME):
+        """
+        Initialize the KeystrokeLogger with a filename.
+        Set attributes using the reset function.
+        """
         self.filename = filename
         self.reset()
 
     def reset(self):
+        """
+        Reset the keystrokes, typed string, previous time, word count, and first character typed flag.
+        """
+        # Keystroke related attributes
         self.keystrokes = []
         self.typed_string = ""
-        self.prev_time = time.time()
         self.word_count = 0
+
+        # Time related attribute
+        self.prev_time = time.time() # The time at keypress is compared to this value.
 
     def on_press(self, keypress):
         """
@@ -68,7 +82,12 @@ class KeystrokeLogger:
             # Handle apostrophe key
             if key_as_string == "\"'\"":
                 key_as_string = "'\''"
-            self.keystrokes.append((key_as_string, time_diff))
+
+            # Mark first character's time_diff as None
+            if self.keystrokes == []:
+                self.keystrokes.append((key_as_string, None))
+            else:
+                self.keystrokes.append((key_as_string, time_diff))
             self.prev_time = current_time
 
             # Append typed character to the string
@@ -114,9 +133,18 @@ class KeystrokeLogger:
             print(f"An error occurred: {e}")
 
     def is_log_legit(self, keystrokes, input_string) -> bool:
+        """
+        Function to check if the log is valid.
+        """
         # Make sure keystrokes is validly typed
         # Make sure input_string is validly typed
+        none_count = 0
         for key, time_diff in keystrokes:
+            if time_diff == None:
+                none_count += 1
+                if none_count > 1:
+                    print('None value marks first character. Only use once.')
+                    return False
             if type(key) != str or type(time_diff) != float:
                 return False
         if type(input_string) != str:
@@ -185,7 +213,13 @@ class KeystrokeLogger:
                 listener.join()
         except Exception as e:
             print(f"An error occurred: {e}")
+        none_count = 0
         for key, time_diff in keystrokes:
+            if time_diff == None:
+                none_count += 1
+                if none_count > 1:
+                    print('Critical error: None value marks first character. Only use once')
+                continue
             # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from time_diff
             if SPEEDHACK:
                 time_diff = time_diff / SPEEDMULTIPLIER

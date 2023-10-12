@@ -5,7 +5,14 @@ OUTLIER_CUTOFF = 0.8
 from config import ABSOLUTE_FILENAME
 # LOG_FILENAME = 'test.json'
 class KeystrokeParser:
+    """
+    A class used to parse keystroke logs.
+    """
     def __init__(self, filename=ABSOLUTE_FILENAME, exclude_outliers=True):
+        """
+        Initialize the KeystrokeParser with a filename and load logs.
+        Outliers are excluded by default.
+        """
         self.filename = filename
         self.logs = self.load_logs()
         self.exclude_outliers = exclude_outliers
@@ -87,9 +94,15 @@ class KeystrokeParser:
         outlier_count = 0
         times = []
         for (_, time) in keystrokes:
-            if (self.exclude_outliers == False) or (time < OUTLIER_CUTOFF):
+            if time == None:
+                none_count += 1
+                if none_count > 1:
+                    print('Critical Error. Keystrokes invalid. Too many nuns!')
+                continue
+            elif (self.exclude_outliers == False) or (time < OUTLIER_CUTOFF):
                 times.append(time)
             else:
+                # This means time < OUTLIER_CUTOFF right?
                 outlier_count += 1
         if outlier_count > 0:
             print(f"Removed {outlier_count} outliers.")
@@ -250,7 +263,14 @@ class KeystrokeParser:
         character_counts = {}
         if keystrokes is None:
             keystrokes = self.get_all_keystrokes()
+
+        none_count = 0
         for key, time in keystrokes:
+            if time == None:
+                none_count += 1
+                if none_count > 1:
+                    print('Critical Error. Keystrokes invalid. Too many nuns!')
+                continue
             if self.exclude_outliers and time > OUTLIER_CUTOFF:
                 continue
             if key in character_times:
