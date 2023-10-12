@@ -1,11 +1,25 @@
 import json
 import statistics
 import matplotlib.pyplot as plt
-from typing import List, Tuple, Dict, Optional, TypedDict
+from typing import List, Dict, Optional, TypedDict, Union
+from os import path
 OUTLIER_CUTOFF = 0.8
-from config import ABSOLUTE_FILENAME
+from config import ROOT, ABSOLUTE_FILENAME
 # LOG_FILENAME = 'test.json'
-class Keystroke: Tuple[str, float]
+# class Keystroke: Tuple[str, Optional[float]]
+class Keystroke:
+    def __init__(self, key: str, time: Optional[float]):
+        self.key = key
+        self.time = time
+    def __iter__(self):
+        yield self.key, self.time
+    def __getitem__(self, index: int) -> Union[str, Optional[float]]:
+        if index == 0:
+            return self.key
+        elif index == 1:
+            return self.time
+        else:
+            raise IndexError("Index out of range.")
 class Log(TypedDict):
     id: str
     string: str
@@ -19,7 +33,7 @@ class KeystrokeParser:
         logs (list): The list of logs loaded from the file.
         exclude_outliers (bool): A flag indicating whether to exclude outliers.
     """
-    def __init__(self, filename: Optional[str] = ABSOLUTE_FILENAME, exclude_outliers: bool = True) -> None:
+    def __init__(self, filename: Optional[str] = None, exclude_outliers: bool = True) -> None:
         """
         Initialize the KeystrokeParser and load logs.
 
@@ -27,6 +41,10 @@ class KeystrokeParser:
             filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_FILENAME.
             exclude_outliers (bool, optional): A flag indicating whether to exclude outliers. Defaults to True.
         """
+        if filename is None:
+            filename = ABSOLUTE_FILENAME
+        else:
+            filename = path.join(ROOT, filename)
         self.filename = filename
         self.logs = self.extract_logs()
         self.exclude_outliers = exclude_outliers
@@ -63,7 +81,7 @@ class KeystrokeParser:
                 return True
         return False
 
-    def id_from_substring(self, keyword: str) -> str or None:
+    def id_from_substring(self, keyword: str) -> Optional[str]:
         """
         Get the ID of the first log that contains a given substring.
 
@@ -132,11 +150,12 @@ class KeystrokeParser:
             identifier (str, optional): The UUID or exact string to check for.
 
         Returns:
-            list: A list of float values.
+            List[float]: A list of float values.
         """
+        keystrokes = []
         if identifier is not None:
             isPresent = self.check_membership(identifier)
-            if isPresent == False:
+            if isPresent is False:
                 return []
             keystrokes = self.get_keystrokes(identifier)
         else:
@@ -147,13 +166,16 @@ class KeystrokeParser:
         none_count = 0
         outlier_count = 0
         times = []
+        if keystrokes == []:
+            print("No keystrokes found.")
+            return []
         for (_, time) in keystrokes:
-            if time == None:
+            if time is None:
                 none_count += 1
                 if none_count > 1:
                     print('Critical Error. Keystrokes invalid. Too many nuns!')
                 continue
-            elif (exclude_outliers == False) or (time < OUTLIER_CUTOFF):
+            elif (exclude_outliers is False) or (time < OUTLIER_CUTOFF):
                 times.append(time)
             else:
                 # This means time < OUTLIER_CUTOFF right?
@@ -183,12 +205,12 @@ class KeystrokeParser:
             for log in self.logs:
                 if log['id'] == identifier or log['string'] == identifier:
                     num_chars = len(log['string'])
-                    total_seconds = sum(self.get_only_times(identifier))
+                    total_seconds = sum(self.get_only_times(identifier)) # type: ignore
                     break
         # If identifier is not provided, calculate WPM for all logs
         else:
             num_chars = sum(len(log['string']) for log in self.logs)
-            total_seconds = sum(self.get_only_times())
+            total_seconds = sum(self.get_only_times()) # type: ignore
 
         # If no characters found
         if num_chars == 0:
@@ -215,7 +237,7 @@ class KeystrokeParser:
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
-            if isPresent == False:
+            if isPresent is False:
                 return []
             for log in self.logs:
                 if log['id'] == identifier or log['string'] == identifier:
@@ -226,13 +248,13 @@ class KeystrokeParser:
             return []
         highest_times = []
         # iterate through logs
-        # calling get_keystrokes() would combine all keystrokes into one list
         for log in self.logs:
-            times = [keystroke[1] for keystroke in log['keystrokes']]
+            id = log['id']
+            times = self.get_only_times(id)
             highest_times.append(max(times) if times else 0)
         return highest_times
     
-    def get_average_delay(self, identifier: Optional[str] = None) -> float or None:
+    def get_average_delay(self, identifier: Optional[str] = None) -> Optional[float]:
         """
         Get the average time between keystrokes.
 
@@ -245,7 +267,7 @@ class KeystrokeParser:
         times = []
         if identifier is not None:
             isPresent = self.check_membership(identifier)
-            if isPresent == False:
+            if isPresent is False:
                 return None
             times = self.get_only_times(identifier)
         else:
@@ -255,7 +277,7 @@ class KeystrokeParser:
             return 0
         return round(sum(times) / len(times), 4)
 
-    def get_std_deviation(self, identifier: Optional[str] = None) -> float or None:
+    def get_std_deviation(self, identifier: Optional[str] = None) -> Optional[float]:
         """
         Get the standard deviation of the time between keystrokes.
 
@@ -267,7 +289,7 @@ class KeystrokeParser:
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
-            if isPresent == False:
+            if isPresent is False:
                 return None
             times = self.get_only_times(identifier)
         else:
@@ -289,7 +311,7 @@ class KeystrokeParser:
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
-            if isPresent == False:
+            if isPresent is False:
                 print("ID invalid, no strings found.")
                 return
             keystrokes = self.get_keystrokes(identifier)
@@ -335,7 +357,7 @@ class KeystrokeParser:
             
         return keystrokes
 
-    def map_chars_to_times(self, keystrokes=None, exclude_outliers: Optional[bool] = None) -> Dict[str, float]:
+    def map_chars_to_times(self, keystrokes: Optional[List[Keystroke]] = None, exclude_outliers: Optional[bool] = None) -> Dict[str, float]:
         """
         Calculates the average keystroke time for each character based on the provided keystrokes.
 
@@ -345,15 +367,15 @@ class KeystrokeParser:
         Returns:
             dict: A dictionary mapping each character to its average keystroke time.
         """
-        character_times = {}
-        character_counts = {}
+        character_times: Dict[str, float] = {}
+        character_counts: Dict[str, int] = {}
         if keystrokes is None:
             keystrokes = self.get_keystrokes()
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         none_count = 0
         for key, time in keystrokes:
-            if time == None:
+            if time is None:
                 none_count += 1
                 if none_count > 1:
                     print('Critical Error. Keystrokes invalid. Too many nuns!')
@@ -374,4 +396,5 @@ class KeystrokeParser:
 
 if __name__ == "__main__":
     parser = KeystrokeParser()
-    print(parser.check_membership("1 2 3 4 5"))
+    id = parser.id_from_substring("")
+    print('Parser working!' if id else 'Get some keystrokes logged!')
