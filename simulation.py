@@ -3,10 +3,10 @@ import time
 import numpy as np
 DEFAULT_DELAY_MEAN = 0.07
 DEFAULT_DELAY_STANDARD_DEVIATION = 0.02
-MAX_WORDS = 30
+MAX_WORDS = 300
 MIN_DELAY = 0.03
 
-LOG_SIMULATION = False
+LOG_SIMULATION = True
 ALLOW_ENTER_AND_TAB = True
 
 if ALLOW_ENTER_AND_TAB:
@@ -86,6 +86,8 @@ def main(input_string=None, log = LOG_SIMULATION):
         from keystrokeLogger import KeystrokeLogger
         logger = KeystrokeLogger()
         logger.set_internal_log(keystrokes, input_string)
+        from config import ABSOLUTE_SIM_FILENAME
+        logger.filename = ABSOLUTE_SIM_FILENAME
         success = logger.save_log()
         if success:
             print('Success!')

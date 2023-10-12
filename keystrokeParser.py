@@ -2,10 +2,10 @@ import json
 import statistics
 import matplotlib.pyplot as plt
 OUTLIER_CUTOFF = 0.8
-LOG_FILENAME = 'keystrokes.json'
+from config import ABSOLUTE_FILENAME
 # LOG_FILENAME = 'test.json'
 class KeystrokeParser:
-    def __init__(self, filename=LOG_FILENAME, exclude_outliers=False):
+    def __init__(self, filename=ABSOLUTE_FILENAME, exclude_outliers=True):
         self.filename = filename
         self.logs = self.load_logs()
         self.exclude_outliers = exclude_outliers
@@ -55,21 +55,23 @@ class KeystrokeParser:
                     return [log['string']]
         return [log['string'] for log in self.logs]
     
-    def print_all_strings(self, identifier=None, truncate=True) -> None:
+    def print_all_strings(self, identifier=None, truncate=25) -> None:
         """
         Function to print all strings in the logs.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
-            if isPresent == False:
+            if not isPresent:
                 print("ID invalid, no strings found.")
                 return
         string_list = self.get_all_strings(identifier)
         print(f"Number of strings: {len(string_list)}")
         for curr_string in string_list:
-            if truncate == True and len(curr_string) > 20:
-                curr_string = curr_string[:20] + "...[truncated]"
+            if truncate > 0 and len(curr_string) > truncate:
+                curr_string = curr_string[:truncate] + "...[truncated]"
+            curr_string = curr_string.replace("\n", "\\n")
             print(curr_string)
+
 
     def get_only_times(self, identifier=None) -> list:
         """
@@ -135,8 +137,8 @@ class KeystrokeParser:
         ## THESE ARE DIFFERENT BECAUSE THE TOTAL TIME IS CALCULATED DIFFERENTLY
         # Total seconds: 70.8942, Total seconds (extra): 76.78259
         # The extra time is due to the delays between keystrokes that are not characters in the final string
-        print(f"Total seconds: {total_seconds}")
-        print(f"Total seconds (extra): {total_seconds_extra}")
+        # print(f"Total seconds: {total_seconds}")
+        # print(f"Total seconds (extra): {total_seconds_extra}")
         # Calculate the CPM
         cpm = (num_chars / total_seconds) * 60
         return round(cpm / 5, 1)

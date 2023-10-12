@@ -2,6 +2,7 @@ from pynput.keyboard import Key, Listener, Controller
 import time
 import json
 import uuid
+from config import ABSOLUTE_FILENAME
 
 MAX_WORDS = 50
 SPEEDHACK = True
@@ -29,7 +30,8 @@ SPECIAL_KEYS = {
 # ]
 
 class KeystrokeLogger:
-    def __init__(self):
+    def __init__(self, filename=ABSOLUTE_FILENAME):
+        self.filename = filename
         self.reset()
 
     def reset(self):
@@ -156,14 +158,14 @@ class KeystrokeLogger:
 
         # Append the log object to the file
         try:
-            with open('keystrokes.json', 'r+') as f:
+            with open(self.filename, 'r+') as f:
                 logs = json.load(f)
                 logs.append(log)
                 f.seek(0)
                 json.dump(logs, f)
                 print("Logfile updated.")
         except FileNotFoundError:
-            with open('keystrokes.json', 'w') as f:
+            with open(self.filename, 'w') as f:
                 json.dump([log], f)
         if reset:
             self.reset()
@@ -207,7 +209,7 @@ class KeystrokeLogger:
         Function to load a log given a UUID or a string.
         """
         try:
-            with open('keystrokes.json', 'r') as f:
+            with open(self.filename, 'r') as f:
                 logs = json.load(f)
                 for log in logs:
                     if log['id'] == identifier or log['string'] == identifier:
