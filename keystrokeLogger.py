@@ -145,7 +145,8 @@ class KeystrokeLogger:
                 if none_count > 1:
                     print('None value marks first character. Only use once.')
                     return False
-            if type(key) != str or type(time_diff) != float:
+            elif type(key) != str or type(time_diff) != float:
+                print('Invalid keystrokes. Must be a list of tuples with a string and a float.')
                 return False
         if type(input_string) != str:
             return False
