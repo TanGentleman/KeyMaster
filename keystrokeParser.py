@@ -1,25 +1,42 @@
 import json
 import statistics
 import matplotlib.pyplot as plt
+from typing import List, Tuple, Dict, Optional, TypedDict
 OUTLIER_CUTOFF = 0.8
 from config import ABSOLUTE_FILENAME
 # LOG_FILENAME = 'test.json'
+class Keystroke: Tuple[str, float]
+class Log(TypedDict):
+    id: str
+    string: str
+    keystrokes: List[Keystroke]
 class KeystrokeParser:
     """
-    A class used to parse keystroke logs.
+    A class used to parse and analyze keystroke logs.
+
+    Attributes:
+        filename (str): The name of the file to load logs from.
+        logs (list): The list of logs loaded from the file.
+        exclude_outliers (bool): A flag indicating whether to exclude outliers.
     """
-    def __init__(self, filename=ABSOLUTE_FILENAME, exclude_outliers=True):
+    def __init__(self, filename: Optional[str] = ABSOLUTE_FILENAME, exclude_outliers: bool = True) -> None:
         """
-        Initialize the KeystrokeParser with a filename and load logs.
-        Outliers are excluded by default.
+        Initialize the KeystrokeParser and load logs.
+
+        Args:
+            filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_FILENAME.
+            exclude_outliers (bool, optional): A flag indicating whether to exclude outliers. Defaults to True.
         """
         self.filename = filename
-        self.logs = self.load_logs()
+        self.logs = self.extract_logs()
         self.exclude_outliers = exclude_outliers
 
-    def load_logs(self) -> list:
+    def extract_logs(self) -> List[Log]:
         """
-        Function to load logs from the file.
+        Reads logfile and extracts logs.
+
+        Returns:
+            list: A list of logs loaded from the file. If an error occurs, an empty list is returned.
         """
         try:
             with open(self.filename, 'r') as f:
@@ -31,27 +48,48 @@ class KeystrokeParser:
             print(f"An error occurred: {e}")
             return []
 
-    def check_membership(self, identifier) -> bool:
+    def check_membership(self, identifier: str) -> bool:
         """
-        Function to check if a log with the given UUID or exact string exists.
+        Check if a log with the identifier exists in the loaded logs.
+
+        Args:
+            identifier (str): The UUID or exact string to check for.
+
+        Returns:
+            bool: True if a log with the given UUID or exact string exists, False otherwise.
         """
         for log in self.logs:
             if log['id'] == identifier or log['string'] == identifier:
                 return True
         return False
 
-    def id_from_substring(self, keyword) -> str or None:
+    def id_from_substring(self, keyword: str) -> str or None:
         """
-        Function to return the ID of the first string that contains a given substring.
+        Get the ID of the first log that contains a given substring.
+
+        Args:
+            keyword (str): The substring to search for.
+
+        Returns:
+            str or None: The ID of the first log that contains the substring. If no such log is found, None is returned.
         """
         for log in self.logs:
             if keyword == log['string'] or keyword in log['string']:
                 return log['id']
         return None
 
-    def get_all_strings(self, identifier=None) -> list:
+    def get_strings(self, identifier: Optional[str] = None) -> List[str]:
         """
-        Function to return a list of all strings in the logs.
+        Get a list of all strings in the logs. If an identifier is provided, 
+        only the associated string is included.
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
+
+        Returns:
+            list: A list of all strings in the logs. If an identifier is provided, 
+            the list contains the string associated with that identifier. 
+            If the identifier is not found, an empty list is returned.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
@@ -62,35 +100,51 @@ class KeystrokeParser:
                     return [log['string']]
         return [log['string'] for log in self.logs]
     
-    def print_all_strings(self, identifier=None, truncate=25) -> None:
+    def print_strings(self, identifier: Optional[str] = None, truncate: int = 25) -> None:
         """
-        Function to print all strings in the logs.
+        Prints strings from logs. If 'identifier' is provided, prints associated string.
+        Strings longer than 'truncate' value are appended with "...[truncated]".
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
+            truncate (int, optional): Maximum length for printed strings. Defaults to 25.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if not isPresent:
                 print("ID invalid, no strings found.")
                 return
-        string_list = self.get_all_strings(identifier)
+        string_list = self.get_strings(identifier)
         print(f"Number of strings: {len(string_list)}")
         for curr_string in string_list:
             if truncate > 0 and len(curr_string) > truncate:
                 curr_string = curr_string[:truncate] + "...[truncated]"
+            # Newlines get annoying, so replace them with "\n"
             curr_string = curr_string.replace("\n", "\\n")
             print(curr_string)
 
 
-    def get_only_times(self, identifier=None) -> list:
+    def get_only_times(self, identifier: Optional[str] = None, exclude_outliers: Optional[bool] = None) -> List[float]:
         """
-        Function to return a list of all times in the logs.
+        Get a list of all keystroke delay times.
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
+
+        Returns:
+            list: A list of float values.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent == False:
                 return []
-            keystrokes = self.get_all_keystrokes(identifier)
+            keystrokes = self.get_keystrokes(identifier)
         else:
-            keystrokes = self.get_all_keystrokes()
+            keystrokes = self.get_keystrokes()
+
+        if exclude_outliers is None:
+            exclude_outliers = self.exclude_outliers
+        none_count = 0
         outlier_count = 0
         times = []
         for (_, time) in keystrokes:
@@ -99,7 +153,7 @@ class KeystrokeParser:
                 if none_count > 1:
                     print('Critical Error. Keystrokes invalid. Too many nuns!')
                 continue
-            elif (self.exclude_outliers == False) or (time < OUTLIER_CUTOFF):
+            elif (exclude_outliers == False) or (time < OUTLIER_CUTOFF):
                 times.append(time)
             else:
                 # This means time < OUTLIER_CUTOFF right?
@@ -108,57 +162,56 @@ class KeystrokeParser:
             print(f"Removed {outlier_count} outliers.")
         return times
     
-    def wpm(self, identifier=None) -> float or None:
+    def wpm(self, identifier: Optional[str] = None) -> Optional[float]:
         """
-        Function to return the average words per minute.
-        WPM is CPM/5, where CPM is characters per minute.
+        Calculate the average words per minute.
+        Formula is CPM/5, where CPM is characters per minute.
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
+
+        Returns:
+            float or None: If no characters are found, None is returned.
         """
         num_chars = 0
-        avg_delay = 0
         total_seconds = 0
-        total_seconds_extra = 0
 
+        # If identifier is provided, calculate WPM for specific log
         if identifier is not None:
-            isPresent = self.check_membership(identifier)
-            if isPresent == False:
+            if not self.check_membership(identifier):
                 return None
             for log in self.logs:
                 if log['id'] == identifier or log['string'] == identifier:
-                    # Get the number of characters in the string
-                    string = log['string']
-                    num_chars = len(string)
-                    # Get the average time between keystrokes
-                    avg_delay = self.get_average_delay(identifier)
-                    total_seconds_extra = sum(self.get_only_times(identifier))
+                    num_chars = len(log['string'])
+                    total_seconds = sum(self.get_only_times(identifier))
                     break
+        # If identifier is not provided, calculate WPM for all logs
         else:
-            num_chars = 0
-            for log in self.logs:
-                num_chars += len(log['string'])
-            # Get the average time between keystrokes
-            avg_delay = self.get_average_delay()
-            total_seconds_extra = sum(self.get_only_times()) #ONLY FOR no-ide
-        # This one calculates the total seconds by multiplying the number of characters by the average delay
+            num_chars = sum(len(log['string']) for log in self.logs)
+            total_seconds = sum(self.get_only_times())
+
+        # If no characters found
         if num_chars == 0:
             print("No characters found.")
-            return 0
-        total_seconds = num_chars * avg_delay
+            return None
+        # If no time found
         if total_seconds == 0:
-            print("No time found!!!")
-            return 0
-        # This one calculates the total seconds by summing the times between keystrokes, so it includes non-chars
-        ## THESE ARE DIFFERENT BECAUSE THE TOTAL TIME IS CALCULATED DIFFERENTLY
-        # Total seconds: 70.8942, Total seconds (extra): 76.78259
-        # The extra time is due to the delays between keystrokes that are not characters in the final string
-        # print(f"Total seconds: {total_seconds}")
-        # print(f"Total seconds (extra): {total_seconds_extra}")
+            print("No keystroke delay times found.")
+            return None
+
         # Calculate the CPM
         cpm = (num_chars / total_seconds) * 60
         return round(cpm / 5, 1)
     
-    def get_highest_keystroke_times(self, identifier=None) -> list:
+    def get_highest_keystroke_times(self, identifier: Optional[str] = None) -> List[float]:
         """
-        Function to return the highest times it took for keystrokes.
+        Get the highest keystroke time for each log.
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
+
+        Returns:
+            list: A list of float values.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
@@ -172,14 +225,22 @@ class KeystrokeParser:
             print("I should never get here, right?")
             return []
         highest_times = []
+        # iterate through logs
+        # calling get_keystrokes() would combine all keystrokes into one list
         for log in self.logs:
             times = [keystroke[1] for keystroke in log['keystrokes']]
             highest_times.append(max(times) if times else 0)
         return highest_times
     
-    def get_average_delay(self, identifier=None) -> float or None:
+    def get_average_delay(self, identifier: Optional[str] = None) -> float or None:
         """
-        Function to return the average time between keystrokes for a given log.
+        Get the average time between keystrokes.
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
+
+        Returns:
+            float or None: If no keystroke times are found, None is returned.
         """
         times = []
         if identifier is not None:
@@ -194,9 +255,15 @@ class KeystrokeParser:
             return 0
         return round(sum(times) / len(times), 4)
 
-    def get_std_deviation(self, identifier=None) -> float or None:
+    def get_std_deviation(self, identifier: Optional[str] = None) -> float or None:
         """
-        Function to return the standard deviation of the time between keystrokes for a given log.
+        Get the standard deviation of the time between keystrokes.
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
+
+        Returns:
+            float or None: If insufficient keystrokes are found, None is returned.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
@@ -210,16 +277,32 @@ class KeystrokeParser:
             return 0
         return round(statistics.stdev(times), 4)
     
-    def visualize_keystroke_times(self, keystrokes=None) -> None:
+    def visualize_keystroke_times(self, identifier: Optional[str] = None, keystrokes: Optional[List[Keystroke]] = None, 
+                                  exclude_outliers: Optional[bool] = None) -> None:
         """
-        Plots the average keystroke time for each character based on the keystrokes in the logs.
+        Plots the average keystroke time for each character.
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
+            keystrokes (list, optional): A list of Keystroke items.
+            exclude_outliers (bool, optional): A flag indicating whether to exclude outliers.
         """
-        if keystrokes is None:
-            keystrokes = self.get_all_keystrokes()
-        if not keystrokes:
+        if identifier is not None:
+            isPresent = self.check_membership(identifier)
+            if isPresent == False:
+                print("ID invalid, no strings found.")
+                return
+            keystrokes = self.get_keystrokes(identifier)
+        elif keystrokes is None:
+            keystrokes = self.get_keystrokes()
+        
+        if keystrokes == []:
             print("No keystrokes found.")
             return
-        character_times = self.calculate_average_keystroke_times(keystrokes)
+        
+        if exclude_outliers is None:
+            exclude_outliers = self.exclude_outliers
+        character_times = self.map_chars_to_times(keystrokes, exclude_outliers)
 
         characters = list(character_times.keys())
         times = list(character_times.values())
@@ -231,12 +314,15 @@ class KeystrokeParser:
         plt.title('Average Keystroke Time for Each Character' + line_2)
         plt.show()
 
-    def get_all_keystrokes(self, identifier=None) -> list:
+    def get_keystrokes(self, identifier: Optional[str] = None) -> List[Keystroke]:
         """
-        Returns a list of all keystrokes in the logs.
+       Get a list of all keystrokes in the logs.
+
+        Args:
+            identifier (str, optional): The UUID or exact string to check for.
 
         Returns:
-            list: A list of keystrokes, where each keystroke is represented by a list containing a character and a time.
+            list: A list of Keystroke items.
         """
         keystrokes = []
         for log in self.logs:
@@ -249,12 +335,12 @@ class KeystrokeParser:
             
         return keystrokes
 
-    def calculate_average_keystroke_times(self, keystrokes=None) -> dict:
+    def map_chars_to_times(self, keystrokes=None, exclude_outliers: Optional[bool] = None) -> Dict[str, float]:
         """
         Calculates the average keystroke time for each character based on the provided keystrokes.
 
         Args:
-            keystrokes (list): A list of keystrokes, where each keystroke is represented by a list containing a character and a time.
+            keystrokes (list, optional): A list of Keystroke items.
 
         Returns:
             dict: A dictionary mapping each character to its average keystroke time.
@@ -262,8 +348,9 @@ class KeystrokeParser:
         character_times = {}
         character_counts = {}
         if keystrokes is None:
-            keystrokes = self.get_all_keystrokes()
-
+            keystrokes = self.get_keystrokes()
+        if exclude_outliers is None:
+            exclude_outliers = self.exclude_outliers
         none_count = 0
         for key, time in keystrokes:
             if time == None:
@@ -271,7 +358,7 @@ class KeystrokeParser:
                 if none_count > 1:
                     print('Critical Error. Keystrokes invalid. Too many nuns!')
                 continue
-            if self.exclude_outliers and time > OUTLIER_CUTOFF:
+            if exclude_outliers and time > OUTLIER_CUTOFF:
                 continue
             if key in character_times:
                 character_times[key] += time
