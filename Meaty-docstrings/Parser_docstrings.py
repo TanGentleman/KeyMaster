@@ -1,46 +1,6 @@
-class Keystroke:
-    def __init__(self, key: str, time: Optional[float]):
-        self.key = key
-        self.time = time
-    def __iter__(self):
-        yield self.key, self.time
-    def __getitem__(self, index: int) -> Union[str, Optional[float]]:
-        if index == 0:
-            return self.key
-        elif index == 1:
-            return self.time
-        else:
-            raise IndexError("Index out of range.")
-class Log(TypedDict):
-    id: str
-    string: str
-    keystrokes: List[Keystroke]
-class KeystrokeParser:
-    """
-    A class used to parse and analyze keystroke logs.
-
-    Attributes:
-        filename (str): The name of the file to load logs from.
-        logs (list): The list of logs loaded from the file.
-        exclude_outliers (bool): A flag indicating whether to exclude outliers.
-    """
-def __init__(self, key: str, time: Optional[float]):
-        self.key = key
-        self.time = time
-    def __iter__(self):
-        yield self.key, self.time
-    def __getitem__(self, index: int) -> Union[str, Optional[float]]:
-        if index == 0:
-            return self.key
-        elif index == 1:
-            return self.time
-        else:
-            raise IndexError("Index out of range.")
-class Log(TypedDict):
-    id: str
-    string: str
-    keystrokes: List[Keystroke]
-class KeystrokeParser:
+from typing import Optional, List, Dict
+from validation import Keystroke, Log
+class KeyParser:
     """
     A class used to parse and analyze keystroke logs.
 
@@ -51,10 +11,10 @@ class KeystrokeParser:
     """
 def __init__(self, filename: Optional[str] = None, exclude_outliers: bool = True) -> None:
         """
-        Initialize the KeystrokeParser and load logs.
+        Initialize the KeyParser and load logs.
 
         Args:
-            filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_FILENAME.
+            filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_REG_FILEPATH.
             exclude_outliers (bool, optional): A flag indicating whether to exclude outliers. Defaults to True.
         """
 def extract_logs(self) -> List[Log]:

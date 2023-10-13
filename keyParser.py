@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 from typing import List, Dict, Optional
 from os import path
 OUTLIER_CUTOFF = 0.8
-from config import ROOT, ABSOLUTE_REG_FILEPATH, Keystroke, Log
-class KeystrokeParser:
+from config import ROOT, ABSOLUTE_REG_FILEPATH
+from validation import Keystroke, Log
+class KeyParser:
     """
     A class used to parse and analyze keystroke logs.
 
@@ -16,7 +17,7 @@ class KeystrokeParser:
     """
     def __init__(self, filename: Optional[str] = None, exclude_outliers: bool = True) -> None:
         """
-        Initialize the KeystrokeParser and load logs.
+        Initialize the KeyParser and load logs.
 
         Args:
             filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_REG_FILEPATH.
@@ -378,6 +379,6 @@ class KeystrokeParser:
         return character_times
 
 if __name__ == "__main__":
-    parser = KeystrokeParser()
+    parser = KeyParser()
     id = parser.id_from_substring("")
     print('Parser working!' if id else 'Get some keystrokes logged!')

@@ -3,33 +3,18 @@ from time import time, sleep
 import json
 import uuid
 from os import path
-from config import ROOT, ABSOLUTE_REG_FILEPATH, Keystroke, Keypress, Log
-from typing import List, Optional, Union
+from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, SPEEDHACK, SPEEDMULTIPLIER, STOP_KEY, SPECIAL_KEYS, WEIRD_KEYS
+from validation import Keystroke, Keypress, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
+from typing import List, Optional
 
-
-MAX_WORDS = 50
-SPEEDHACK = True
-SPEEDMULTIPLIER = 2
-BANNED_KEYS = ["'√'"]
-DELIMITER_KEY = "*" # This key is used to stop the listener when pressed
-SPECIAL_KEYS = {
-    'Key.space': Key.space,
-    'Key.backspace': Key.backspace,
-    'Key.shift': Key.shift,
-    'Key.caps_lock': Key.caps_lock,
-    # 'Key.tab': Key.tab,
-    # 'Key.enter': Key.enter,
-    # 'Key.esc': Key.esc,
-}
-
-class KeystrokeLogger:
+class KeyLogger:
     """
     A class used to log keystrokes and calculate delays between each keypress.
     """
 
     def __init__(self, filename: Optional[str] = None) -> None:
         """
-        Initialize the KeystrokeLogger with a filename.
+        Initialize the KeyLogger with a filename.
         Set attributes using the reset function.
         """
         if filename is None:
@@ -54,30 +39,6 @@ class KeystrokeLogger:
         # Time related attribute
         self.prev_time: float = time() # The time at keypress is compared to this value.
 
-    def is_key_valid(self, key: Union[str, Keypress]) -> bool:
-        """
-        Function to check if the key is valid.
-        """
-        if isinstance(key, KeyCode):
-            return True
-        elif isinstance(key, Key):
-            key_as_string = str(key)
-        elif isinstance(key, str):
-            key_as_string = key
-        else:
-            # You can't get here! I think...
-            assert(False)
-        if key_as_string in BANNED_KEYS:
-            return False
-        elif key_as_string in SPECIAL_KEYS:
-            return True
-        
-        # Im curious about the apostrophe and any other potential wacky characters
-        is_legit = len(key_as_string) == 1 and key_as_string.isprintable()
-        if not is_legit:
-            print(f"Invalid key: {key_as_string}")
-        return is_legit
-    
     def on_press(self, keypress: Keypress) -> Optional[bool]:
         """
         Function to handle key press events.
@@ -86,26 +47,26 @@ class KeystrokeLogger:
         time_diff = current_time - self.prev_time
         if time_diff > 3:
             time_diff = 3 + (time_diff / 1000)
-        time_diff = round(time_diff, 4)  # Round to 4 decimal places
+        # HANDLE WEIRD KEYS LIKE f3
         key_as_string = str(keypress)
-        if key_as_string == "\"'\"":
-            print(f"found comma! It is {'valid' if self.is_key_valid(key_as_string) else 'invalid'} originally")
-            key_as_string = "'\''"
-            print(f"found comma! It is {'valid' if self.is_key_valid(key_as_string) else 'invalid'} after")
-        if self.is_key_valid(keypress):
-            # Handle apostrophe key
-            # if key_as_string == "\"'\"":
-            #     key_as_string = "'\''"
-
-            # Mark first character's time_diff as None
+        # if key in SPECIAL_KEYS:
+        #             keyboard.press(SPECIAL_KEYS[key])
+        #             keyboard.release(SPECIAL_KEYS[key])
+        #         elif key in WEIRD_KEYS:
+        #             keyboard.type(WEIRD_KEYS[key])
+        #         else:
+        #             keyboard.type(key.strip("\'"))
+        if is_key_valid(keypress):
+            # Mark first character time_diff as None
             if self.keystrokes == []:
                 self.keystrokes.append(Keystroke(key_as_string, None))
             else:
+                time_diff = round(time_diff, 4)  # Round to 4 decimal places
                 self.keystrokes.append(Keystroke(key_as_string, time_diff))
             self.prev_time = current_time
 
             # Append typed character to the string
-            if hasattr(keypress, 'char'):
+            if isinstance(keypress, KeyCode) and keypress.char is not None:
                 self.typed_string += keypress.char
             elif keypress == Key.space:
                 self.typed_string += ' '
@@ -115,8 +76,9 @@ class KeystrokeLogger:
                 self.typed_string = self.typed_string[:-1]
                 if len(self.typed_string) > 0 and self.typed_string[-1]  == ' ':
                     self.word_count -= 1
-            ## Enter/Tab not valid logged keys, this may technically affect correctness of word count if used in lieu of space
+            ## Enter/Tab not valid special keys, this may technically affect correctness of word count
             # elif keypress == Key.enter:
+            #     # My logic is that spamming newlines should increase word count, but maybe just space is best
             #     self.typed_string += '\n'
             #     self.word_count += 1
             # elif keypress == Key.tab:
@@ -126,10 +88,9 @@ class KeystrokeLogger:
             # Stop listener when max words have been typed
             if self.word_count == MAX_WORDS:
                 return False
-        # Stop listener when DELIMITER_KEY typed
-        if isinstance(keypress, KeyCode):
-            if keypress.char == DELIMITER_KEY:
-                return False
+            # Stop listener when DELIMITER_KEY pressed
+            if isinstance(keypress, KeyCode) and keypress.char is not None:
+                return keypress.char != STOP_KEY
         return None
 
     def on_release(self, keypress: Keypress) -> Optional[bool]:
@@ -214,17 +175,21 @@ class KeystrokeLogger:
             'string': self.typed_string,
             'keystrokes': self.keystrokes
         }
+        # Fix the keystrokes
         # Append the log object to the file
         try:
             with open(self.filename, 'r+') as f:
-                logs: List[Log] = json.load(f)
+                logs = json.load(f, cls=KeystrokeDecoder)
                 logs.append(log)
                 f.seek(0)
-                json.dump(logs, f)
+                json.dump(logs, f, cls=KeystrokeEncoder)
                 print("Logfile updated.")
         except FileNotFoundError:
             with open(self.filename, 'w') as f:
-                json.dump([log], f)
+                json.dump([log], f, cls=KeystrokeEncoder)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return False
         if reset:
             self.reset()
         return True
@@ -253,7 +218,7 @@ class KeystrokeLogger:
             key = keystroke.key
             time = keystroke.time
 
-            if self.is_key_valid(key) == False:
+            if is_key_valid(key) == False:
                 print(f"Invalid key: {key}")
                 continue
             if time is None:
@@ -267,11 +232,8 @@ class KeystrokeLogger:
                 time_diff = time
                 # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from time_diff
                 if SPEEDHACK:
-                    # Avoid any potential divide by 0 errors
-                    if SPEEDMULTIPLIER == 0:
-                        print("Speed multiplier cannot be 0. Setting to 1")
-                        SPEEDMULTIPLIER = 1
-                    time_diff = time_diff / SPEEDMULTIPLIER
+                    if SPEEDMULTIPLIER > 0:
+                        time_diff = time_diff / SPEEDMULTIPLIER
                 if time_diff > 3:
                     time_diff = 3 + (time_diff / 1000)
             try:
@@ -280,10 +242,10 @@ class KeystrokeLogger:
                 if key in SPECIAL_KEYS:
                     keyboard.press(SPECIAL_KEYS[key])
                     keyboard.release(SPECIAL_KEYS[key])
-                elif key == "'\''":
-                    keyboard.type("'")  # Type the apostrophe
+                elif key in WEIRD_KEYS:
+                    keyboard.type(WEIRD_KEYS[key])
                 else:
-                    keyboard.type(key.strip('\''))  # Type the character
+                    keyboard.type(key.strip("\'"))  # Type the character
             except Exception as e:
                 print(f"An error occurred: {e}")
                 break
@@ -306,7 +268,7 @@ class KeystrokeLogger:
             print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    logger = KeystrokeLogger()
+    logger = KeyLogger()
     logger.start_listener()
     success = logger.save_log()
     if success:

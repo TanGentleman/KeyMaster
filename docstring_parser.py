@@ -2,7 +2,7 @@ import re
 from config import ROOT
 from os import path
 
-FILE_TO_READ = 'keystrokeLogger.py'
+FILE_TO_READ = 'keySimulator.py'
 FILE_TO_WRITE = 'docstrings.py'
 
 def find_instances(string):
@@ -10,7 +10,8 @@ def find_instances(string):
     functionPattern = r'def.*?""".*?"""'
 
     # pattern = r'c.*?(?=b).*b' # Regular expression pattern
-    class_matches = re.findall(classPattern, string, re.DOTALL)
+    # Use first class match only
+    class_matches = re.findall(classPattern, string, re.DOTALL)[:1]
     # add onto class_matches
     function_matches = re.findall(functionPattern, string, re.DOTALL)
     # return combined list of matches
@@ -57,7 +58,7 @@ def write_file(filename, string):
 
 
 def create_docstring_file_from_string(read_filename, write_filename):
-    # Read file keystrokeParser.py as string
+    # Read file keyParser.py as string
     file_as_string = read_file(read_filename)
     # Find all instances of docstrings
     truncated_instances_list = find_instances(file_as_string)

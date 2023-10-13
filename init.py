@@ -1,5 +1,7 @@
-from keystrokeParser import KeystrokeParser
-from keystrokeLogger import KeystrokeLogger
+from keyLogger import KeyLogger
+from keyParser import KeyParser
+from keySimulator import KeySimulator
 
-logger = KeystrokeLogger()
-parser = KeystrokeParser()
+logger = KeyLogger()
+parser = KeyParser()
+simulator = KeySimulator()
