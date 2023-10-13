@@ -3,7 +3,7 @@ from time import time, sleep
 import json
 import uuid
 from os import path
-from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, SPEEDHACK, SPEEDMULTIPLIER, STOP_KEY, SPECIAL_KEYS, WEIRD_KEYS
+from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, SPEEDHACK, SPEED_MULTIPLE, STOP_KEY, SPECIAL_KEYS, WEIRD_KEYS
 from validation import Keystroke, Keypress, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
 
@@ -279,8 +279,8 @@ class KeyLogger:
                 time_diff = time
                 # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from time_diff
                 if SPEEDHACK:
-                    if SPEEDMULTIPLIER > 0:
-                        time_diff = time_diff / SPEEDMULTIPLIER
+                    if SPEED_MULTIPLE > 0:
+                        time_diff = time_diff / SPEED_MULTIPLE
                 if time_diff > 3:
                     time_diff = 3 + (time_diff / 1000)
             try:

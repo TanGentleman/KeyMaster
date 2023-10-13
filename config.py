@@ -23,15 +23,15 @@ WEIRD_KEYS = { # This maps str(Key.backslash) and str(Key.Apostrophe)
 }
 
 MAX_WORDS = 50
-SPEEDHACK = True
-SPEEDMULTIPLIER = 2
+SPEEDHACK = True # Only applies for KeyLogger class, this will be changed
+SPEED_MULTIPLE = 2
 STOP_KEY = "*" # This key is used to stop the listener when pressed
 
 ### SIMULATION.PY CONFIG ###
-DEFAULT_DELAY_MEAN = 0.07
-DEFAULT_DELAY_STANDARD_DEVIATION = 0.02
+DEFAULT_DELAY_MEAN = 0.06
+DEFAULT_DELAY_STANDARD_DEVIATION = 0.015
 SIM_MAX_WORDS = 300
-MIN_DELAY = 0.03
+MIN_DELAY = 0.025
 
 SIM_LOGGING_ON = True
 SIM_ALLOW_ENTER_AND_TAB = True
