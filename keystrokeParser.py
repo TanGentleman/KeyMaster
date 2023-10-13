@@ -1,29 +1,10 @@
 import json
 import statistics
 import matplotlib.pyplot as plt
-from typing import List, Dict, Optional, TypedDict, Union
+from typing import List, Dict, Optional
 from os import path
 OUTLIER_CUTOFF = 0.8
-from config import ROOT, ABSOLUTE_FILENAME
-# LOG_FILENAME = 'test.json'
-# class Keystroke: Tuple[str, Optional[float]]
-class Keystroke:
-    def __init__(self, key: str, time: Optional[float]):
-        self.key = key
-        self.time = time
-    def __iter__(self):
-        yield self.key, self.time
-    def __getitem__(self, index: int) -> Union[str, Optional[float]]:
-        if index == 0:
-            return self.key
-        elif index == 1:
-            return self.time
-        else:
-            raise IndexError("Index out of range.")
-class Log(TypedDict):
-    id: str
-    string: str
-    keystrokes: List[Keystroke]
+from config import ROOT, ABSOLUTE_REG_FILEPATH, Keystroke, Log
 class KeystrokeParser:
     """
     A class used to parse and analyze keystroke logs.
@@ -38,16 +19,16 @@ class KeystrokeParser:
         Initialize the KeystrokeParser and load logs.
 
         Args:
-            filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_FILENAME.
+            filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_REG_FILEPATH.
             exclude_outliers (bool, optional): A flag indicating whether to exclude outliers. Defaults to True.
         """
         if filename is None:
-            filename = ABSOLUTE_FILENAME
+            filename = ABSOLUTE_REG_FILEPATH
         else:
             filename = path.join(ROOT, filename)
-        self.filename = filename
-        self.logs = self.extract_logs()
-        self.exclude_outliers = exclude_outliers
+        self.filename: str = filename
+        self.logs: List[Log] = self.extract_logs()
+        self.exclude_outliers: bool = exclude_outliers
 
     def extract_logs(self) -> List[Log]:
         """
@@ -58,7 +39,14 @@ class KeystrokeParser:
         """
         try:
             with open(self.filename, 'r') as f:
-                return json.load(f)
+                data = json.load(f)
+            logs = []
+            for log_data in data:
+                # Instantiate Keystrokes are replace them in each log
+                keystrokes = [Keystroke(value[0], value[1]) for value in log_data['keystrokes']]
+                log_data['keystrokes'] = keystrokes
+                logs.append(log_data)
+            return logs
         except FileNotFoundError:
             print("No log file found.")
             return []
@@ -138,8 +126,8 @@ class KeystrokeParser:
             if truncate > 0 and len(curr_string) > truncate:
                 curr_string = curr_string[:truncate] + "...[truncated]"
             # Newlines get annoying, so replace them with "\n"
-            curr_string = curr_string.replace("\n", "\\n")
-            print(curr_string)
+            # curr_string = curr_string.replace("\n", "\\n")
+            print([curr_string])
 
 
     def get_only_times(self, identifier: Optional[str] = None, exclude_outliers: Optional[bool] = None) -> List[float]:
@@ -163,23 +151,20 @@ class KeystrokeParser:
 
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
-        none_count = 0
         outlier_count = 0
         times = []
         if keystrokes == []:
             print("No keystrokes found.")
             return []
-        for (_, time) in keystrokes:
+        for keystroke in keystrokes:
+            time = keystroke.time
             if time is None:
-                none_count += 1
-                if none_count > 1:
-                    print('Critical Error. Keystrokes invalid. Too many nuns!')
                 continue
-            elif (exclude_outliers is False) or (time < OUTLIER_CUTOFF):
-                times.append(time)
-            else:
-                # This means time < OUTLIER_CUTOFF right?
+            elif time > OUTLIER_CUTOFF and exclude_outliers:
                 outlier_count += 1
+                continue
+            else:
+                times.append(time)
         if outlier_count > 0:
             print(f"Removed {outlier_count} outliers.")
         return times
@@ -239,13 +224,8 @@ class KeystrokeParser:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
                 return []
-            for log in self.logs:
-                if log['id'] == identifier or log['string'] == identifier:
-                    # times = [keystroke[1] for keystroke in log['keystrokes']]
-                    times = self.get_only_times(identifier)
-                    return [max(times) if times else 0]
-            print("I should never get here, right?")
-            return []
+            times = self.get_only_times(identifier)
+            return [max(times) if times else 0]
         highest_times = []
         # iterate through logs
         for log in self.logs:
@@ -371,16 +351,19 @@ class KeystrokeParser:
         character_counts: Dict[str, int] = {}
         if keystrokes is None:
             keystrokes = self.get_keystrokes()
+        if keystrokes == []:
+            print("No keystrokes found.")
+            return {}
+        # Else ensure keystrokes are valid
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
-        none_count = 0
-        for key, time in keystrokes:
+
+        for keystroke in keystrokes:
+            key = keystroke.key
+            time = keystroke.time
             if time is None:
-                none_count += 1
-                if none_count > 1:
-                    print('Critical Error. Keystrokes invalid. Too many nuns!')
                 continue
-            if exclude_outliers and time > OUTLIER_CUTOFF:
+            if time > OUTLIER_CUTOFF and exclude_outliers:
                 continue
             if key in character_times:
                 character_times[key] += time
