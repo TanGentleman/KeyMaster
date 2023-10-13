@@ -5,17 +5,24 @@ import uuid
 from os import path
 from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, SPEEDHACK, SPEEDMULTIPLIER, STOP_KEY, SPECIAL_KEYS, WEIRD_KEYS
 from validation import Keystroke, Keypress, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
-from typing import List, Optional
+from typing import List, Optional, Union
 
 class KeyLogger:
     """
     A class used to log keystrokes and calculate delays between each keypress.
+    This class is responsible for capturing and storing keystrokes values and timings.
+    It also keeps track of the total number of words typed and the entire string of characters typed.
     """
 
     def __init__(self, filename: Optional[str] = None) -> None:
         """
         Initialize the KeyLogger with a filename.
         Set attributes using the reset function.
+
+        Args:
+            filename (str, optional): The name of the file where the logs will be stored. 
+            If not provided, the default file path (ABSOLUTE_REG_FILEPATH) will be used. 
+            If a relative path is provided, it will be converted to an absolute path.
         """
         if filename is None:
             filename = ABSOLUTE_REG_FILEPATH
@@ -29,7 +36,8 @@ class KeyLogger:
 
     def reset(self) -> None:
         """
-        Reset the keystrokes, typed string, previous time, word count, and first character typed flag.
+        Clear the current state of the logger.
+        Keystrokes, the typed string, and the word count will be set to default values.
         """
         # Keystroke related attributes
         self.keystrokes: List[Keystroke] = []
@@ -39,23 +47,24 @@ class KeyLogger:
         # Time related attribute
         self.prev_time: float = time() # The time at keypress is compared to this value.
 
-    def on_press(self, keypress: Keypress) -> Optional[bool]:
+    # on_press still needs to be tidied up a bit
+    def on_press(self, keypress: Keypress) -> None:
         """
-        Function to handle key press events.
+        Handles key press events and logs valid Keystroke events.
+
+        This function is called whenever a key is pressed. 
+        It validates the keypres and appends the data
+        KeyLogger attributes modified: keystrokes, typed_string, word_count, prev_time
+
+        Args:
+            keypress (Keypress): The key press event to handle.
         """
+
         current_time = time()
         time_diff = current_time - self.prev_time
         if time_diff > 3:
             time_diff = 3 + (time_diff / 1000)
-        # HANDLE WEIRD KEYS LIKE f3
         key_as_string = str(keypress)
-        # if key in SPECIAL_KEYS:
-        #             keyboard.press(SPECIAL_KEYS[key])
-        #             keyboard.release(SPECIAL_KEYS[key])
-        #         elif key in WEIRD_KEYS:
-        #             keyboard.type(WEIRD_KEYS[key])
-        #         else:
-        #             keyboard.type(key.strip("\'"))
         if is_key_valid(keypress):
             # Mark first character time_diff as None
             if self.keystrokes == []:
@@ -84,20 +93,37 @@ class KeyLogger:
             # elif keypress == Key.tab:
             #     self.typed_string += '\t'
             #     self.word_count += 1
-
-            # Stop listener when max words have been typed
-            if self.word_count == MAX_WORDS:
-                return False
-            # Stop listener when DELIMITER_KEY pressed
-            if isinstance(keypress, KeyCode) and keypress.char is not None:
-                return keypress.char != STOP_KEY
         return None
 
-    def on_release(self, keypress: Keypress) -> Optional[bool]:
+    def stop_listener_condition(self, keypress: Keypress) -> bool:
         """
-        Function to handle key release events.
+        Function to determine whether to stop the listener.
+
+        Args:
+            keypress (Keypress): The key press event to handle.
+
+        Returns:
+            bool: True if the listener should stop, False otherwise.
         """
         if keypress == Key.esc:
+            return True
+        elif self.word_count >= MAX_WORDS:
+            return False
+        elif isinstance(keypress, KeyCode) and keypress.char is not None:
+            return keypress.char == STOP_KEY
+        return False
+    
+    def on_release(self, keypress: Keypress) -> Union[False, None]:
+        """
+        Handles key release events. Stop the listener when stop condition is met.
+
+        Args:
+            keypress (Keypress): The key press event to handle.
+
+        Returns:
+            False or None: False if the maximum word count is reached. This stops the listener.
+        """
+        if self.stop_listener_condition(keypress):
             print('')
             return False
         return None
@@ -105,6 +131,7 @@ class KeyLogger:
     def start_listener(self) -> None:
         """
         Function to start the key listener.
+        The listener will only stop when stop_listener_condition returns True.
         """
         try:
             with Listener(on_press=self.on_press, on_release=self.on_release) as listener: # type: ignore
@@ -115,11 +142,17 @@ class KeyLogger:
 
     def is_log_legit(self, keystrokes: List[Keystroke], input_string: str) -> bool:
         """
-        Function to check if the log is valid.
-        """
-        # Make sure keystrokes is validly typed
-        # Make sure input_string is validly typed
+        Validates the input string and keystrokes to ensure well formatted Log.
 
+        This function ensures keystrokes are correctly formatted and input string is nonempty.
+
+        Args:
+            keystrokes (List[Keystroke]): The list of keystrokes to validate.
+            input_string (str): The input string to validate.
+
+        Returns:
+            bool: True if the input is valid Log material, False otherwise.
+        """
         if input_string == "":
             print("No keystrokes found. Log not legit")
             return False
@@ -139,9 +172,15 @@ class KeyLogger:
 
     def set_internal_log(self, keystrokes: List[Keystroke], input_string: str) -> bool:
         """
-        Function to set the internal log.
+        Replace the internal log with the provided keystrokes and input string.
+
+        Args:
+            keystrokes (List[Keystroke]): The list of keystrokes to replace self.keystrokes with.
+            input_string (str): The input string to replace self.typed_string with.
+
+        Returns:
+            bool: True if state successfully replaced. False if arguments invalid.
         """
-        ### MUST CHECK VALIDITY OF THESE!
         if self.is_log_legit(keystrokes, input_string) == False:
             print("Invalid log. Internal log not set")
             return False
@@ -149,12 +188,16 @@ class KeyLogger:
         self.typed_string = input_string
         self.word_count = input_string.count(' ')
         return True
-        ## OR should it be self.word_count = input_string.count(' ')
-        ## I can make a case 
 
     def save_log(self, reset: bool = False) -> bool:
         """
         Function to save the log to a file.
+
+        Args:
+            reset (bool, optional): Whether to reset the logger after saving the log. Defaults to False.
+
+        Returns:
+            bool: True if the log was saved successfully, False otherwise.
         """
         if self.typed_string == "":
             print("No keystrokes to save.")
@@ -196,7 +239,11 @@ class KeyLogger:
     
     def simulate_keystrokes(self, keystrokes: Optional[List[Keystroke]] = None) -> None:
         """
-        Function to simulate the keystrokes with the same timing.
+        Function to simulate the given keystrokes.
+
+        Args:
+            keystrokes (List[Keystroke], optional): The list of keystrokes to simulate. 
+            If not provided, the internal keystrokes will be simulated.
         """
         if keystrokes is None:
             keystrokes = self.keystrokes
