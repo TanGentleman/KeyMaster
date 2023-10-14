@@ -1,9 +1,9 @@
-from pynput.keyboard import Controller, Key
+from pynput.keyboard import Controller
 from time import sleep
 import numpy as np
-from config import ABSOLUTE_SIM_FILEPATH
-from typing import List, Optional, Union
-from validation import is_key_valid, Keystroke
+from config import ABSOLUTE_SIM_FILEPATH, DEFAULT_DELAY_MEAN, DEFAULT_DELAY_STANDARD_DEVIATION, SIM_MAX_WORDS, MIN_DELAY, SIM_LOGGING_ON, SIM_SPECIAL_KEYS, SPEEDHACK, SPEEDMULTIPLIER
+from typing import List, Union, Optional
+from validation import Keystroke
 from keyLogger import KeyLogger
 class KeySimulator:
     """
@@ -15,28 +15,22 @@ class KeySimulator:
         max_words (int): The maximum number of words to simulate.
         min_delay (float): The minimum delay between keystrokes.
         logging_on (bool): A flag indicating whether to log keystrokes.
-        allow_enter_and_tab (bool): A flag indicating whether to allow enter and tab keys.
         special_keys (dict): A dictionary mapping special characters to their corresponding keys.
     """
 
-    def __init__(self, delay_mean: float = 0.07, delay_standard_deviation: float = 0.02, max_words: int = 300,
-                  min_delay: float = 0.03, logging_on: bool = True, allow_enter_and_tab: bool = True) -> None:
+    def __init__(self, speed_multiplier: Union[float, int] = 1, delay_mean: float = DEFAULT_DELAY_MEAN, delay_standard_deviation: float = DEFAULT_DELAY_STANDARD_DEVIATION, 
+                 max_words: int = SIM_MAX_WORDS, min_delay: float = MIN_DELAY, logging_on: bool = SIM_LOGGING_ON, 
+                 special_keys: dict = SIM_SPECIAL_KEYS) -> None:
         """
         Initialize the KeySimulator with the given parameters.
         """
-        self.speed_multiplier = 1
+        self.speed_multiplier = speed_multiplier
         self.delay_mean = delay_mean
         self.delay_standard_deviation = delay_standard_deviation
         self.max_words = max_words
         self.min_delay = min_delay
         self.logging_on = logging_on
-        self.allow_enter_and_tab = allow_enter_and_tab
-        self.special_keys = {' ': Key.space}
-        if self.allow_enter_and_tab:
-            self.special_keys.update({
-                '\n': Key.enter,
-                '\t': Key.tab,
-            })
+        self.special_keys = special_keys
     
     def get_delay(self, speed_multiple: Union[float, int, None]) -> float:
         """
@@ -62,10 +56,9 @@ class KeySimulator:
             # print(f"Delay too low: {delay}")
             delay = self.min_delay + delay/10
         return delay
-    
-    def simulate_keystrokes(self, string: str) -> List[Keystroke]:
+    def generate_keystrokes_from_string(self, string: str) -> List[Keystroke]:
         """
-        Simulate keystrokes from a string.
+        Create a list of Keystroke items from a string.
 
         Args:
             string (str): The string to simulate.
@@ -108,13 +101,72 @@ class KeySimulator:
             if keystrokes == []:
                 keystrokes.append(Keystroke(key_as_string, None))
             else:
-                time_diff = round(delay1 + delay2, 4)
-                keystrokes.append(Keystroke(key_as_string, time_diff))
+                delay = round(delay1 + delay2, 4)
+                keystrokes.append(Keystroke(key_as_string, delay))
         return keystrokes
+    
+    def simulate_keystrokes(self, keystrokes: Optional[List[Keystroke]] = None) -> None:
+        """
+        Function to simulate the given keystrokes.
+
+        Args:
+            keystrokes (List[Keystroke], optional): The list of keystrokes to simulate. 
+            If not provided, the internal keystrokes will be simulated.
+        """
+        if keystrokes is None:
+            keystrokes = self.keystrokes
+        # Validate keystrokes
+        # Maybe keystrokes have to be legit to even be passed here?
+        if keystrokes == []:
+            print("No keystrokes found.")
+            return
+
+        keyboard = Controller()
+        try:
+            with Listener(on_release=self.on_release) as listener: # type: ignore
+                print(f"Listener started. The simulation will start when you press ESC.")
+                listener.join()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        none_count = 0
+        for keystroke in keystrokes:
+            if keystroke.valid == False:
+                print(f"Invalid key: {keystroke.key}")
+                continue
+            key = keystroke.key
+            time = keystroke.time
+            if time is None:
+                none_count += 1
+                if none_count > 1:
+                    print('Critical error: None value marks first character. Only use once')
+                    break
+                # What should this time diff be?
+                delay = 0.0
+            else:
+                delay = time
+                # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from delay
+                if SPEEDHACK:
+                    if SPEED_MULTIPLE > 0:
+                        delay = delay / SPEED_MULTIPLE
+                if delay > 3:
+                    delay = 3 + (delay / 1000)
+            try:
+                if delay > 0:
+                    sleep(delay)  # Wait for the time difference between keystrokes
+                if key in SPECIAL_KEYS:
+                    keyboard.press(SPECIAL_KEYS[key])
+                    keyboard.release(SPECIAL_KEYS[key])
+                elif key in WEIRD_KEYS:
+                    keyboard.type(WEIRD_KEYS[key])
+                else:
+                    keyboard.type(key.strip("\'"))  # Type the character
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                break
     
     def log_keystrokes(self, keystrokes: List[Keystroke], input_string:str) -> bool:
         """
-        Log keystrokes to a file.
+        Log keystrokes to simulation logfile.
 
         Args:
             keystrokes (List[Keystroke]): The list of keystrokes to log.
@@ -137,14 +189,24 @@ class KeySimulator:
             print('Failed to log keystrokes.')
         return success
 
-    def main(self, input_string:str = "hey look ma, a simulation!"):
-        """
-        Simulate keystrokes from a string and log them.
+def main(input_string:str = "hey look ma, a simulation!"):
+    """
+    Simulate keystrokes from a string and log them.
 
-        Args:
-            input_string (str): The string to simulate.
-        """
-        keystrokes = self.simulate_keystrokes(input_string)
-        if self.logging_on:
-            self.log_keystrokes(keystrokes, input_string)
-        return keystrokes
+    Args:
+        input_string (str): The string to simulate.
+    """
+    simulator = KeySimulator()
+    keystrokes = simulator.simulate_keystrokes(input_string)
+    if simulator.logging_on:
+        simulator.log_keystrokes(keystrokes, input_string)
+    return keystrokes
+
+if __name__ == "__main__":
+    import sys
+    length = len(sys.argv)
+    if length > 1:
+        # print(f'boop! {length}')
+        main(sys.argv[1])
+    else:
+        main()

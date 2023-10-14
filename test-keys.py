@@ -3,7 +3,7 @@ from pynput.keyboard import Key, Listener, KeyCode
 
 
 BANNED_KEYS = ["'√'"]
-DELIMITER_KEY = "*" # This key is used to stop the listener when pressed
+STOP_KEY = "*" # This key is used to stop the listener when pressed
 SPECIAL_KEYS = {
     'Key.space': Key.space,
     'Key.backspace': Key.backspace,
