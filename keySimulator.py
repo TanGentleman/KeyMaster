@@ -101,8 +101,8 @@ class KeySimulator:
             if keystrokes == []:
                 keystrokes.append(Keystroke(key_as_string, None))
             else:
-                time_diff = round(delay1 + delay2, 4)
-                keystrokes.append(Keystroke(key_as_string, time_diff))
+                delay = round(delay1 + delay2, 4)
+                keystrokes.append(Keystroke(key_as_string, delay))
         return keystrokes
     
     def log_keystrokes(self, keystrokes: List[Keystroke], input_string:str) -> bool:
@@ -130,24 +130,24 @@ class KeySimulator:
             print('Failed to log keystrokes.')
         return success
 
-    def main(self, input_string:str = "hey look ma, a simulation!"):
-        """
-        Simulate keystrokes from a string and log them.
+def main(input_string:str = "hey look ma, a simulation!"):
+    """
+    Simulate keystrokes from a string and log them.
 
-        Args:
-            input_string (str): The string to simulate.
-        """
-        keystrokes = self.simulate_keystrokes(input_string)
-        if self.logging_on:
-            self.log_keystrokes(keystrokes, input_string)
-        return keystrokes
+    Args:
+        input_string (str): The string to simulate.
+    """
+    simulator = KeySimulator()
+    keystrokes = simulator.simulate_keystrokes(input_string)
+    if simulator.logging_on:
+        simulator.log_keystrokes(keystrokes, input_string)
+    return keystrokes
 
 if __name__ == "__main__":
     import sys
-    simulator = KeySimulator()
     length = len(sys.argv)
     if length > 1:
         # print(f'boop! {length}')
-        simulator.main(sys.argv[1])
+        main(sys.argv[1])
     else:
-        simulator.main()
+        main()

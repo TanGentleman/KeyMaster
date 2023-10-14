@@ -5,7 +5,7 @@ import uuid
 from os import path
 from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, SPEEDHACK, SPEED_MULTIPLE, STOP_KEY, SPECIAL_KEYS, WEIRD_KEYS
 from validation import Keystroke, Keypress, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
-from typing import List, Optional, Union
+from typing import List, Optional
 
 class KeyLogger:
     """
@@ -61,18 +61,26 @@ class KeyLogger:
         """
 
         current_time = time()
-        time_diff = current_time - self.prev_time
-        if time_diff > 3:
-            time_diff = 3 + (time_diff / 1000)
-        key_as_string = str(keypress)
+        delay = current_time - self.prev_time
+        if delay > 3:
+            delay = 3 + (delay / 1000)
+
+        # Alternatively, I could do Keystroke(keypress, delay) and then check if keypress is valid in Keystroke class
+        # Right now, all Keystroke objects from this function have the property valid
         if is_key_valid(keypress):
-            # Mark first character time_diff as None
+            key_as_string = str(keypress)
+            # Mark first character delay as None
             if self.keystrokes == []:
-                self.keystrokes.append(Keystroke(key_as_string, None))
+                keystroke = Keystroke(key_as_string, None)
+                self.keystrokes.append(keystroke)
             else:
-                time_diff = round(time_diff, 4)  # Round to 4 decimal places
-                self.keystrokes.append(Keystroke(key_as_string, time_diff))
-            self.prev_time = current_time
+                delay = round(delay, 4)  # Round to 4 decimal places
+                keystroke = Keystroke(key_as_string, delay)
+                self.keystrokes.append(keystroke)
+            
+            # I can assert Keystroke.valid == True here
+            assert(keystroke.valid == True)
+            self.prev_time = current_time # <----- Make sure this statement comes at an appropriate time.
 
             # Append typed character to the string
             if isinstance(keypress, KeyCode) and keypress.char is not None:
@@ -113,7 +121,7 @@ class KeyLogger:
             return keypress.char == STOP_KEY
         return False
     
-    def on_release(self, keypress: Keypress) -> Union[False, None]:
+    def on_release(self, keypress: Keypress) -> Optional[bool]:
         """
         Handles key release events. Stop the listener when stop condition is met.
 
@@ -159,13 +167,13 @@ class KeyLogger:
         none_count = 0
         for keystroke in keystrokes:
             key = keystroke.key
-            time_diff = keystroke.time
-            if time_diff is None:
+            delay = keystroke.time
+            if delay is None:
                 none_count += 1
                 if none_count > 1:
                     print('None value marks first character. Only use once.')
                     return False
-            elif type(key) != str or type(time_diff) != float:
+            elif type(key) != str or type(delay) != float:
                 print('Invalid keystrokes. Format is (key:str, time:float)')
                 return False
         return True
@@ -262,30 +270,29 @@ class KeyLogger:
             print(f"An error occurred: {e}")
         none_count = 0
         for keystroke in keystrokes:
-            key = keystroke.key
-            time = keystroke.time
-
-            if is_key_valid(key) == False:
+            if keystroke.valid == False:
                 print(f"Invalid key: {key}")
                 continue
+            key = keystroke.key
+            time = keystroke.time
             if time is None:
                 none_count += 1
                 if none_count > 1:
                     print('Critical error: None value marks first character. Only use once')
                     break
                 # What should this time diff be?
-                time_diff = 0.0
+                delay = 0.0
             else:
-                time_diff = time
-                # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from time_diff
+                delay = time
+                # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from delay
                 if SPEEDHACK:
                     if SPEED_MULTIPLE > 0:
-                        time_diff = time_diff / SPEED_MULTIPLE
-                if time_diff > 3:
-                    time_diff = 3 + (time_diff / 1000)
+                        delay = delay / SPEED_MULTIPLE
+                if delay > 3:
+                    delay = 3 + (delay / 1000)
             try:
-                if time_diff > 0:
-                    sleep(time_diff)  # Wait for the time difference between keystrokes
+                if delay > 0:
+                    sleep(delay)  # Wait for the time difference between keystrokes
                 if key in SPECIAL_KEYS:
                     keyboard.press(SPECIAL_KEYS[key])
                     keyboard.release(SPECIAL_KEYS[key])
@@ -314,10 +321,14 @@ class KeyLogger:
         except Exception as e:
             print(f"An error occurred: {e}")
 
-if __name__ == "__main__":
+def main():
     logger = KeyLogger()
     logger.start_listener()
     success = logger.save_log()
     if success:
         print("\nLog saved. Now simulating keystrokes...\n")
         logger.simulate_keystrokes()
+
+
+if __name__ == "__main__":
+    main()

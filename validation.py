@@ -1,10 +1,10 @@
-# This file is for the key validation function and clearly typeset classes.
+# This file is for the key validation function to explicitly typecheck classes.
 from typing import List, Union, Optional, Iterator, Tuple, TypedDict
 from pynput.keyboard import Key, KeyCode
 from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
 import json
 # *** KEY VALIDATION ***
-def is_key_valid(key) -> bool:
+def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
     """
     Function to check if the key is valid.
     """
@@ -48,20 +48,16 @@ class LegalKey:
             return self.key == other
         return False
 
-def validate_key(key: Union[Key, KeyCode, str]) -> Optional[LegalKey]:
-    if is_key_valid(key):
-        return LegalKey(str(key))
-    else:
-        return None
-
 class Keystroke:
     def __init__(self, key: str, time: Optional[float]):
+        # Implement LegalKey here? Or can Keystrokes have illegal keys?
         if not isinstance(key, str):
             raise TypeError('key must be a string')
         if not isinstance(time, float) and time is not None:
             raise TypeError('time must be a float or None')
         self.key = key
         self.time = time
+        self.valid = is_key_valid(key)
 
     def __iter__(self) -> Iterator[Tuple[str, Optional[float]]]:
         yield self.key, self.time
