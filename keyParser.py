@@ -43,7 +43,7 @@ class KeyParser:
                 data = json.load(f)
             logs = []
             for log_data in data:
-                # Instantiate Keystrokes are replace them in each log
+                # Instantiate Keystrokes and replace them in each log
                 keystrokes = [Keystroke(value[0], value[1]) for value in log_data['keystrokes']]
                 log_data['keystrokes'] = keystrokes
                 logs.append(log_data)
