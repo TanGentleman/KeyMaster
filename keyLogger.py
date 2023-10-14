@@ -3,9 +3,9 @@ from time import time, sleep
 import json
 import uuid
 from os import path
-from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, SPEEDHACK, SPEED_MULTIPLE, STOP_KEY, SPECIAL_KEYS, WEIRD_KEYS
-from validation import Keystroke, Keypress, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
-from typing import List, Optional
+from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY
+from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
+from typing import List, Optional, Union
 
 class KeyLogger:
     """
@@ -48,7 +48,7 @@ class KeyLogger:
         self.prev_time: float = time() # The time at keypress is compared to this value.
 
     # on_press still needs to be tidied up a bit
-    def on_press(self, keypress: Keypress) -> None:
+    def on_press(self, keypress: Union[Key, KeyCode]) -> None:
         """
         Handles key press events and logs valid Keystroke events.
 
@@ -67,6 +67,7 @@ class KeyLogger:
 
         # Alternatively, I could do Keystroke(keypress, delay) and then check if keypress is valid in Keystroke class
         # Right now, all Keystroke objects from this function have the property valid
+        # I prefer using a Key or KeyCode object as the input key
         if is_key_valid(keypress):
             key_as_string = str(keypress)
             # Mark first character delay as None
@@ -103,7 +104,7 @@ class KeyLogger:
             #     self.word_count += 1
         return None
 
-    def stop_listener_condition(self, keypress: Keypress) -> bool:
+    def stop_listener_condition(self, keypress: Union[Key, KeyCode]) -> bool:
         """
         Function to determine whether to stop the listener.
 
@@ -121,7 +122,7 @@ class KeyLogger:
             return keypress.char == STOP_KEY
         return False
     
-    def on_release(self, keypress: Keypress) -> Optional[bool]:
+    def on_release(self, keypress: Union[Key, KeyCode]) -> Optional[bool]:
         """
         Handles key release events. Stop the listener when stop condition is met.
 
@@ -244,82 +245,6 @@ class KeyLogger:
         if reset:
             self.reset()
         return True
-    
-    def simulate_keystrokes(self, keystrokes: Optional[List[Keystroke]] = None) -> None:
-        """
-        Function to simulate the given keystrokes.
-
-        Args:
-            keystrokes (List[Keystroke], optional): The list of keystrokes to simulate. 
-            If not provided, the internal keystrokes will be simulated.
-        """
-        if keystrokes is None:
-            keystrokes = self.keystrokes
-        # Validate keystrokes
-        # Maybe keystrokes have to be legit to even be passed here?
-        if keystrokes == []:
-            print("No keystrokes found.")
-            return
-
-        keyboard = Controller()
-        try:
-            with Listener(on_release=self.on_release) as listener: # type: ignore
-                print(f"Listener started. The simulation will start when you press ESC.")
-                listener.join()
-        except Exception as e:
-            print(f"An error occurred: {e}")
-        none_count = 0
-        for keystroke in keystrokes:
-            if keystroke.valid == False:
-                print(f"Invalid key: {key}")
-                continue
-            key = keystroke.key
-            time = keystroke.time
-            if time is None:
-                none_count += 1
-                if none_count > 1:
-                    print('Critical error: None value marks first character. Only use once')
-                    break
-                # What should this time diff be?
-                delay = 0.0
-            else:
-                delay = time
-                # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from delay
-                if SPEEDHACK:
-                    if SPEED_MULTIPLE > 0:
-                        delay = delay / SPEED_MULTIPLE
-                if delay > 3:
-                    delay = 3 + (delay / 1000)
-            try:
-                if delay > 0:
-                    sleep(delay)  # Wait for the time difference between keystrokes
-                if key in SPECIAL_KEYS:
-                    keyboard.press(SPECIAL_KEYS[key])
-                    keyboard.release(SPECIAL_KEYS[key])
-                elif key in WEIRD_KEYS:
-                    keyboard.type(WEIRD_KEYS[key])
-                else:
-                    keyboard.type(key.strip("\'"))  # Type the character
-            except Exception as e:
-                print(f"An error occurred: {e}")
-                break
-
-    def simulate_from_id(self, identifier: str) -> None:
-        """
-        Function to load a log given a UUID or a string.
-        """
-        try:
-            with open(self.filename, 'r') as f:
-                logs = json.load(f)
-                for log in logs:
-                    if log['id'] == identifier or log['string'] == identifier:
-                        self.simulate_keystrokes(log['keystrokes'])
-                        return
-                print(f"No log found with the identifier: {identifier}")
-        except FileNotFoundError:
-            print("No log file found.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
 
 def main():
     logger = KeyLogger()
