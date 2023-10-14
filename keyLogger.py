@@ -1,19 +1,18 @@
-from pynput.keyboard import Key, KeyCode, Listener, Controller
-from time import time, sleep
+from pynput.keyboard import Key, KeyCode, Listener
+from time import time
 import json
 import uuid
 from os import path
 from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY
 from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
-
+class StopListener(Exception): pass
 class KeyLogger:
     """
     A class used to log keystrokes and calculate delays between each keypress.
     This class is responsible for capturing and storing keystrokes values and timings.
     It also keeps track of the total number of words typed and the entire string of characters typed.
     """
-
     def __init__(self, filename: Optional[str] = None) -> None:
         """
         Initialize the KeyLogger with a filename.
@@ -48,7 +47,7 @@ class KeyLogger:
         self.prev_time: float = time() # The time at keypress is compared to this value.
 
     # on_press still needs to be tidied up a bit
-    def on_press(self, keypress: Union[Key, KeyCode]) -> None:
+    def on_press(self, keypress: Union[Key, KeyCode, None]) -> None:
         """
         Handles key press events and logs valid Keystroke events.
 
@@ -59,7 +58,8 @@ class KeyLogger:
         Args:
             keypress (Keypress): The key press event to handle.
         """
-
+        if keypress is None:
+            return None
         current_time = time()
         delay = current_time - self.prev_time
         if delay > 3:
@@ -122,7 +122,7 @@ class KeyLogger:
             return keypress.char == STOP_KEY
         return False
     
-    def on_release(self, keypress: Union[Key, KeyCode]) -> Optional[bool]:
+    def on_release(self, keypress: Union[Key, KeyCode, None]) -> None:
         """
         Handles key release events. Stop the listener when stop condition is met.
 
@@ -132,9 +132,11 @@ class KeyLogger:
         Returns:
             False or None: False if the maximum word count is reached. This stops the listener.
         """
+        if keypress is None:
+            return None
         if self.stop_listener_condition(keypress):
             print('')
-            return False
+            raise StopListener
         return None
 
     def start_listener(self) -> None:
@@ -143,7 +145,7 @@ class KeyLogger:
         The listener will only stop when stop_listener_condition returns True.
         """
         try:
-            with Listener(on_press=self.on_press, on_release=self.on_release) as listener: # type: ignore
+            with Listener(on_press=self.on_press, on_release=self.on_release) as listener:
                 print(f"Listener started. Type your text. The listener will stop after {MAX_WORDS} words have been typed or when you press ESC.")
                 listener.join()
         except Exception as e:
