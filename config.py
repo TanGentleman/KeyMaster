@@ -37,13 +37,13 @@ SIM_ALLOW_ENTER_AND_TAB = True
 SIM_SPEED_MULTIPLE = 2
 
 if SIM_ALLOW_ENTER_AND_TAB:
-    SIM_SPECIAL_KEYS = {
+    SIM_WHITESPACE_DICT = {
         '\n': Key.enter,
         '\t': Key.tab,
         ' ': Key.space,
     }
 else:
-    SIM_SPECIAL_KEYS = {' ': Key.space}
+    SIM_WHITESPACE_DICT = {' ': Key.space}
 
 
 ### JSON format for keystrokes.json

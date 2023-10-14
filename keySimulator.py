@@ -1,7 +1,8 @@
 from pynput.keyboard import Controller
 from time import sleep
 import numpy as np
-from config import ABSOLUTE_SIM_FILEPATH, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, MIN_DELAY, SIM_LOGGING_ON, SIM_SPECIAL_KEYS
+from config import ABSOLUTE_SIM_FILEPATH, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, MIN_DELAY, SIM_LOGGING_ON, SIM_WHITESPACE_DICT
+from config import SPECIAL_KEYS, STOP_KEY
 
 from config import SPECIAL_KEYS, WEIRD_KEYS
 from typing import List, Union, Optional
@@ -23,7 +24,7 @@ class KeySimulator:
     def __init__(self, speed_multiplier: Union[float, int] = SIM_SPEED_MULTIPLE, delay_mean: float = SIM_DELAY_MEAN, 
                  delay_standard_deviation: float = SIM_DELAY_STD_DEV, max_words: int = SIM_MAX_WORDS, 
                  min_delay: float = MIN_DELAY, logging_on: bool = SIM_LOGGING_ON, 
-                 special_keys: dict = SIM_SPECIAL_KEYS) -> None:
+                 whitespace_keys: dict = SIM_WHITESPACE_DICT, special_keys: dict = SPECIAL_KEYS) -> None:
         """
         Initialize the KeySimulator with the given parameters.
         """
@@ -33,6 +34,7 @@ class KeySimulator:
         self.max_words = max_words
         self.min_delay = min_delay
         self.logging_on = logging_on
+        self.whitespace_keys = whitespace_keys
         self.special_keys = special_keys
     
     def calculate_delay(self, speed_multiple: Union[float, int, None]) -> float:
@@ -95,9 +97,9 @@ class KeySimulator:
         delay2 = self.calculate_delay(1.5)
         key_as_string = ''
 
-        if char in self.special_keys:
-            special_key = self.special_keys[char]
-            key_as_string = str(special_key)
+        if char in self.whitespace_keys:
+            whitespace_char = self.whitespace_keys[char]
+            key_as_string = str(whitespace_char)
         elif char.isprintable():
             key_as_string = char
         else:
@@ -142,13 +144,17 @@ class KeySimulator:
             try:
                 if delay > 0:
                     sleep(delay)  # Wait for the time difference between keystrokes
-                if key in SPECIAL_KEYS:
-                    keyboard.press(SPECIAL_KEYS[key])
-                    keyboard.release(SPECIAL_KEYS[key])
+                if key in self.special_keys:
+                    keyboard.press(self.special_keys[key])
+                    keyboard.release(self.special_keys[key])
                 elif key in WEIRD_KEYS:
                     keyboard.type(WEIRD_KEYS[key])
                 else:
                     keyboard.type(key.strip("\'"))  # Type the character
+
+                if key == STOP_KEY:
+                    print('STOP key found. Stopping simulation.')
+                    break
             except Exception as e:
                 print(f"An error occurred: {e}")
                 break
@@ -187,6 +193,7 @@ def main(input_string:str = "hey look ma, a simulation!"):
     """
     simulator = KeySimulator()
     keystrokes = simulator.generate_keystrokes_from_string(input_string)
+    simulator.simulate_keystrokes(keystrokes)
     if simulator.logging_on:
         simulator.log_keystrokes(keystrokes, input_string)
     return keystrokes
