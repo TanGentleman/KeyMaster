@@ -66,7 +66,7 @@ class KeyParser:
             bool: True if a log with the given UUID or exact string exists, False otherwise.
         """
         for log in self.logs:
-            if log['id'] == identifier or log['string'] == identifier:
+            if log['id'] is identifier or log['string'] is identifier:
                 return True
         return False
 

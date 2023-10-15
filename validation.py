@@ -62,6 +62,10 @@ class Keystroke:
             raise TypeError('time must be a float or None')
         self.key = key
         self.time = time
+        # Assuming is_key_valid is a function that checks the validity of the key
+        self.valid = is_key_valid(key)
+        if not self.valid:
+            print(f"Keystroke class found Invalid key: {key}")
 
     def __iter__(self) -> Iterator[Tuple[str, Optional[float]]]:
         yield self.key, self.time
