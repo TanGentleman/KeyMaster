@@ -6,7 +6,8 @@ from os import path
 from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY
 from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
-class StopListener(Exception): pass
+from keySimulator import KeySimulator
+MAX_TIME = 5
 class KeyLogger:
     """
     A class used to log keystrokes and calculate delays between each keypress.
@@ -14,37 +15,29 @@ class KeyLogger:
     It also keeps track of the total number of words typed and the entire string of characters typed.
     """
     def __init__(self, filename: Optional[str] = None) -> None:
-        """
-        Initialize the KeyLogger with a filename.
-        Set attributes using the reset function.
-
-        Args:
-            filename (str, optional): The name of the file where the logs will be stored. 
-            If not provided, the default file path (ABSOLUTE_REG_FILEPATH) will be used. 
-            If a relative path is provided, it will be converted to an absolute path.
-        """
+        self.keystrokes: List[Keystroke] = []
+        self.word_count: int = 0
+        self.typed_string: str = ""
+        self.start_time: Optional[float] = None
+        self.prev_time: float = time()
         if filename is None:
             filename = ABSOLUTE_REG_FILEPATH
         else:
             # Make absolute path if not already
             if not path.isabs(filename):
                 filename = path.join(ROOT, filename)
-
         self.filename: str = filename
-        self.reset()
 
     def reset(self) -> None:
         """
         Clear the current state of the logger.
         Keystrokes, the typed string, and the word count will be set to default values.
         """
-        # Keystroke related attributes
-        self.keystrokes: List[Keystroke] = []
-        self.typed_string: str = ""
-        self.word_count: int = 0
-
-        # Time related attribute
-        self.prev_time: float = time() # The time at keypress is compared to this value.
+        self.keystrokes = []
+        self.word_count = 0
+        self.input_string = ""
+        self.start_time = None
+        self.prev_time = time()
 
     # on_press still needs to be tidied up a bit
     def on_press(self, keypress: Union[Key, KeyCode, None]) -> None:
@@ -65,7 +58,7 @@ class KeyLogger:
         if delay > 3:
             delay = 3 + (delay / 1000)
 
-        # Alternatively, I could do Keystroke(keypress, delay) and then check if keypress is valid in Keystroke class
+        # Alternatively, I could do Keystroke(str(keypress), delay) and then check if keypress is valid in Keystroke class
         # Right now, all Keystroke objects from this function have the property valid
         # I prefer using a Key or KeyCode object as the input key
         if is_key_valid(keypress):
@@ -114,6 +107,12 @@ class KeyLogger:
         Returns:
             bool: True if the listener should stop, False otherwise.
         """
+        if self.start_time is None:
+            raise ValueError("start_time is None. Listener not started.")
+        current_time = time()
+        elapsed_time = current_time - self.start_time
+        if elapsed_time > MAX_TIME:
+            return True
         if keypress == Key.esc:
             return True
         elif self.word_count >= MAX_WORDS:
@@ -136,7 +135,7 @@ class KeyLogger:
             return None
         if self.stop_listener_condition(keypress):
             print('')
-            raise StopListener
+            raise KeyboardInterrupt
         return None
 
     def start_listener(self) -> None:
@@ -144,12 +143,16 @@ class KeyLogger:
         Function to start the key listener.
         The listener will only stop when stop_listener_condition returns True.
         """
+        self.start_time = time()
         try:
             with Listener(on_press=self.on_press, on_release=self.on_release) as listener:
                 print(f"Listener started. Type your text. The listener will stop after {MAX_WORDS} words have been typed or when you press ESC.")
                 listener.join()
+        except KeyboardInterrupt:
+            print("Listener stopped.")
         except Exception as e:
             print(f"An error occurred: {e}")
+        
 
     def is_log_legit(self, keystrokes: List[Keystroke], input_string: str) -> bool:
         """
@@ -249,12 +252,23 @@ class KeyLogger:
         return True
 
 def main():
+    from keyParser import KeyParser
     logger = KeyLogger()
     logger.start_listener()
     success = logger.save_log()
     if success:
-        print("\nLog saved. Now simulating keystrokes...\n")
-        logger.simulate_keystrokes()
+        print("Success!")
+    else:
+        print("Log not saved.")
+        return
+    keystrokes = logger.keystrokes
+    test_string = "Test!"
+    logs = [{"id": "None", "string": test_string, "keystrokes": keystrokes}]
+
+    parser = KeyParser()
+    parser.logs = logs
+    assert(parser.get_keystrokes() == keystrokes)
+    assert(parser.get_strings() == [test_string])
 
 
 if __name__ == "__main__":

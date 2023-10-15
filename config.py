@@ -7,14 +7,14 @@ ABSOLUTE_REG_FILEPATH = path.join(ROOT, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(ROOT, "simulated-keystrokes.json")
 
 # *** KEY VALIDATION ***
+# The below constant is used by the functions: config.is_key_valid, KeySimulator.simulate_keystrokes, and KeyLogger.on_press
 SPECIAL_KEYS = {
     'Key.space': Key.space,
     'Key.backspace': Key.backspace,
     'Key.shift': Key.shift,
-    'Key.caps_lock': Key.caps_lock
-    # 'Key.tab': Key.tab,
-    # 'Key.enter': Key.enter,
-    # 'Key.esc': Key.esc,
+    'Key.caps_lock': Key.caps_lock,
+    'Key.tab': Key.tab,
+    'Key.enter': Key.enter,
     }
 BANNED_KEYS = ["'√'"]
 WEIRD_KEYS = { # This maps str(Key.backslash) and str(Key.Apostrophe)
@@ -32,9 +32,8 @@ SIM_DELAY_STD_DEV = 0.015
 SIM_MAX_WORDS = 300
 MIN_DELAY = 0.025
 
-SIM_LOGGING_ON = True
 SIM_ALLOW_ENTER_AND_TAB = True
-SIM_SPEED_MULTIPLE = 2
+SIM_SPEED_MULTIPLE = 2.25
 
 if SIM_ALLOW_ENTER_AND_TAB:
     SIM_WHITESPACE_DICT = {
@@ -42,10 +41,21 @@ if SIM_ALLOW_ENTER_AND_TAB:
         '\t': Key.tab,
         ' ': Key.space,
     }
+    SIM_MAP_CHARS = {
+        ' ': str(Key.space),
+        '\t': str(Key.tab),
+        '\n': str(Key.enter),
+        '\\': "'\\\\'",
+        "'": '"\'"'
+    }
 else:
     SIM_WHITESPACE_DICT = {' ': Key.space}
-
-
+    SIM_MAP_CHARS = {
+        ' ': str(Key.space),
+        '\\': "'\\\\'",
+        "'": '"\'"'
+    }
+    
 ### JSON format for keystrokes.json
 # [
 #   {
