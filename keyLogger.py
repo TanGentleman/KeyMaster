@@ -6,8 +6,8 @@ from os import path
 from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY
 from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
-from keySimulator import KeySimulator
-MAX_TIME = 5
+import threading
+DURATION = 3
 class KeyLogger:
     """
     A class used to log keystrokes and calculate delays between each keypress.
@@ -18,7 +18,6 @@ class KeyLogger:
         self.keystrokes: List[Keystroke] = []
         self.word_count: int = 0
         self.typed_string: str = ""
-        self.start_time: Optional[float] = None
         self.prev_time: float = time()
         if filename is None:
             filename = ABSOLUTE_REG_FILEPATH
@@ -27,6 +26,11 @@ class KeyLogger:
             if not path.isabs(filename):
                 filename = path.join(ROOT, filename)
         self.filename: str = filename
+
+
+        self.listener_thread = None
+        self.stop_event = threading.Event()
+        self.duration = float(DURATION)
 
     def reset(self) -> None:
         """
@@ -107,12 +111,6 @@ class KeyLogger:
         Returns:
             bool: True if the listener should stop, False otherwise.
         """
-        if self.start_time is None:
-            raise ValueError("start_time is None. Listener not started.")
-        current_time = time()
-        elapsed_time = current_time - self.start_time
-        if elapsed_time > MAX_TIME:
-            return True
         if keypress == Key.esc:
             return True
         elif self.word_count >= MAX_WORDS:
@@ -143,10 +141,13 @@ class KeyLogger:
         Function to start the key listener.
         The listener will only stop when stop_listener_condition returns True.
         """
-        self.start_time = time()
+        duration = self.duration
         try:
             with Listener(on_press=self.on_press, on_release=self.on_release) as listener:
-                print(f"Listener started. Type your text. The listener will stop after {MAX_WORDS} words have been typed or when you press ESC.")
+                print(f"Listening for {duration} seconds. The listener will stop on ESC, STOP_KEY, or after {MAX_WORDS} words.")
+                # Start a timer of 10 seconds
+                timer = threading.Timer(duration, listener.stop)
+                timer.start()
                 listener.join()
         except KeyboardInterrupt:
             print("Listener stopped.")
