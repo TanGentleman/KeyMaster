@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add complex logic in Keystroke to ensure non-ascii chars aren't typed ungodly fast
   - Some unicode testing needed, look into pynput docs too
 - Build analysis functions in KeyParser that can compare lists of keystrokes
+- Add "Key.Shift" before generating keystrokes that would require it
 ## [1.1.1] - 2023-10-13
 
 ### Added

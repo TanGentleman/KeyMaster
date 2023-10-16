@@ -64,8 +64,13 @@ class Keystroke:
 
     def __repr__(self):
         return f"Keystroke(key={self.key}, time={self.time})"
-    def to_json(self):
-        return json.dumps([self.key, self.time])
+    
+    def __eq__(self, other):
+        if isinstance(other, Keystroke):
+            return self.key == other.key
+        elif isinstance(other, str):
+            return self.key == other
+        return False
     
 class KeystrokeDecoder(json.JSONDecoder):
     def object_hook(self, dct):

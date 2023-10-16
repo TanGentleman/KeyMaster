@@ -388,6 +388,31 @@ class KeyParser:
             return {}
         return character_times
 
+    def visualize_keystroke_differences(self, keystrokes1: List[Keystroke], keystrokes2: List[Keystroke]) -> None:
+        # Extract the keys and times from the keystrokes
+        assert (key1 == key2 for key1, key2 in zip(keystrokes1, keystrokes2))
+        assert (len(keystrokes1) == len(keystrokes2))
+        keys1 = [keystroke.key for keystroke in keystrokes1]
+        times1 = [keystroke.time if keystroke.time else 0.0 for keystroke in keystrokes1]
+
+        keys2 = [keystroke.key for keystroke in keystrokes2]
+        times2 = [keystroke.time if keystroke.time else 0.0 for keystroke in keystrokes2]
+
+        assert(len(keys1) == len(times1))
+        assert(len(keys2) == len(times2))
+        # Create a bar chart for each key
+        length = len(keys1)
+        for i in range(length):
+            # Get the times for each person
+            # Plot the bar chart
+            plt.figure()
+            plt.bar(['Person 1', 'Person 2'], [times1[i], times2[i]])
+            plt.title(f'Keystroke: {keys1[i]}')
+            plt.xlabel('Person')
+            plt.ylabel('Count')
+            plt.show()
+
+
 if __name__ == "__main__":
     parser = KeyParser()
     id = parser.id_from_substring("")
