@@ -7,6 +7,9 @@ ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
 
 # *** KEY VALIDATION ***
+SHIFT_SPEED = 0.2222
+SHIFTED_CHARS = (r"~!@#$%^&*()_+{}|:\"<>?")
+
 # The below constant is used by the functions: config.is_key_valid, KeySimulator.simulate_keystrokes, and KeyLogger.on_press
 SPECIAL_KEYS = {
     'Key.space': Key.space,
@@ -27,7 +30,7 @@ SPEEDHACK = True # Only applies for KeyLogger class, this will be changed
 STOP_KEY = "*" # This key is used to stop the listener when pressed
 
 ### SIMULATION.PY CONFIG ###
-SIM_DISABLE = False
+SIM_DISABLE = True
 
 SIM_DELAY_MEAN = 0.06
 SIM_DELAY_STD_DEV = 0.015

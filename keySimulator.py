@@ -2,7 +2,7 @@ from pynput.keyboard import Controller
 from time import sleep
 import numpy as np
 from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SIM_WHITESPACE_DICT, SIM_MAP_CHARS
-from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE
+from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED
 
 from typing import List, Union, Optional
 from validation import Keystroke
@@ -73,13 +73,36 @@ class KeySimulator:
         keystrokes: List[Keystroke] = []
         word_count = 0
 
-        for char in string:
+        string_length = len(string)
+        for i in range(string_length):
+            char = string[i]
             if word_count == self.max_words:
                 print(f"Reached max words: {self.max_words}")
                 break
             keystroke = self.generate_keystroke(char)
             if keystroke is None:
                 continue
+            
+            if not keystrokes:
+                last_key = None
+            else:
+                last_key = keystrokes[-1].key
+
+            # Lambda function to check if a key is eligible to have shift before it
+            eligible = lambda k: (k is None or k == ' ') or (k not in SHIFTED_CHARS and not k.isupper())
+
+            # Check if a shift key needs to be added
+            if eligible(last_key):
+                if char.isupper() or (char in SHIFTED_CHARS):
+                    print(f"Found shifted key: {string[i]}")
+                    # Add a shift keypress
+                    if keystrokes == []:
+                        time = None
+                    else:
+                        time = SHIFT_SPEED
+                    key = 'Key.shift'
+                    keystrokes.append(Keystroke(key, time))
+
             if keystroke.key == ' ':
                 word_count += 1
             if keystrokes == []:
@@ -100,7 +123,8 @@ class KeySimulator:
             key_as_string = str(self.char_map[char])
             # print(f"Found char: {char} | {self.char_map[char]} | {key_as_string}")
         elif char.isprintable():
-            key_as_string = char
+            # Add '' around the character
+            key_as_string = f"'{char}'"
         else:
             return None
         delay = round(delay1 + delay2, 4)
