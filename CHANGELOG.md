@@ -16,11 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement functions to double check the equality of all Keystrokes in the KeyLogger and KeySimulator
 - Add complex logic in Keystroke to ensure non-ascii chars aren't typed ungodly fast
   - Some unicode testing needed, look into pynput docs too
+- Build analysis functions in KeyParser that can compare lists of keystrokes
 ## [1.1.1] - 2023-10-13
 
 ### Added
 - Add a stop_condition function to KeyLogger to allow STOP keys or word count/other checks
 - Move KeyLogger.simulate to KeySimulator
+- Simulation disabling works consistently
 
 ### Fixed
 

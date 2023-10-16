@@ -26,7 +26,7 @@ def main(input_string, ListenFirst = LISTENFIRST):
     else:
         if input_string is None:
             input_string = DEFAULT_STRING
-        simulator = KeySimulator(disabled=False)
+        simulator = KeySimulator()
         keystrokes = simulator.generate_keystrokes_from_string(input_string)
     if not keystrokes:
         print("No keystrokes found.")
@@ -35,6 +35,7 @@ def main(input_string, ListenFirst = LISTENFIRST):
         print("Starting simulation in 5 seconds...")
         sleep(5)
     simulator.simulate_keystrokes(keystrokes)
+    print(keystrokes)
     if LOGGING_ON:
         logger = KeyLogger(ABSOLUTE_SIM_FILEPATH)
         logger.set_internal_log(keystrokes, input_string)

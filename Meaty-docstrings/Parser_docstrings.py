@@ -1,5 +1,5 @@
-from typing import Optional, List, Dict
-from validation import Keystroke, Log
+from typing import List, Optional, Dict
+from validation import Log, Keystroke
 class KeyParser:
     """
     A class used to parse and analyze keystroke logs.
@@ -9,7 +9,7 @@ class KeyParser:
         logs (list): The list of logs loaded from the file.
         exclude_outliers (bool): A flag indicating whether to exclude outliers.
     """
-def __init__(self, filename: Optional[str] = None, exclude_outliers: bool = True) -> None:
+def __init__(self, filename: Optional[str] = '', exclude_outliers: bool = True) -> None:
         """
         Initialize the KeyParser and load logs.
 

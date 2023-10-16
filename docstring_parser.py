@@ -2,7 +2,7 @@ import re
 from config import ROOT
 from os import path
 
-FILE_TO_READ = 'keySimulator.py'
+DEFAULT_FILE = 'keySimulator.py'
 FILE_TO_WRITE = 'docstrings.py'
 
 def find_instances(string):
@@ -74,4 +74,17 @@ def create_docstring_file_from_string(read_filename, write_filename):
 # sample_string = r'junks zdef foo() """ This is a docstring """ junk here'
 # print(find_instances(sample_string))
 
-create_docstring_file_from_string(FILE_TO_READ, FILE_TO_WRITE)
+if __name__ == "__main__":
+    from sys import argv as args
+    length = len(args)
+    if length > 1:
+        file_as_string = args[1]
+        if path.exists(file_as_string):
+            FILE_TO_READ = file_as_string
+            create_docstring_file_from_string(FILE_TO_READ, FILE_TO_WRITE)
+        else:
+            print(f"File {file_as_string} not found")
+    else:
+        FILE_TO_READ = DEFAULT_FILE
+        print(f"Using default file {FILE_TO_READ}")
+        create_docstring_file_from_string(FILE_TO_READ, FILE_TO_WRITE)

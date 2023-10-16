@@ -15,6 +15,14 @@ class KeyLogger:
     It also keeps track of the total number of words typed and the entire string of characters typed.
     """
     def __init__(self, filename: Optional[str] = "") -> None:
+        """
+        Initialize the KeyLogger.
+
+        Args:
+            filename (str, optional): The filename to save the log to.
+            Defaults to ABSOLUTE_REG_FILEPATH.
+            None value treated as null path.
+        """
         self.keystrokes: List[Keystroke] = []
         self.word_count: int = 0
         self.typed_string: str = ""
