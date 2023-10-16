@@ -111,14 +111,14 @@ class KeySimulator:
         Args:
             keystrokes (List[Keystroke], optional): The list of keystrokes to simulate. 
         """
-        if keystrokes == []:
+        if not keystrokes:
             print("No keystrokes found.")
             return
 
         keyboard = Controller()
         none_count = 0
         for keystroke in keystrokes:
-            if keystroke.valid == False:
+            if not keystroke.valid:
                 print(f"Invalid key: {keystroke.key}")
                 continue
             key = keystroke.key

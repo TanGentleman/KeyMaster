@@ -7,30 +7,31 @@ from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY
 from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
 import threading
-DURATION = 3
+TIMEOUT_DURATION = 10
 class KeyLogger:
     """
     A class used to log keystrokes and calculate delays between each keypress.
     This class is responsible for capturing and storing keystrokes values and timings.
     It also keeps track of the total number of words typed and the entire string of characters typed.
     """
-    def __init__(self, filename: Optional[str] = None) -> None:
+    def __init__(self, filename: Optional[str] = "") -> None:
         self.keystrokes: List[Keystroke] = []
         self.word_count: int = 0
         self.typed_string: str = ""
         self.prev_time: float = time()
         if filename is None:
+            # This will be treated as a null value
+            pass
+        elif filename == "":
             filename = ABSOLUTE_REG_FILEPATH
         else:
             # Make absolute path if not already
             if not path.isabs(filename):
                 filename = path.join(ROOT, filename)
-        self.filename: str = filename
+        self.filename = filename
 
-
-        self.listener_thread = None
-        self.stop_event = threading.Event()
-        self.duration = float(DURATION)
+        self.timer = None
+        self.duration = float(TIMEOUT_DURATION)
 
     def reset(self) -> None:
         """
@@ -49,7 +50,7 @@ class KeyLogger:
         Handles key press events and logs valid Keystroke events.
 
         This function is called whenever a key is pressed. 
-        It validates the keypres and appends the data
+        It validates the keypress and appends the data
         KeyLogger attributes modified: keystrokes, typed_string, word_count, prev_time
 
         Args:
@@ -68,7 +69,7 @@ class KeyLogger:
         if is_key_valid(keypress):
             key_as_string = str(keypress)
             # Mark first character delay as None
-            if self.keystrokes == []:
+            if not self.keystrokes:
                 keystroke = Keystroke(key_as_string, None)
                 self.keystrokes.append(keystroke)
             else:
@@ -76,8 +77,7 @@ class KeyLogger:
                 keystroke = Keystroke(key_as_string, delay)
                 self.keystrokes.append(keystroke)
             
-            # I can assert Keystroke.valid == True here
-            assert(keystroke.valid == True)
+            assert(keystroke.valid is True)
             self.prev_time = current_time # <----- Make sure this statement comes at an appropriate time.
 
             # Append typed character to the string
@@ -133,6 +133,9 @@ class KeyLogger:
             return None
         if self.stop_listener_condition(keypress):
             print('')
+            if self.timer is None:
+                raise ValueError("Timer is None. Start it before listener.join")
+            self.timer.cancel()
             raise KeyboardInterrupt
         return None
 
@@ -146,8 +149,8 @@ class KeyLogger:
             with Listener(on_press=self.on_press, on_release=self.on_release) as listener:
                 print(f"Listening for {duration} seconds. The listener will stop on ESC, STOP_KEY, or after {MAX_WORDS} words.")
                 # Start a timer of 10 seconds
-                timer = threading.Timer(duration, listener.stop)
-                timer.start()
+                self.timer = threading.Timer(duration, listener.stop)
+                self.timer.start()
                 listener.join()
         except KeyboardInterrupt:
             print("Listener stopped.")
@@ -168,7 +171,7 @@ class KeyLogger:
         Returns:
             bool: True if the input is valid Log material, False otherwise.
         """
-        if input_string == "":
+        if not input_string:
             print("No keystrokes found. Log not legit")
             return False
         none_count = 0
@@ -196,7 +199,7 @@ class KeyLogger:
         Returns:
             bool: True if state successfully replaced. False if arguments invalid.
         """
-        if self.is_log_legit(keystrokes, input_string) == False:
+        if not self.is_log_legit(keystrokes, input_string):
             print("Invalid log. Internal log not set")
             return False
         self.keystrokes = keystrokes
@@ -214,13 +217,14 @@ class KeyLogger:
         Returns:
             bool: True if the log was saved successfully, False otherwise.
         """
-        if self.typed_string == "":
+        if not self.typed_string:
             print("No keystrokes to save.")
             if reset:
                 self.reset()
             return False
         # ensure log is legit
-        if self.is_log_legit(self.keystrokes, self.typed_string) == False:
+        legit = self.is_log_legit(self.keystrokes, self.typed_string)
+        if not legit:
             print("Log is not legit. Did not update file.")
             return False
         
@@ -233,8 +237,13 @@ class KeyLogger:
             'string': self.typed_string,
             'keystrokes': self.keystrokes
         }
-        # Fix the keystrokes
+        # Create var logs to store the logs
+        # Replace keystrokes in json using KeystrokeEncoder
         # Append the log object to the file
+        logs: List[Log] = []
+        if self.filename is None:
+            print("Filename null. Log not saved.")
+            return False
         try:
             with open(self.filename, 'r+') as f:
                 logs = json.load(f, cls=KeystrokeDecoder)
@@ -253,23 +262,25 @@ class KeyLogger:
         return True
 
 def main():
-    from keyParser import KeyParser
     logger = KeyLogger()
     logger.start_listener()
     success = logger.save_log()
-    if success:
-        print("Success!")
-    else:
+    if not success:
         print("Log not saved.")
         return
-    keystrokes = logger.keystrokes
-    test_string = "Test!"
-    logs = [{"id": "None", "string": test_string, "keystrokes": keystrokes}]
-
-    parser = KeyParser()
-    parser.logs = logs
-    assert(parser.get_keystrokes() == keystrokes)
-    assert(parser.get_strings() == [test_string])
+    else:
+        print("success!")
+        from keyParser import KeyParser
+        print("Running assertion checks")
+        parser = KeyParser(None)
+        print('parser created')
+        assert(parser.logs == [])
+        new_parser_logs = [{"id": "None", "string": logger.typed_string, "keystrokes": logger.keystrokes}]
+        parser.logs = new_parser_logs
+        assert(parser.check_membership('None') is True)
+        assert(parser.get_keystrokes() == logger.keystrokes)
+        assert(parser.get_strings() == [logger.typed_string])
+        assert(parser.id_from_substring("") == "None")
 
 
 if __name__ == "__main__":

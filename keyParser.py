@@ -15,7 +15,7 @@ class KeyParser:
         logs (list): The list of logs loaded from the file.
         exclude_outliers (bool): A flag indicating whether to exclude outliers.
     """
-    def __init__(self, filename: Optional[str] = None, exclude_outliers: bool = True) -> None:
+    def __init__(self, filename: Optional[str] = '', exclude_outliers: bool = True) -> None:
         """
         Initialize the KeyParser and load logs.
 
@@ -24,10 +24,13 @@ class KeyParser:
             exclude_outliers (bool, optional): A flag indicating whether to exclude outliers. Defaults to True.
         """
         if filename is None:
+            self.filename = None
+        elif filename == '':
             filename = ABSOLUTE_REG_FILEPATH
         else:
             filename = path.join(ROOT, filename)
-        self.filename: str = filename
+
+        self.filename = filename
         self.logs: List[Log] = self.extract_logs()
         self.exclude_outliers: bool = exclude_outliers
 
@@ -38,6 +41,9 @@ class KeyParser:
         Returns:
             list: A list of logs loaded from the file. If an error occurs, an empty list is returned.
         """
+        if self.filename is None:
+            print("No filename assigned.")
+            return []
         try:
             with open(self.filename, 'r') as f:
                 data = json.load(f)
@@ -100,7 +106,7 @@ class KeyParser:
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
-            if isPresent == False:
+            if not isPresent:
                 return []
             for log in self.logs:
                 if log['id'] == identifier or log['string'] == identifier:
@@ -154,7 +160,7 @@ class KeyParser:
             exclude_outliers = self.exclude_outliers
         outlier_count = 0
         times = []
-        if keystrokes == []:
+        if not keystrokes:
             print("No keystrokes found.")
             return []
         for keystroke in keystrokes:
@@ -306,7 +312,9 @@ class KeyParser:
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         character_times = self.map_chars_to_times(keystrokes, exclude_outliers)
-
+        if not character_times: # If no characters found
+            print("No characters to visualize.")
+            return
         characters = list(character_times.keys())
         times = list(character_times.values())
 
@@ -352,8 +360,8 @@ class KeyParser:
         character_counts: Dict[str, int] = {}
         if keystrokes is None:
             keystrokes = self.get_keystrokes()
-        if keystrokes == []:
-            print("No keystrokes found.")
+        elif not keystrokes:
+            print("No keystrokes to map.")
             return {}
         # Else ensure keystrokes are valid
         if exclude_outliers is None:
@@ -375,7 +383,9 @@ class KeyParser:
 
         for key in character_times:
             character_times[key] /= character_counts[key]
-
+        if not character_times:
+            print("No characters to map.")
+            return {}
         return character_times
 
 if __name__ == "__main__":
