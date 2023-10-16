@@ -7,7 +7,7 @@ from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY
 from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
 import threading
-TIMEOUT_DURATION = 10
+TIMEOUT_DURATION = 20
 class KeyLogger:
     """
     A class used to log keystrokes and calculate delays between each keypress.
@@ -23,6 +23,7 @@ class KeyLogger:
             # This will be treated as a null value
             pass
         elif filename == "":
+            # This is the default keystrokes.json file (in ROOT folder for now)
             filename = ABSOLUTE_REG_FILEPATH
         else:
             # Make absolute path if not already
@@ -30,7 +31,7 @@ class KeyLogger:
                 filename = path.join(ROOT, filename)
         self.filename = filename
 
-        self.timer = None
+        self.timer:Optional[threading.Timer] = None
         self.duration = float(TIMEOUT_DURATION)
 
     def reset(self) -> None:
@@ -156,6 +157,14 @@ class KeyLogger:
             print("Listener stopped.")
         except Exception as e:
             print(f"An error occurred: {e}")
+        finally:
+            # Ensure the timer is stopped
+            if self.timer is not None:
+                self.timer.cancel()
+            # Ensure the listener is stopped
+            if listener is not None:
+                listener.stop()
+                print("i had to do it manually!")
         
 
     def is_log_legit(self, keystrokes: List[Keystroke], input_string: str) -> bool:

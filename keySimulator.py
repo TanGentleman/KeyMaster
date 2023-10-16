@@ -22,7 +22,8 @@ class KeySimulator:
     def __init__(self, speed_multiplier: Union[float, int] = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
                  delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
                  min_delay: float = MIN_DELAY, whitespace_keys: dict = SIM_WHITESPACE_DICT, 
-                 char_map = SIM_MAP_CHARS, special_keys: dict = SPECIAL_KEYS) -> None:
+                 char_map = SIM_MAP_CHARS, special_keys: dict = SPECIAL_KEYS,
+                 disabled = False) -> None:
         """
         Initialize the KeySimulator with the given parameters.
         """
@@ -34,6 +35,7 @@ class KeySimulator:
         self.whitespace_keys = whitespace_keys
         self.special_keys = special_keys
         self.char_map = char_map
+        self.disabled = disabled
     
     def calculate_delay(self, speed_multiple: Union[float, int, None]) -> float:
         """
@@ -113,6 +115,9 @@ class KeySimulator:
         """
         if not keystrokes:
             print("No keystrokes found.")
+            return
+        if self.disabled:
+            print("Simulation disabled.")
             return
 
         keyboard = Controller()
