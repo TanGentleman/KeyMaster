@@ -27,7 +27,7 @@ class KeySimulator:
         """
         Initialize the KeySimulator with the given parameters.
         """
-        self.speed_multiplier = speed_multiplier
+        self.speed_multiplier = float(speed_multiplier)
         self.delay_mean = delay_mean
         self.delay_standard_deviation = delay_standard_deviation
         self.max_words = max_words
@@ -94,7 +94,7 @@ class KeySimulator:
             # Check if a shift key needs to be added
             if eligible(last_key):
                 if char.isupper() or (char in SHIFTED_CHARS):
-                    print(f"Found shifted key: {string[i]}")
+                    print(f"Found shifted key: {char}")
                     # Add a shift keypress
                     if keystrokes == []:
                         time = None
