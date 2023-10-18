@@ -3,12 +3,13 @@ from config import ABSOLUTE_SIM_FILEPATH
 from keySimulator import KeySimulator
 from time import sleep
 import string
-LOGGING_ON = False
+from typing import Optional
 
+LOGGING_ON = True
 LISTENFIRST = False
 PRINT_KEYS = False
 
-DEFAULT_STRING = "hey look ma, \n it's a simulation!"
+DEFAULT_STRING = "hey look ma, it's a simulation!"
 
 def filter_non_typable_chars(input_string: str) -> str:
     """
@@ -34,61 +35,66 @@ def filter_non_typable_chars(input_string: str) -> str:
     return filtered_string
 
 
-def main(input_string:str, ListenFirst = LISTENFIRST):
-    if input_string:
-        ListenFirst = False
-        if '\n' in input_string:
-            print(f"This string has a newline!")
+def main(input_string: Optional[str] = DEFAULT_STRING, listen_first: bool = LISTENFIRST) -> None:
+    """
+    This function simulates keystrokes based on the input_string or listens for keystrokes if listen_first is True.
+    """
     keystrokes = []
-    if ListenFirst:
+    logger = KeyLogger() if listen_first else KeyLogger(ABSOLUTE_SIM_FILEPATH)
+    simulator = KeySimulator()
+
+    if listen_first:
         print("I will say START in 3 seconds...")
         sleep(3)
-        logger = KeyLogger()
         print("START!")
         logger.start_listener()
         if logger.keystrokes:
             keystrokes = logger.keystrokes
-            print("STOPPED LISTENING!")
-            simulator = KeySimulator()
         else:
             return
     else:
         if input_string is None:
-            input_string = DEFAULT_STRING
-        simulator = KeySimulator()
+            print("No input string found, and ListenFirst is False")
+            return
+        if '\n' in input_string:
+            print(f"This string has a newline!")
         keystrokes = simulator.generate_keystrokes_from_string(input_string)
+
     if not keystrokes:
         print("No keystrokes found.")
         return
-    if ListenFirst:
+
+    if listen_first:
         print("Starting simulation in 5 seconds...")
         sleep(5)
+
     simulator.simulate_keystrokes(keystrokes)
-    if PRINT_KEYS: print(keystrokes)
-    if input_string and LOGGING_ON:
-        logger = KeyLogger(ABSOLUTE_SIM_FILEPATH)
-        logger.set_internal_log(keystrokes, input_string)
-        success = logger.save_log()
-        if success:
-            print("Successfully saved keystrokes to file.")
+
+    if PRINT_KEYS: 
+        print(keystrokes)
+
+    if LOGGING_ON:
+        if listen_first:
+            logger.save_log()
         else:
-            print("Failed to save keystrokes to file.")
-    pass
-### This file is used for Shortcuts. For instance, I have a keyboard shortcut to run a shell script `python simulate.py "$(pbpaste)"`
+            if input_string:
+                logger.set_internal_log(keystrokes, input_string)
+                logger.save_log()
+
+### This supports no-UI Shortcuts integration.
+# Create a keyboard shortcut to run a shell script `python simulate.py "*Clipboard*"`
 if __name__ == "__main__":
     from sys import argv as args
     length = len(args)
     if length > 1:
         if length > 2:
-            # raise error
             raise ValueError("Too many CLI arguments")
-        # make sure string is utf-8
         arg_string = args[1]
         if arg_string == 'Test':
             main(None, True)
         elif arg_string == '*Clipboard*':
-            import pyperclip
-            main(filter_non_typable_chars(pyperclip.paste()))
+            from pyperclip import paste as py_paste # type: ignore
+            main(filter_non_typable_chars(py_paste()))
         else:
             print("Gotta have a valid argument. Try 'Test' or '*Clipboard*'")
             pass

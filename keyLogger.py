@@ -1,13 +1,13 @@
 from pynput.keyboard import Key, KeyCode, Listener
-from time import time
+from time import time, perf_counter
 import json
 import uuid
 from os import path
-from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY
+from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
 from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
 import threading
-TIMEOUT_DURATION = 20
+
 class KeyLogger:
     """
     A class used to log keystrokes and calculate delays between each keypress.
@@ -26,6 +26,7 @@ class KeyLogger:
         self.keystrokes: List[Keystroke] = []
         self.word_count: int = 0
         self.typed_string: str = ""
+        # The first value of a keystrokes List will always have Keystroke.time = None, but we will init to time() anyways
         self.prev_time: float = time()
         if filename is None:
             # This will be treated as a null value
@@ -40,7 +41,7 @@ class KeyLogger:
         self.filename = filename
 
         self.timer:Optional[threading.Timer] = None
-        self.duration = float(TIMEOUT_DURATION)
+        self.duration = float(LISTEN_TIMEOUT_DURATION)
 
     def reset(self) -> None:
         """
@@ -50,7 +51,6 @@ class KeyLogger:
         self.keystrokes = []
         self.word_count = 0
         self.input_string = ""
-        self.start_time = None
         self.prev_time = time()
 
     # on_press still needs to be tidied up a bit
@@ -67,7 +67,7 @@ class KeyLogger:
         """
         if keypress is None:
             return None
-        current_time = time()
+        current_time = perf_counter()
         delay = current_time - self.prev_time
         if delay > 3:
             delay = 3 + (delay / 1000)
@@ -82,7 +82,7 @@ class KeyLogger:
                 keystroke = Keystroke(key_as_string, None)
                 self.keystrokes.append(keystroke)
             else:
-                delay = round(delay, 4)  # Round to 4 decimal places
+                delay = round(delay, ROUND_DIGITS)  # Round to 4 decimal places
                 keystroke = Keystroke(key_as_string, delay)
                 self.keystrokes.append(keystroke)
             
@@ -166,14 +166,15 @@ class KeyLogger:
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
-            # Ensure the timer is stopped
-            if self.timer is not None:
-                self.timer.cancel()
             # Ensure the listener is stopped
             if listener is not None:
                 listener.stop()
-                print("i had to do it manually!")
-        
+                print("Listener stopped!")
+                
+            # Ensure the timer is stopped
+            if self.timer is not None:
+                self.timer.cancel()
+            
 
     def is_log_legit(self, keystrokes: List[Keystroke], input_string: str) -> bool:
         """

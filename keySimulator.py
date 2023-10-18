@@ -1,11 +1,13 @@
 from pynput.keyboard import Controller
+from time import time as get_time
 from time import sleep
 import numpy as np
 from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SIM_WHITESPACE_DICT, SIM_MAP_CHARS
-from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED
+from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 
-from typing import List, Union, Optional
-from validation import Keystroke
+from typing import List, Union, Optional, Dict
+from validation import Keystroke, Key
+
 class KeySimulator:
     """
     A class used to simulate keystrokes and log them.
@@ -16,14 +18,14 @@ class KeySimulator:
         max_words (int): The maximum number of words to simulate.
         min_delay (float): The minimum delay between keystrokes.
         logging_on (bool): A flag indicating whether to log keystrokes.
-        special_keys (dict): A dictionary mapping special characters to their corresponding keys.
+        special_keys (dict): A dictionary mapping special key strings to their corresponding keys.
     """
 
     def __init__(self, speed_multiplier: Union[float, int] = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
                  delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
                  min_delay: float = MIN_DELAY, whitespace_keys: dict = SIM_WHITESPACE_DICT, 
-                 char_map = SIM_MAP_CHARS, special_keys: dict = SPECIAL_KEYS,
-                 disabled = SIM_DISABLE) -> None:
+                 char_map = SIM_MAP_CHARS, special_keys: Dict[str, Key] = SPECIAL_KEYS,
+                 disabled = SIM_DISABLE, max_duration = SIM_MAX_DURATION) -> None:
         """
         Initialize the KeySimulator with the given parameters.
         """
@@ -36,6 +38,8 @@ class KeySimulator:
         self.special_keys = special_keys
         self.char_map = char_map
         self.disabled = disabled
+        self.max_duration = max_duration
+        sim_start_time = None
     
     def calculate_delay(self, speed_multiple: Union[float, int, None]) -> float:
         """
@@ -143,6 +147,8 @@ class KeySimulator:
         if self.disabled:
             print("Simulation disabled.")
             return
+        self.sim_start_time = get_time()
+        special_key_dict = self.special_keys
 
         keyboard = Controller()
         none_count = 0
@@ -150,6 +156,11 @@ class KeySimulator:
             if not keystroke.valid:
                 print(f"Invalid key: {keystroke.key}")
                 continue
+            # Check if max duration has been reached
+            if get_time() - self.sim_start_time > self.max_duration:
+                print(f"Max duration reached: {self.max_duration} seconds")
+                break
+
             key = keystroke.key
             time = keystroke.time
             if time is None:
@@ -169,9 +180,9 @@ class KeySimulator:
             try:
                 if delay > 0:
                     sleep(delay)  # Wait for the time difference between keystrokes
-                if key in self.special_keys:
-                    keyboard.press(self.special_keys[key])
-                    keyboard.release(self.special_keys[key])
+                if key in special_key_dict:
+                    keyboard.press(special_key_dict[key])
+                    keyboard.release(special_key_dict[key])
                 elif key in WEIRD_KEYS:
                     keyboard.type(WEIRD_KEYS[key])
                 else:
