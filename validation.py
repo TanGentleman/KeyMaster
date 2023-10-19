@@ -64,13 +64,10 @@ class Keystroke:
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
-
     def __iter__(self) -> Iterator[Tuple[str, Optional[float]]]:
         yield self.key, self.time
-
     def __repr__(self):
         return f"Keystroke(key={self.key}, time={self.time})"
-    
     def __eq__(self, other):
         if isinstance(other, Keystroke):
             return self.key == other.key
@@ -78,6 +75,17 @@ class Keystroke:
             return self.key == other
         return False
     
+def check_keystrokes_legit(keystrokes: List[Keystroke]) -> bool:
+	"""
+	Function to check if the keystrokes are valid.
+	"""
+	if keystrokes == []:
+		return True
+	for keystroke in keystrokes:
+		if not keystroke.valid:
+			print(f"Invalid keystroke: {keystroke.key}")
+			return False
+	return True
 class Log(TypedDict):
     """
     A class used to represent a log. The logfile is a list of logs.
@@ -108,8 +116,6 @@ class KeystrokeEncoder(JSONEncoder):
                 'keystrokes': [self.default(keystroke) for keystroke in obj['keystrokes']]
             }
         return super().default(obj)
-    
-
 
 class LegalKey:
     """
