@@ -2,7 +2,28 @@
 from typing import List, Union, Optional, Iterator, Tuple, TypedDict
 from pynput.keyboard import Key, KeyCode
 from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
-import json
+from json import JSONDecoder, JSONEncoder
+import string
+
+def filter_non_typable_chars(input_string: str) -> str:
+    """
+    Filter out non-typable characters from a string.
+    """
+    replacements = {
+        '\u2028': '\n',  # replace line separator with newline
+        # '\u2029': '\n',  # replace paragraph separator with newline
+        # add more replacements here if needed
+    }
+    typable_chars = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
+    for c in input_string:
+        if c not in typable_chars:
+            print(f"Non-typable character:{c}->{ord(c)}")
+    for old, new in replacements.items():
+        input_string = input_string.replace(old, new)
+    filtered_string = ''.join(c for c in input_string if c in typable_chars)
+    return filtered_string
+
+
 # *** KEY VALIDATION ***
 def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
     """
@@ -30,25 +51,10 @@ def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
         return False
     return len(key_as_string) == 1
 
-class LegalKey:
-    def __init__(self, key: str):
-        if not isinstance(key, str):
-            raise TypeError('key must be a string')
-        if not is_key_valid(key):
-            raise ValueError(f'Key {key} failed is_key_valid()')
-        self.key = key
-    def __repr__(self):
-        return f"key={self.key}"
-    def __str__(self):
-        return self.key
-    def __eq__(self, other):
-        if isinstance(other, LegalKey):
-            return self.key == other.key
-        elif isinstance(other, str):
-            return self.key == other
-        return False
-
 class Keystroke:
+    """
+    A class used to represent a keystroke. The validity is held in Keystroke.valid
+    """
     def __init__(self, key: str, time: Optional[float]):
         # Implement LegalKey here? Or can Keystrokes have illegal keys?
         if not isinstance(key, str):
@@ -72,12 +78,26 @@ class Keystroke:
             return self.key == other
         return False
     
-class KeystrokeDecoder(json.JSONDecoder):
+class Log(TypedDict):
+    """
+    A class used to represent a log. The logfile is a list of logs.
+    """
+    id: str
+    string: str
+    keystrokes: List[Keystroke]
+
+class KeystrokeDecoder(JSONDecoder):
+    """
+    A JSONDecoder that decodes Keystrokes [Logfile->List of Keystrokes]
+    """
     def object_hook(self, dct):
         if 'keystrokes' in dct:
             dct['keystrokes'] = [Keystroke(*k) for k in dct['keystrokes']]
         return dct
-class KeystrokeEncoder(json.JSONEncoder):
+class KeystrokeEncoder(JSONEncoder):
+    """
+    A JSONEncoder that encodes Keystrokes [Keystrokes->(key, time) and Log->Logfile)]
+    """
     def default(self, obj):
         if isinstance(obj, Keystroke):
             return [obj.key, obj.time]
@@ -89,9 +109,25 @@ class KeystrokeEncoder(json.JSONEncoder):
             }
         return super().default(obj)
     
-class Log(TypedDict):
-    id: str
-    string: str
-    keystrokes: List[Keystroke]
 
-class Keypress: Union[Key, KeyCode]
+
+class LegalKey:
+    """
+    A class used to represent a legal key. Not currently implemented
+    """
+    def __init__(self, key: str):
+        if not isinstance(key, str):
+            raise TypeError('key must be a string')
+        if not is_key_valid(key):
+            raise ValueError(f'Key {key} failed is_key_valid()')
+        self.key = key
+    def __repr__(self):
+        return f"key={self.key}"
+    def __str__(self):
+        return self.key
+    def __eq__(self, other):
+        if isinstance(other, LegalKey):
+            return self.key == other.key
+        elif isinstance(other, str):
+            return self.key == other
+        return False

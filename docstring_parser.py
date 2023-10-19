@@ -6,8 +6,8 @@ DEFAULT_FILE = 'keySimulator.py'
 FILE_TO_WRITE = 'docstrings.py'
 
 def find_instances(string):
-    classPattern = r'class.*?""".*?"""'
-    functionPattern = r'def.*?""".*?"""'
+    classPattern = r'class .*?""".*?"""'
+    functionPattern = r'def .*?""".*?"""'
 
     # pattern = r'c.*?(?=b).*b' # Regular expression pattern
     # Use first class match only
