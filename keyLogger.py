@@ -1,12 +1,12 @@
 from pynput.keyboard import Key, KeyCode, Listener
 from time import time, perf_counter
 import json
-import uuid
+from uuid import uuid4
 from os import path
-from config import ROOT, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
+from config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
 from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
-import threading
+from threading import Timer
 
 class KeyLogger:
 	"""
@@ -37,10 +37,10 @@ class KeyLogger:
 		else:
 			# Make absolute path if not already
 			if not path.isabs(filename):
-				filename = path.join(ROOT, filename)
+				filename = path.join(LOG_DIR, filename)
 		self.filename = filename
 
-		self.timer:Optional[threading.Timer] = None
+		self.timer:Optional[Timer] = None
 		self.duration = float(LISTEN_TIMEOUT_DURATION)
 
 	def reset(self) -> None:
@@ -159,7 +159,7 @@ class KeyLogger:
 			with Listener(on_press=self.on_press, on_release=self.on_release) as listener:
 				print(f"Listening for {duration} seconds. The listener will stop on ESC, STOP_KEY, or after {MAX_WORDS} words.")
 				# Start a timer of 10 seconds
-				self.timer = threading.Timer(duration, listener.stop)
+				self.timer = Timer(duration, listener.stop)
 				self.timer.start()
 				listener.join()
 		except KeyboardInterrupt:
@@ -248,7 +248,7 @@ class KeyLogger:
 			return False
 		
 		# Create a unique ID
-		unique_id = str(uuid.uuid4())
+		unique_id = str(uuid4())
 
 		# Create the log object of class Log
 		log: Log = {

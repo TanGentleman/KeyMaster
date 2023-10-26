@@ -11,7 +11,7 @@ PRINT_KEYS = False
 
 DEFAULT_STRING = "hey look ma, it's a simulation!"
 
-def main(input_string: Optional[str] = DEFAULT_STRING, listen_first: bool = LISTENFIRST) -> None:
+def main(listen_first: bool = LISTENFIRST, input_string: str = DEFAULT_STRING) -> None:
     """
     This function simulates keystrokes based on the input_string or listens for keystrokes if listen_first is True.
     """
@@ -33,7 +33,7 @@ def main(input_string: Optional[str] = DEFAULT_STRING, listen_first: bool = LIST
             print("No input string found, and ListenFirst is False")
             return
         if '\n' in input_string:
-            print(f"This string has a newline!")
+            print(f"This string contains newlines!")
         keystrokes = simulator.generate_keystrokes_from_string(input_string)
 
     if not keystrokes:
@@ -56,7 +56,6 @@ def main(input_string: Optional[str] = DEFAULT_STRING, listen_first: bool = LIST
             if input_string:
                 logger.set_internal_log(keystrokes, input_string)
                 logger.save_log()
-
 ### This supports no-UI Shortcuts integration.
 # Create a keyboard shortcut to run a shell script `python simulate.py "*Clipboard*"`
 if __name__ == "__main__":
@@ -67,17 +66,17 @@ if __name__ == "__main__":
             raise ValueError("Too many CLI arguments")
         arg_string = args[1]
         if arg_string == 'Test':
-            main(None, True)
+            main(True)
         elif arg_string == '*Clipboard*':
             from pyperclip import paste as py_paste # type: ignore
             if not py_paste():
                 print("No text found in clipboard.")
                 pass
             else:
-                main(filter_non_typable_chars(py_paste()))
+                main(False, filter_non_typable_chars(py_paste()))
         else:
             print("Gotta have a valid argument. Try 'Test' or '*Clipboard*'")
             pass
     else:
         input_string = DEFAULT_STRING
-        main(input_string)
+        main(False, input_string)

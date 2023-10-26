@@ -6,7 +6,7 @@ LOG_DIR = path.join(ROOT, "Logfiles") # Define the path for the logfiles directo
 ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
 
-LISTEN_TIMEOUT_DURATION = 20
+LISTEN_TIMEOUT_DURATION = 30
 ROUND_DIGITS = 4 # This is for logfile
 # *** KEY VALIDATION ***
 SHIFT_SPEED = 0.2222
@@ -40,16 +40,16 @@ SIM_MAX_WORDS = 300
 MIN_DELAY = 0.03
 
 SIM_ALLOW_ENTER_AND_TAB = True
-SIM_SPEED_MULTIPLE = 2
-SIM_MAX_DURATION = 10
+SIM_SPEED_MULTIPLE = 1
+SIM_MAX_DURATION = 30
 
 if SIM_ALLOW_ENTER_AND_TAB:
-    SIM_WHITESPACE_DICT = {
+    sim_whitespace_dict = {
         '\n': Key.enter,
         '\t': Key.tab,
         ' ': Key.space,
     }
-    SIM_MAP_CHARS = {
+    sim_map_chars = {
         ' ': str(Key.space),
         '\t': str(Key.tab),
         '\n': str(Key.enter),
@@ -57,8 +57,8 @@ if SIM_ALLOW_ENTER_AND_TAB:
         "'": '"\'"'
     }
 else:
-    SIM_WHITESPACE_DICT = {' ': Key.space}
-    SIM_MAP_CHARS = {
+    sim_whitespace_dict = {' ': Key.space}
+    sim_map_chars = {
         ' ': str(Key.space),
         '\\': "'\\\\'",
         "'": '"\'"'

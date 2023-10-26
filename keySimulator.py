@@ -2,7 +2,7 @@ from pynput.keyboard import Controller
 from time import time as get_time
 from time import sleep
 import numpy as np
-from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SIM_WHITESPACE_DICT, SIM_MAP_CHARS
+from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_whitespace_dict, sim_map_chars
 from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 
 from typing import List, Union, Optional, Dict
@@ -23,8 +23,8 @@ class KeySimulator:
 
     def __init__(self, speed_multiplier: Union[float, int] = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
                  delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
-                 min_delay: float = MIN_DELAY, whitespace_keys: dict = SIM_WHITESPACE_DICT, 
-                 char_map = SIM_MAP_CHARS, special_keys: Dict[str, Key] = SPECIAL_KEYS,
+                 min_delay: float = MIN_DELAY, whitespace_keys: dict = sim_whitespace_dict, 
+                 char_map = sim_map_chars, special_keys: Dict[str, Key] = SPECIAL_KEYS,
                  disabled = SIM_DISABLE, max_duration = SIM_MAX_DURATION) -> None:
         """
         Initialize the KeySimulator with the given parameters.

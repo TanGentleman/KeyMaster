@@ -1,5 +1,5 @@
 # This file is for the key validation function to explicitly typecheck classes.
-from typing import List, Union, Optional, Iterator, Tuple, TypedDict
+from typing import List, Union, Optional, Iterator, Tuple, TypedDict, Any, Dict
 from pynput.keyboard import Key, KeyCode
 from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
 from json import JSONDecoder, JSONEncoder
@@ -35,7 +35,8 @@ def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
         key_as_string = str(key)
         return key_as_string in SPECIAL_KEYS
     
-    elif isinstance(key, str):
+    else:
+        # We know isinstance(key, str)
         key_as_string = key
         # A string like 'a' is valid, but 'Key.alt' is not
         if key_as_string in BANNED_KEYS:
@@ -57,8 +58,6 @@ class Keystroke:
     """
     def __init__(self, key: str, time: Optional[float]):
         # Implement LegalKey here? Or can Keystrokes have illegal keys?
-        if not isinstance(key, str):
-            raise TypeError('key must be a string')
         if not isinstance(time, float) and time is not None:
             raise TypeError('time must be a float or None')
         self.key = key
@@ -68,7 +67,7 @@ class Keystroke:
         yield self.key, self.time
     def __repr__(self):
         return f"Keystroke(key={self.key}, time={self.time})"
-    def __eq__(self, other):
+    def __eq__(self, other: Any)	 -> bool:
         if isinstance(other, Keystroke):
             return self.key == other.key
         elif isinstance(other, str):
@@ -98,10 +97,11 @@ class KeystrokeDecoder(JSONDecoder):
     """
     A JSONDecoder that decodes Keystrokes [Logfile->List of Keystrokes]
     """
-    def object_hook(self, dct):
+    def object_hook(self, dct: dict[str, Any]) -> dict[str, Any]:
         if 'keystrokes' in dct:
             dct['keystrokes'] = [Keystroke(*k) for k in dct['keystrokes']]
         return dct
+
 class KeystrokeEncoder(JSONEncoder):
     """
     A JSONEncoder that encodes Keystrokes [Keystrokes->(key, time) and Log->Logfile)]
@@ -127,7 +127,7 @@ class LegalKey:
         if not is_key_valid(key):
             raise ValueError(f'Key {key} failed is_key_valid()')
         self.key = key
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"key={self.key}"
     def __str__(self):
         return self.key

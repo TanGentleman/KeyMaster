@@ -47,7 +47,7 @@ class KeyParser:
         try:
             with open(self.filename, 'r') as f:
                 data = json.load(f)
-            logs = []
+            logs:List[Log] = []
             for log_data in data:
                 # Instantiate Keystrokes and replace them in each log
                 keystrokes = [Keystroke(value[0], value[1]) for value in log_data['keystrokes']]
@@ -159,7 +159,7 @@ class KeyParser:
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         outlier_count = 0
-        times = []
+        times:List[float] = []
         if not keystrokes:
             print("No keystrokes found.")
             return []
@@ -233,7 +233,7 @@ class KeyParser:
                 return []
             times = self.get_only_times(identifier)
             return [max(times) if times else 0]
-        highest_times = []
+        highest_times: List[float] = []
         # iterate through logs
         for log in self.logs:
             id = log['id']
@@ -335,7 +335,7 @@ class KeyParser:
         Returns:
             list: A list of Keystroke items.
         """
-        keystrokes = []
+        keystrokes: List[Keystroke] = []
         for log in self.logs:
             if identifier is not None:
                 if log['id'] == identifier or log['string'] == identifier:
@@ -390,17 +390,23 @@ class KeyParser:
 
     def visualize_keystroke_differences(self, keystrokes1: List[Keystroke], keystrokes2: List[Keystroke]) -> None:
         # Extract the keys and times from the keystrokes
-        assert (key1 == key2 for key1, key2 in zip(keystrokes1, keystrokes2))
-        assert (len(keystrokes1) == len(keystrokes2))
+        # assert all keys are valid
+        assert(keystroke.valid for keystroke in keystrokes1)
+        assert(keystroke.valid for keystroke in keystrokes2)
+        # Get the intersection of the two lists
+        assert(key1 == key2 for key1, key2 in zip(keystrokes1, keystrokes2))
+        # This optional statement asserts that the keystrokes are the same length
+        # assert (len(keystrokes1) == len(keystrokes2))
         keys1 = [keystroke.key for keystroke in keystrokes1]
         times1 = [keystroke.time if keystroke.time else 0.0 for keystroke in keystrokes1]
+        length1 = len(keys1)
 
         keys2 = [keystroke.key for keystroke in keystrokes2]
         times2 = [keystroke.time if keystroke.time else 0.0 for keystroke in keystrokes2]
+        length2 = len(keys2)
 
-        assert(len(keys1) == len(times1))
-        assert(len(keys2) == len(times2))
         # Create a bar chart for each key
+        # Iterate through a list of all the unique keystroke.key values
         length = len(keys1)
         for i in range(length):
             # Get the times for each person
