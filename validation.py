@@ -1,28 +1,41 @@
 # This file is for the key validation function to explicitly typecheck classes.
-from typing import List, Union, Optional, Iterator, Tuple, TypedDict, Any, Dict
+from typing import List, Union, Optional, Iterator, Tuple, TypedDict, Any
 from pynput.keyboard import Key, KeyCode
 from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
 from json import JSONDecoder, JSONEncoder
 import string
 
-def filter_non_typable_chars(input_string: str) -> str:
+VALID_KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
+def replace_weird_keys(input_string: str) -> str:
     """
-    Filter out non-typable characters from a string.
+    Replace weird keys with their string representations.
+    I have found some present occasionally when copying text in the Notes app on macOS.
+    Potentially quotes with different unicode representations could go here too.
     """
     replacements = {
         '\u2028': '\n',  # replace line separator with newline
         # '\u2029': '\n',  # replace paragraph separator with newline
         # add more replacements here if needed
     }
-    typable_chars = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
-    for c in input_string:
-        if c not in typable_chars:
-            print(f"Non-typable character:{c}->{ord(c)}")
     for old, new in replacements.items():
         input_string = input_string.replace(old, new)
-    filtered_string = ''.join(c for c in input_string if c in typable_chars)
-    return filtered_string
+    return input_string
 
+def filter_non_typable_chars(input_string: str) -> str:
+    """
+    Filter out non-typable characters from a string.
+    Returns a string with only typable characters.
+    """
+    return ''.join(c for c in input_string if c in VALID_KEYBOARD_CHARS)
+
+def clean_string(input_string: str) -> str:
+    """
+    Returns a string with only typable characters.
+    """
+    for c in input_string:
+        if c not in VALID_KEYBOARD_CHARS:
+            print(f"Invalid character: {c} -> {ord(c)}")
+    return filter_non_typable_chars(replace_weird_keys(input_string))
 
 # *** KEY VALIDATION ***
 def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
@@ -32,9 +45,7 @@ def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
     if isinstance(key, KeyCode):
         return key.char is not None
     elif isinstance(key, Key):
-        key_as_string = str(key)
-        return key_as_string in SPECIAL_KEYS
-    
+        return key in SPECIAL_KEYS.values()
     else:
         # We know isinstance(key, str)
         key_as_string = key
@@ -47,9 +58,6 @@ def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
             return True
     # Check the length of the key stripped of single quotes
     key_as_string = key_as_string.strip("'")
-    if not key_as_string.isprintable():
-        print(f"Weird unprintable key: {key_as_string}")
-        return False
     return len(key_as_string) == 1
 
 class Keystroke:
@@ -60,14 +68,17 @@ class Keystroke:
         # Implement LegalKey here? Or can Keystrokes have illegal keys?
         if not isinstance(time, float) and time is not None:
             raise TypeError('time must be a float or None')
+        if not isinstance(key, str) or key == '':
+            raise TypeError('key must be a nonempty string')
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
+        self.typeable = all(c in VALID_KEYBOARD_CHARS for c in key)
     def __iter__(self) -> Iterator[Tuple[str, Optional[float]]]:
         yield self.key, self.time
     def __repr__(self):
         return f"Keystroke(key={self.key}, time={self.time})"
-    def __eq__(self, other: Any)	 -> bool:
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, Keystroke):
             return self.key == other.key
         elif isinstance(other, str):
@@ -92,6 +103,11 @@ class Log(TypedDict):
     id: str
     string: str
     keystrokes: List[Keystroke]
+    # These look like [ {
+    # "id": "6c03f172-abe8-4087-af47-bc84498b0f48", 
+    # "string": "*", 
+    # "keystrokes": [["Key.shift", null], ["'*'", 0.167]]
+    # } ]
 
 class KeystrokeDecoder(JSONDecoder):
     """
@@ -137,3 +153,4 @@ class LegalKey:
         elif isinstance(other, str):
             return self.key == other
         return False
+

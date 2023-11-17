@@ -6,8 +6,28 @@ LOG_DIR = path.join(ROOT, "Logfiles") # Define the path for the logfiles directo
 ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
 
+# Keyboard Listener timeout duration in seconds
 LISTEN_TIMEOUT_DURATION = 30
-ROUND_DIGITS = 4 # This is for logfile
+
+### SIMULATION.PY CONFIG ###
+SIM_MAX_DURATION = 30
+SIM_DISABLE = False
+
+SIM_DELAY_MEAN = 0.06
+SIM_DELAY_STD_DEV = 0.015
+SIM_MAX_WORDS = 300
+MIN_DELAY = 0.03
+
+SIM_ALLOW_ENTER_AND_TAB = True
+SIM_SPEED_MULTIPLE = 5
+
+### KEYLOGGER.PY CONFIG ###
+MAX_WORDS = 50
+SPEEDHACK = True # Only applies for KeyLogger class, this will be changed
+STOP_KEY = "*" # This key is used to stop the listener when pressed
+
+ROUND_DIGITS = 4 # This is for logfile timestamps
+
 # *** KEY VALIDATION ***
 SHIFT_SPEED = 0.2222
 SHIFTED_CHARS = r'~!@#$%^&*()_+{}|:"<>?'
@@ -22,26 +42,12 @@ SPECIAL_KEYS = {
     'Key.enter': Key.enter,
     }
 BANNED_KEYS = ["'√'"]
-WEIRD_KEYS = { # This maps str(Key.backslash) and str(Key.Apostrophe)
-    "'\\\\'": '\\',
-    '"\'"': "'"
+WEIRD_KEYS = { # Quirks of str(keypress) when the keypress is backslash or apostrophe
+#   str(KeyCode.from_char('\\')) == "'\\\\'"
+#   str(KeyCode.from_char("'")) == '"\'"'
+    "'\\\\'": '\\', # str(Key.backslash) -> '\\'
+    '"\'"': "'" # This is an apostrophe
 }
-
-MAX_WORDS = 50
-SPEEDHACK = True # Only applies for KeyLogger class, this will be changed
-STOP_KEY = "*" # This key is used to stop the listener when pressed
-
-### SIMULATION.PY CONFIG ###
-SIM_DISABLE = False
-
-SIM_DELAY_MEAN = 0.06
-SIM_DELAY_STD_DEV = 0.015
-SIM_MAX_WORDS = 300
-MIN_DELAY = 0.03
-
-SIM_ALLOW_ENTER_AND_TAB = True
-SIM_SPEED_MULTIPLE = 1
-SIM_MAX_DURATION = 30
 
 if SIM_ALLOW_ENTER_AND_TAB:
     sim_whitespace_dict = {
@@ -49,7 +55,7 @@ if SIM_ALLOW_ENTER_AND_TAB:
         '\t': Key.tab,
         ' ': Key.space,
     }
-    sim_map_chars = {
+    sim_encoded_char_dict = {
         ' ': str(Key.space),
         '\t': str(Key.tab),
         '\n': str(Key.enter),
@@ -58,7 +64,7 @@ if SIM_ALLOW_ENTER_AND_TAB:
     }
 else:
     sim_whitespace_dict = {' ': Key.space}
-    sim_map_chars = {
+    sim_encoded_char_dict = {
         ' ': str(Key.space),
         '\\': "'\\\\'",
         "'": '"\'"'

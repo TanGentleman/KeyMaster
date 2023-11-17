@@ -2,7 +2,7 @@ from pynput.keyboard import Controller
 from time import time as get_time
 from time import sleep
 import numpy as np
-from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_whitespace_dict, sim_map_chars
+from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_whitespace_dict, sim_encoded_char_dict
 from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 
 from typing import List, Union, Optional, Dict
@@ -13,18 +13,22 @@ class KeySimulator:
     A class used to simulate keystrokes and log them.
 
     Attributes:
+        speed_multiplier (float or int): The speed multiplier.
         delay_mean (float): The mean delay between keystrokes.
         delay_standard_deviation (float): The standard deviation of the delay between keystrokes.
         max_words (int): The maximum number of words to simulate.
         min_delay (float): The minimum delay between keystrokes.
-        logging_on (bool): A flag indicating whether to log keystrokes.
-        special_keys (dict): A dictionary mapping special key strings to their corresponding keys.
+        whitespace_keys (dict): A dictionary of whitespace characters and their corresponding keys.
+        special_keys (dict): A dictionary of special keys and their corresponding keys.
+        encoded_char_dict (dict): A dictionary of encoded characters and their corresponding strings.
+        disabled (bool): Whether or not the simulation is disabled.
+        max_duration (float): The maximum duration of the simulation.
     """
 
     def __init__(self, speed_multiplier: Union[float, int] = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
                  delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
                  min_delay: float = MIN_DELAY, whitespace_keys: dict = sim_whitespace_dict, 
-                 char_map = sim_map_chars, special_keys: Dict[str, Key] = SPECIAL_KEYS,
+                 encoded_char_dict = sim_encoded_char_dict, special_keys: Dict[str, Key] = SPECIAL_KEYS,
                  disabled = SIM_DISABLE, max_duration = SIM_MAX_DURATION) -> None:
         """
         Initialize the KeySimulator with the given parameters.
@@ -36,10 +40,10 @@ class KeySimulator:
         self.min_delay = min_delay
         self.whitespace_keys = whitespace_keys
         self.special_keys = special_keys
-        self.char_map = char_map
+        self.encoded_char_dict = encoded_char_dict
         self.disabled = disabled
         self.max_duration = max_duration
-        sim_start_time = None
+        self.sim_start_time = None
     
     def calculate_delay(self, speed_multiple: Union[float, int, None]) -> float:
         """
@@ -86,17 +90,17 @@ class KeySimulator:
             keystroke = self.generate_keystroke(char)
             if keystroke is None:
                 continue
-            
+            if char == ' ':
+                word_count += 1
             if not keystrokes:
                 last_key = None
             else:
                 last_key = keystrokes[-1].key
-
             # Lambda function to check if a key is eligible to have shift before it
-            eligible = lambda k: (k is None or k == ' ') or (k not in SHIFTED_CHARS and not k.isupper())
+            shift_eligible = lambda k: (k is None or k == ' ') or (k not in SHIFTED_CHARS and not k.isupper())
 
             # Check if a shift key needs to be added
-            if eligible(last_key):
+            if shift_eligible(last_key):
                 if char.isupper() or (char in SHIFTED_CHARS):
                     print(f"Found shifted key: {char}")
                     # Add a shift keypress
@@ -107,8 +111,6 @@ class KeySimulator:
                     key = 'Key.shift'
                     keystrokes.append(Keystroke(key, time))
 
-            if keystroke.key == ' ':
-                word_count += 1
             if keystrokes == []:
                 keystroke.time = None
             keystrokes.append(keystroke)
@@ -119,13 +121,17 @@ class KeySimulator:
         """
         Generate a single keystroke from a character.
         """
+        try:
+            assert(len(char) == 1)
+        except AssertionError:
+            print(f"Character length > 1: {char}")
+            return None
         delay1 = self.calculate_delay(1)
         delay2 = self.calculate_delay(1.5)
         key_as_string = ''
 
-        if char in self.char_map:
-            key_as_string = str(self.char_map[char])
-            # print(f"Found char: {char} | {self.char_map[char]} | {key_as_string}")
+        if char in self.encoded_char_dict:
+            key_as_string = str(self.encoded_char_dict[char])
         elif char.isprintable():
             # Add '' around the character
             key_as_string = f"'{char}'"
@@ -181,12 +187,14 @@ class KeySimulator:
                 if delay > 0:
                     sleep(delay)  # Wait for the time difference between keystrokes
                 if key in special_key_dict:
-                    keyboard.press(special_key_dict[key])
-                    keyboard.release(special_key_dict[key])
+                    keyboard.tap(special_key_dict[key])
                 elif key in WEIRD_KEYS:
                     keyboard.type(WEIRD_KEYS[key])
                 else:
-                    keyboard.type(key.strip("\'"))  # Type the character
+                    key = key.strip("\'")
+                    # IMPORTANT. This string may should have '' around it (Not required)
+                    # My implementation throughout should ensure it gets logged with single quotes.
+                    keyboard.type(key)
 
                 if key == STOP_KEY:
                     print('STOP key found. Stopping simulation.')

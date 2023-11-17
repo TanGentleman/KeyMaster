@@ -1,15 +1,17 @@
 from keyLogger import KeyLogger
 from config import ABSOLUTE_SIM_FILEPATH
-from validation import filter_non_typable_chars
+from validation import clean_string
 from keySimulator import KeySimulator
 from time import sleep
-from typing import Optional
 
 LOGGING_ON = True
 LISTENFIRST = False
 PRINT_KEYS = False
-
 DEFAULT_STRING = "hey look ma, it's a simulation!"
+
+## RINSE TO SIMULATE HUMAN INPUT (Removes unicode characters)
+RINSE_STRING = True
+
 
 def main(listen_first: bool = LISTENFIRST, input_string: str = DEFAULT_STRING) -> None:
     """
@@ -54,7 +56,8 @@ def main(listen_first: bool = LISTENFIRST, input_string: str = DEFAULT_STRING) -
             logger.save_log()
         else:
             if input_string:
-                logger.set_internal_log(keystrokes, input_string)
+                # WARNING: The internal log may not match! Your clipboard string may be longer.
+                logger.set_internal_log(keystrokes, '*CLIPBOARD*:' + input_string)
                 logger.save_log()
 ### This supports no-UI Shortcuts integration.
 # Create a keyboard shortcut to run a shell script `python simulate.py "*Clipboard*"`
@@ -73,7 +76,10 @@ if __name__ == "__main__":
                 print("No text found in clipboard.")
                 pass
             else:
-                main(False, filter_non_typable_chars(py_paste()))
+                if RINSE_STRING:
+                    main(False, clean_string(py_paste()))
+                else:
+                    main(False, py_paste())
         else:
             print("Gotta have a valid argument. Try 'Test' or '*Clipboard*'")
             pass
