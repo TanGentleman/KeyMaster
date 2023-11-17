@@ -4,7 +4,7 @@ import json
 from uuid import uuid4
 from os import path
 from config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
-from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
+from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid, keystrokes_to_string
 from typing import List, Optional, Union
 from threading import Timer
 
@@ -80,13 +80,12 @@ class KeyLogger:
 			# Mark first character delay as None
 			if not self.keystrokes:
 				keystroke = Keystroke(key_as_string, None)
-				self.keystrokes.append(keystroke)
 			else:
 				delay = round(delay, ROUND_DIGITS)  # Round to 4 decimal places
 				keystroke = Keystroke(key_as_string, delay)
-				self.keystrokes.append(keystroke)
-			
+
 			assert(keystroke.valid is True)
+			self.keystrokes.append(keystroke)
 			self.prev_time = current_time # <----- Make sure this statement comes at an appropriate time.
 
 			# Append typed character to the string
@@ -195,16 +194,30 @@ class KeyLogger:
 			return False
 		none_count = 0
 		for keystroke in keystrokes:
-			key = keystroke.key
 			delay = keystroke.time
 			if delay is None:
 				none_count += 1
 				if none_count > 1:
 					print('None value marks first character. Only use once.')
 					return False
-			elif type(key) != str or type(delay) != float:
-				print('Invalid keystrokes. Format is (key:str, time:float)')
-				return False
+		validation_string = keystrokes_to_string(self.keystrokes)
+		if self.typed_string != validation_string:
+			print("Warning: typed_string and keystrokes do not exactly match!")
+			if len(self.typed_string) != len(validation_string):
+				print(f"String lengths do not match.")
+			# Find the first character that differs
+			min_length = min(len(self.typed_string), len(validation_string))
+			for i in range(min_length):
+				# safety check
+				if i >= len(self.typed_string) or i >= len(validation_string):
+					print(f"String value at index {i} out of bounds.")
+					break
+
+				if self.typed_string[i] != validation_string[i]:
+					print(f"First differing character: {self.typed_string[i]}")
+					break
+		else:
+			print("Internal log validated and set.")
 		return True
 
 	def set_internal_log(self, keystrokes: List[Keystroke], input_string: str) -> bool:

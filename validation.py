@@ -73,7 +73,7 @@ class Keystroke:
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
-        self.typeable = all(c in VALID_KEYBOARD_CHARS for c in key)
+        self.typeable = self.valid and all(c in VALID_KEYBOARD_CHARS for c in key)
     def __iter__(self) -> Iterator[Tuple[str, Optional[float]]]:
         yield self.key, self.time
     def __repr__(self):
@@ -154,3 +154,40 @@ class LegalKey:
             return self.key == other
         return False
 
+def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
+    """
+    Converts a list of Keystroke objects into a string, taking into account special keys.
+
+    Args:
+        keystrokes (List[Keystroke]): A list of Keystroke objects.
+
+    Returns:
+        str: The string representation of the keystrokes.
+    """
+    output_string = ""
+    word_count = 0
+    for keystroke in keystrokes:
+        if not keystroke.valid:
+            print(f"Invalid keystroke: {keystroke.key}")
+            continue
+        # This means keystroke.valid is true, so it is a valid keypress
+        key = keystroke.key
+        # Handle special keys
+        if key in SPECIAL_KEYS:
+            key = SPECIAL_KEYS[key]
+            if key == Key.backspace and output_string != '':
+                output_string = output_string[:-1]  # Remove the last character
+            elif key == Key.space:
+                output_string += ' '
+                word_count += 1
+            elif key == Key.enter:
+                output_string += '\n'
+            elif key == Key.tab:
+                output_string += '\t'
+            else:
+                pass # Ignore CapsLock and Shift
+        else:
+            # Append the character to the output string
+            # It is 1 character because it passed is_key_valid() and is not in SPECIAL_KEYS
+            output_string += key.strip("'")
+    return output_string
