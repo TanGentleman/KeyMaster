@@ -42,20 +42,21 @@ def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
     """
     Function to check if the key is valid.
     """
-    if isinstance(key, KeyCode):
-        return key.char is not None
-    elif isinstance(key, Key):
+    if isinstance(key, Key):
         return key in SPECIAL_KEYS.values()
-    else:
-        # We know isinstance(key, str)
-        key_as_string = key
-        # A string like 'a' is valid, but 'Key.alt' is not
-        if key_as_string in BANNED_KEYS:
+    elif isinstance(key, KeyCode):
+        if key.char is None:
             return False
-        elif key_as_string in SPECIAL_KEYS:
-            return True
-        if key_as_string in WEIRD_KEYS:
-            return True
+        key = str(key)
+    # We know isinstance(key, str)
+    key_as_string = key
+    # A string like 'a' is valid, but 'Key.alt' is not
+    if key_as_string in BANNED_KEYS:
+        return False
+    elif key_as_string in SPECIAL_KEYS:
+        return True
+    if key_as_string in WEIRD_KEYS:
+        return True
     # Check the length of the key stripped of single quotes
     key_as_string = key_as_string.strip("'")
     return len(key_as_string) == 1
@@ -66,17 +67,17 @@ class Keystroke:
     """
     def __init__(self, key: str, time: Optional[float]):
         # Implement LegalKey here? Or can Keystrokes have illegal keys?
-        if not isinstance(time, float) and time is not None:
-            raise TypeError('time must be a float or None')
         if not isinstance(key, str) or key == '':
             raise TypeError('key must be a nonempty string')
+        if not isinstance(time, float) and time is not None:
+            raise TypeError('time must be a float or None')
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
         self.typeable = self.valid and all(c in VALID_KEYBOARD_CHARS for c in key)
     def __iter__(self) -> Iterator[Tuple[str, Optional[float]]]:
         yield self.key, self.time
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Keystroke(key={self.key}, time={self.time})"
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Keystroke):
@@ -86,16 +87,14 @@ class Keystroke:
         return False
     
 def check_keystrokes_legit(keystrokes: List[Keystroke]) -> bool:
-	"""
-	Function to check if the keystrokes are valid.
-	"""
-	if keystrokes == []:
-		return True
-	for keystroke in keystrokes:
-		if not keystroke.valid:
-			print(f"Invalid keystroke: {keystroke.key}")
-			return False
-	return True
+    """
+    Function to check if the keystrokes are valid.
+    """
+    if keystrokes is None:
+        return False
+    if keystrokes == []:
+        return True
+    return all(keystroke.valid for keystroke in keystrokes)
 class Log(TypedDict):
     """
     A class used to represent a log. The logfile is a list of logs.
@@ -174,15 +173,15 @@ def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
         key = keystroke.key
         # Handle special keys
         if key in SPECIAL_KEYS:
-            key = SPECIAL_KEYS[key]
-            if key == Key.backspace and output_string != '':
+            special_key = SPECIAL_KEYS[key]
+            if special_key == Key.backspace and output_string != '':
                 output_string = output_string[:-1]  # Remove the last character
-            elif key == Key.space:
+            elif special_key == Key.space:
                 output_string += ' '
                 word_count += 1
-            elif key == Key.enter:
+            elif special_key == Key.enter:
                 output_string += '\n'
-            elif key == Key.tab:
+            elif special_key == Key.tab:
                 output_string += '\t'
             else:
                 pass # Ignore CapsLock and Shift

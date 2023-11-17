@@ -43,7 +43,6 @@ class KeySimulator:
         self.encoded_char_dict = encoded_char_dict
         self.disabled = disabled
         self.max_duration = max_duration
-        self.sim_start_time = None
     
     def calculate_delay(self, speed_multiple: Union[float, int, None]) -> float:
         """
@@ -153,7 +152,7 @@ class KeySimulator:
         if self.disabled:
             print("Simulation disabled.")
             return
-        self.sim_start_time = get_time()
+        start_time = get_time()
         special_key_dict = self.special_keys
 
         keyboard = Controller()
@@ -163,7 +162,7 @@ class KeySimulator:
                 print(f"Invalid key: {keystroke.key}")
                 continue
             # Check if max duration has been reached
-            if get_time() - self.sim_start_time > self.max_duration:
+            if get_time() - start_time > self.max_duration:
                 print(f"Max duration reached: {self.max_duration} seconds")
                 break
 

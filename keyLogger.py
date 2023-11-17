@@ -81,7 +81,7 @@ class KeyLogger:
 			if not self.keystrokes:
 				keystroke = Keystroke(key_as_string, None)
 			else:
-				delay = round(delay, ROUND_DIGITS)  # Round to 4 decimal places
+				delay = round(delay, ROUND_DIGITS) # Round to 4 decimal places
 				keystroke = Keystroke(key_as_string, delay)
 
 			assert(keystroke.valid is True)
@@ -94,19 +94,15 @@ class KeyLogger:
 			elif keypress == Key.space:
 				self.typed_string += ' '
 				self.word_count += 1
+			elif keypress == Key.enter:
+				self.typed_string += '\n'
+			elif keypress == Key.tab:
+				self.typed_string += '\t'
 			# logic for backspaces, including if going back on a space
-			elif keypress == Key.backspace:
-				self.typed_string = self.typed_string[:-1]
-				if len(self.typed_string) > 0 and self.typed_string[-1]  == ' ':
+			elif keypress == Key.backspace and len(self.typed_string) > 0:
+				if self.typed_string[-1] == ' ':
 					self.word_count -= 1
-			## Enter/Tab not valid special keys, this may technically affect correctness of word count
-			# elif keypress == Key.enter:
-			#     # My logic is that spamming newlines should increase word count, but maybe just space is best
-			#     self.typed_string += '\n'
-			#     self.word_count += 1
-			# elif keypress == Key.tab:
-			#     self.typed_string += '\t'
-			#     self.word_count += 1
+				self.typed_string = self.typed_string[:-1]
 		return None
 
 	def stop_listener_condition(self, keypress: Union[Key, KeyCode]) -> bool:
