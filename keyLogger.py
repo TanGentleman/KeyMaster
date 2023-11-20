@@ -4,10 +4,14 @@ import json
 from uuid import uuid4
 from os import path
 from config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
-from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid, keystrokes_to_string
+from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List, Optional, Union
 from threading import Timer
 
+VALIDATE_WITH_PARSER = True
+if VALIDATE_WITH_PARSER:
+	from keyParser import validate_keystrokes
+	from keyParser import KeyParser
 class KeyLogger:
 	"""
 	A class used to log keystrokes and calculate delays between each keypress.
@@ -186,6 +190,9 @@ class KeyLogger:
 			bool: True if the input is valid Log material, False otherwise.
 		"""
 		if not input_string:
+			print("No input string found. Log not legit")
+			return False
+		if not keystrokes:
 			print("No keystrokes found. Log not legit")
 			return False
 		none_count = 0
@@ -196,24 +203,9 @@ class KeyLogger:
 				if none_count > 1:
 					print('None value marks first character. Only use once.')
 					return False
-		validation_string = keystrokes_to_string(self.keystrokes)
-		if self.typed_string != validation_string:
-			print("Warning: typed_string and keystrokes do not exactly match!")
-			if len(self.typed_string) != len(validation_string):
-				print(f"String lengths do not match.")
-			# Find the first character that differs
-			min_length = min(len(self.typed_string), len(validation_string))
-			for i in range(min_length):
-				# safety check
-				if i >= len(self.typed_string) or i >= len(validation_string):
-					print(f"String value at index {i} out of bounds.")
-					break
-
-				if self.typed_string[i] != validation_string[i]:
-					print(f"First differing character: {self.typed_string[i]}")
-					break
-		else:
-			print("Internal log validated and set.")
+		if VALIDATE_WITH_PARSER:
+			success = validate_keystrokes(keystrokes, input_string)
+			print(f"Keystrokes validated: {success}")
 		return True
 
 	def set_internal_log(self, keystrokes: List[Keystroke], input_string: str) -> bool:
@@ -302,17 +294,16 @@ def run_parser_tests(logger: KeyLogger, parser) -> None:
 	print("All assertion checks passed.")
 
 
-def main(include_parser: bool = True):
+def main():
 	logger = KeyLogger()
 	logger.start_listener()
 	success = logger.save_log()
 	if not success:
 		print("Log not saved.")
 		return
-	if include_parser:
+	if VALIDATE_WITH_PARSER and KeyParser is not None:
 		try:
 			print("Now testing KeyParser.")
-			from keyParser import KeyParser
 			parser = KeyParser(None)
 			run_parser_tests(logger, parser)
 		except:

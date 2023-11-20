@@ -3,9 +3,37 @@ import statistics
 import matplotlib.pyplot as plt
 from typing import List, Dict, Optional
 from os import path
-OUTLIER_CUTOFF = 0.8
-from config import ROOT, ABSOLUTE_REG_FILEPATH
+from config import LOG_DIR, ABSOLUTE_REG_FILEPATH, STOP_KEY
+from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
 from validation import Keystroke, Log
+from pynput.keyboard import Key
+
+OUTLIER_CUTOFF = 0.8
+
+# Function to see if an identifier is present in a log
+def is_id_in_log(identifier: str, log: Log) -> bool:
+    """
+    Check if a log with the identifier exists in the loaded logs.
+
+    Args:
+        identifier (str): The UUID or exact string formatted as "*string". (* is the STOP_KEY)
+        log (Log): The log to check.
+
+    Returns:
+        bool: True if a log with the given UUID or exact string exists, False otherwise.
+    """
+    if not identifier:
+        print("No identifier provided.")
+        return False
+    if not log:
+        print("No log provided.")
+        return False
+    if log['id'] == identifier:
+        return True
+    if identifier[-1] == STOP_KEY and log['string'] == identifier[1:]:
+        return True
+    return False
+
 class KeyParser:
     """
     A class used to parse and analyze keystroke logs.
@@ -27,8 +55,10 @@ class KeyParser:
             self.filename = None
         elif filename == '':
             filename = ABSOLUTE_REG_FILEPATH
+        elif filename == 'SIM':
+            filename = path.join(LOG_DIR, 'simulated-keystrokes.json')
         else:
-            filename = path.join(ROOT, filename)
+            filename = path.join(LOG_DIR, filename)
 
         self.filename = filename
         self.logs: List[Log] = self.extract_logs()
@@ -42,17 +72,17 @@ class KeyParser:
             list: A list of logs loaded from the file. If an error occurs, an empty list is returned.
         """
         if self.filename is None:
-            print("No filename assigned.")
+            # print("No filename assigned.")
             return []
         try:
             with open(self.filename, 'r') as f:
-                data = json.load(f)
+                log_contents = json.load(f)
             logs:List[Log] = []
-            for log_data in data:
+            for log in log_contents:
                 # Instantiate Keystrokes and replace them in each log
-                keystrokes = [Keystroke(value[0], value[1]) for value in log_data['keystrokes']]
-                log_data['keystrokes'] = keystrokes
-                logs.append(log_data)
+                keystrokes = [Keystroke(k[0], k[1]) for k in log['keystrokes']]
+                log['keystrokes'] = keystrokes
+                logs.append(log)
             return logs
         except FileNotFoundError:
             print("No log file found.")
@@ -71,10 +101,38 @@ class KeyParser:
         Returns:
             bool: True if a log with the given UUID or exact string exists, False otherwise.
         """
+        if not identifier:
+            print("No identifier provided.")
+            return False
         for log in self.logs:
-            if log['id'] == identifier or log['string'] == identifier:
+            if is_id_in_log(identifier, log):
                 return True
         return False
+    
+    def id_by_index(self, index: int) -> Optional[str]:
+        """
+        Get the ID of the log at a given index. 
+        Index begins at 1, as labeled in method print_strings.
+
+        Args:
+            index (int): The index of the log to get the ID of.
+
+        Returns:
+            str or None: The ID of the log at the given index. If no such log is found, None is returned.
+        """
+        if not self.logs:
+            print("No logs found. Returning None.")
+            return None
+        if index < 1:
+            if index == 0:
+                print("WARNING: Index begins at 1. Returning first log anyways.")
+                index = 1
+            else:
+                raise ValueError("Index must be greater than 0.")
+        if index > len(self.logs):
+            print("Index too high. Returning the last id.")
+            return self.logs[-1]['id']
+        return self.logs[index-1]['id']
 
     def id_from_substring(self, keyword: str) -> Optional[str]:
         """
@@ -104,23 +162,27 @@ class KeyParser:
             the list contains the string associated with that identifier. 
             If the identifier is not found, an empty list is returned.
         """
+        if not self.logs:
+            print("No logs found. Returning empty list.")
+            return []
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if not isPresent:
                 return []
             for log in self.logs:
-                if log['id'] == identifier or log['string'] == identifier:
+                if is_id_in_log(identifier, log):
                     return [log['string']]
         return [log['string'] for log in self.logs]
     
-    def print_strings(self, identifier: Optional[str] = None, truncate: int = 25) -> None:
+    def print_strings(self, max: int = 5, truncate: int = 25, identifier: Optional[str] = None) -> None:
         """
         Prints strings from logs. If 'identifier' is provided, prints associated string.
         Strings longer than 'truncate' value are appended with "...[truncated]".
 
         Args:
+            max (int): Maximum number of strings to print. Defaults to 5.
+            truncate (int): Maximum number of characters to print. Defaults to 25.
             identifier (str, optional): The UUID or exact string to check for.
-            truncate (int, optional): Maximum length for printed strings. Defaults to 25.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
@@ -128,14 +190,18 @@ class KeyParser:
                 print("ID invalid, no strings found.")
                 return
         string_list = self.get_strings(identifier)
-        print(f"Number of strings: {len(string_list)}")
+        print(f"Total strings: {len(string_list)}")
+        count = 0
         for curr_string in string_list:
+            count += 1
+            if count > max:
+                print(f"First {max} strings printed.")
+                break
             if truncate > 0 and len(curr_string) > truncate:
-                curr_string = curr_string[:truncate] + "...[truncated]"
+                curr_string = curr_string[:truncate] + "[...]"
             # Newlines get annoying, so replace them with "\n"
             # curr_string = curr_string.replace("\n", "\\n")
-            print([curr_string])
-
+            print(f'{count}|{curr_string}')
 
     def get_only_times(self, identifier: Optional[str] = None, exclude_outliers: Optional[bool] = None) -> List[float]:
         """
@@ -187,9 +253,11 @@ class KeyParser:
         Returns:
             float or None: If no characters are found, None is returned.
         """
+        if not self.logs:
+            print("No logs found.")
+            return None
         num_chars = 0
         total_seconds = 0
-
         # If identifier is provided, calculate WPM for specific log
         if identifier is not None:
             if not self.check_membership(identifier):
@@ -227,18 +295,25 @@ class KeyParser:
         Returns:
             list: A list of float values.
         """
+        if not self.logs:
+            print("No logs found.")
+            return []
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
                 return []
             times = self.get_only_times(identifier)
-            return [max(times) if times else 0]
-        highest_times: List[float] = []
+            if len(times) == 0:
+                print("No keystroke times found.")
+                return []
+            return [max(times)]
+        highest_times = []
         # iterate through logs
         for log in self.logs:
             id = log['id']
             times = self.get_only_times(id)
-            highest_times.append(max(times) if times else 0)
+            if times:
+                highest_times.append(max(times))
         return highest_times
     
     def get_average_delay(self, identifier: Optional[str] = None) -> Optional[float]:
@@ -418,7 +493,86 @@ class KeyParser:
             plt.ylabel('Count')
             plt.show()
 
+    def keystrokes_to_string(self, keystrokes: List[Keystroke]) -> str:
+        """
+        Converts a list of Keystroke objects into a string, taking into account special keys.
 
+        Args:
+            keystrokes (List[Keystroke]): A list of Keystroke objects.
+
+        Returns:
+            str: The string representation of the keystrokes.
+        """
+        output_string = ""
+        word_count = 0
+        for keystroke in keystrokes:
+            if not keystroke.valid:
+                print(f"Invalid keystroke: {keystroke.key}")
+                continue
+            # This means keystroke.valid is true, so it is a valid keypress
+            key = keystroke.key
+            # Handle special keys
+            if key in SPECIAL_KEYS:
+                special_key = SPECIAL_KEYS[key]
+                if special_key == Key.backspace and output_string != '':
+                    output_string = output_string[:-1]  # Remove the last character
+                elif special_key == Key.space:
+                    output_string += ' '
+                    word_count += 1
+                elif special_key == Key.enter:
+                    output_string += '\n'
+                elif special_key == Key.tab:
+                    output_string += '\t'
+                else:
+                    continue # Ignore CapsLock and Shift
+            elif key in WEIRD_KEYS:
+                output_string += WEIRD_KEYS[key]
+            elif key in BANNED_KEYS:
+                continue
+            else:
+                # Append the character to the output string
+                # It is 1 character because it passed is_key_valid() and is not in SPECIAL_KEYS
+                output_string += key.strip("'")
+        return output_string
+
+def validate_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
+    """
+    Validate a list of Keystroke objects against the logs.
+
+    Args:
+        keystrokes (List[Keystroke]): A list of Keystroke objects.
+        identifier (str, optional): The UUID or exact string to check for.
+
+    Returns:
+        bool: True if the keystrokes match the logs, False otherwise.
+    """
+    # Validate the keystrokes with the parser
+    parser = KeyParser(None)
+    validation_string = parser.keystrokes_to_string(keystrokes)
+    if input_string != validation_string:
+        print("Warning: input string and keystrokes do not exactly match!")
+        if len(input_string) != len(validation_string):
+            print(f"String lengths do not match.")
+        # Find the first character that differs
+        max_length = max(len(input_string), len(validation_string))
+        for i in range(max_length):
+            # safety check
+            if i >= len(input_string):
+                print(f"Validation string found extra char at index {i}: {(validation_string[i])} <-")
+                break
+            
+            elif i >= len(validation_string):
+                print(f"Typed string has extra char at index {i}: {(input_string[i])} <-")
+                break
+            typed_char = input_string[i]
+            validation_char = validation_string[i]
+            if typed_char != validation_char:
+                print(f"Found differing character!")
+                print(f"Typed string: {typed_char} <-")
+                print(f"Validation string: {validation_char} <-")
+                break
+        return False
+    return True
 if __name__ == "__main__":
     parser = KeyParser()
     id = parser.id_from_substring("")

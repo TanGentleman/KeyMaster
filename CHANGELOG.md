@@ -3,18 +3,28 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Bugs
-- Certain unicode characters may present a discrepancy between input string and generated keystrokes
+- Squashed the unicode bugs! Compatibility strengthening each update!
 
 ## [Unreleased]
-- Make a proper feature list and update the README file
+- Create test cases to ensure consistency across all 3 classes
+- Formalize readable documentation and update the README file
+- Move more constants to config.py
 - Convert print statements to proper logging
-- Implement functions to double check the consistency between Keystrokes and input strings (robust to backspace, caps lock, other tricky input keys.)
 - Repeated keypresses handled, possibly heavily reducing the time between repeated keys
 - Utilize public datasets to make custom algorithm choices for generating keystroke delays
+## [1.1.2] - 2023-November
 
+### Added
+- Add validation function in KeyParser class to compare keystroke lists to a string
+- Implement LegalKey object for consistency of valid keystroke objects, robust to backspace, caps lock, unicode symbols, etc.
+- Nuanced "Shift" keypress handling and appropriately generating in sample data
+- Keystroke attributes `valid` and `typeable` allow unicode characters to be tightly controlled
+- Strict validation of keystrokes with new `legalize` method that converts to object LegalKey
+- Use files test.py and note built-in logging for edge cases
+    - Troubleshoot unicode characters like `Invalid character: ˜ -> 732`
+    - Customize list of banned characters in config.py
 ## [1.1.1] - 2023-October
 
 ### Added
@@ -27,9 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle modifier key logic more elegantly when simulating presses (Like shift key being held down when typing "##")
 
 ### Fixed
-
+- Constants for listening/simulating duration and max words in config.py work consistently 
+- Certain unicode characters may present a discrepancy between input string and generated keystrokes
 - Compatibility of keystrokes from different sources (str, Key, Keycode) to and from logfile
-- Teeny typo in keyParser.py 
 - Running KeyLogger.start_listener in jupyter notebook lacks perms and stalls, need separate thread to halt in x seconds
 - Running simulator.main on a string with apostrophes is now failing.
 - Simulation disabling works consistently

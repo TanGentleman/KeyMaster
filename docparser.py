@@ -25,10 +25,10 @@ def read_file(filename: str) -> Optional[str]:
             return f.read()
     except FileNotFoundError:
         print(f"File {filename} not found")
-        return
+        return None
     except Exception as e:
         print(f"An error occurred: {e}")
-        return
+        return None
 
 from os import path
 
@@ -86,8 +86,8 @@ if __name__ == "__main__":
         file_as_string = args[1]
         if path.exists(file_as_string):
             file_to_read = file_as_string
+            print(f"Parsing {file_to_read}.")
             create_docstring_file_from_string(file_to_read, FILE_TO_WRITE)
-            print(f"File {file_as_string} not found")
     else:
         file_to_read = DEFAULT_FILE
         print(f"Using default file {file_to_read}")

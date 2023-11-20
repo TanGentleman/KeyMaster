@@ -6,6 +6,7 @@ from json import JSONDecoder, JSONEncoder
 import string
 
 VALID_KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
+
 def replace_weird_keys(input_string: str) -> str:
     """
     Replace weird keys with their string representations.
@@ -38,7 +39,7 @@ def clean_string(input_string: str) -> str:
     return filter_non_typable_chars(replace_weird_keys(input_string))
 
 # *** KEY VALIDATION ***
-def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
+def is_key_valid(key: Union[Key, KeyCode, str], strict = False) -> bool:
     """
     Function to check if the key is valid.
     """
@@ -59,14 +60,45 @@ def is_key_valid(key: Union[Key, KeyCode, str]) -> bool:
         return True
     # Check the length of the key stripped of single quotes
     key_as_string = key_as_string.strip("'")
+    # This means that both wrapped and unwrapped chars are valid
+    if strict:
+        return len(key_as_string) == 1 and key_as_string in VALID_KEYBOARD_CHARS
     return len(key_as_string) == 1
 
+class LegalKey:
+    """
+    A class used to represent a legal key. Chars have no quote wrapping.
+    >>> LegalKey('a', False)
+    key=a
+    >>> LegalKey('Key.shift', True)
+    key=Key.shift
+    """
+    def __init__(self, key: str, is_special: bool):
+        if not isinstance(key, str) or not isinstance(is_special, bool):
+            raise TypeError('key must be a string and is_special must be a bool')
+        assert(is_key_valid(key, strict=True))
+        self.key = key
+        self.is_special = is_special
+    def __repr__(self) -> str:
+        return f"key={self.key}"
+    def __eq__(self, other) -> bool:
+        if isinstance(other, LegalKey):
+            return self.key == other.key
+        elif isinstance(other, str):
+            return self.key == other
+        return False
 class Keystroke:
     """
     A class used to represent a keystroke. The validity is held in Keystroke.valid
+    Convention is to wrap the key in single quotes if it is a character.
     """
     def __init__(self, key: str, time: Optional[float]):
-        # Implement LegalKey here? Or can Keystrokes have illegal keys?
+        """
+        >>> Keystroke("'a'", None)
+        Keystroke(key='a', time=None)
+        >>> Keystroke('Key.shift', 0.2222)
+        Keystroke(key=Key.shift, time=0.222)
+        """
         if not isinstance(key, str) or key == '':
             raise TypeError('key must be a nonempty string')
         if not isinstance(time, float) and time is not None:
@@ -74,7 +106,7 @@ class Keystroke:
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
-        self.typeable = self.valid and all(c in VALID_KEYBOARD_CHARS for c in key)
+        self.typeable = is_key_valid(key, strict=True)
     def __iter__(self) -> Iterator[Tuple[str, Optional[float]]]:
         yield self.key, self.time
     def __repr__(self) -> str:
@@ -85,16 +117,30 @@ class Keystroke:
         elif isinstance(other, str):
             return self.key == other
         return False
-    
-def check_keystrokes_legit(keystrokes: List[Keystroke]) -> bool:
-    """
-    Function to check if the keystrokes are valid.
-    """
-    if keystrokes is None:
-        return False
-    if keystrokes == []:
-        return True
-    return all(keystroke.valid for keystroke in keystrokes)
+    def legalize(self) -> LegalKey | None:
+        """
+        Returns a LegalKey object or None if the key is not valid.
+        """
+        if self.typeable:
+            is_special = False
+            # Assertions should always pass
+            if self.key in SPECIAL_KEYS:
+                # What should a legal key look like for a special key?
+                print("Special key! Legal key status is None")
+                is_special = True
+                legal_key = self.key
+            elif self.key in WEIRD_KEYS:
+                legal_key = WEIRD_KEYS[self.key]
+            else:
+                legal_key = self.key.strip("'")
+                assert(len(legal_key) == 1 and legal_key in VALID_KEYBOARD_CHARS)
+            return LegalKey(legal_key, is_special)
+        else:
+            print(f"Could not be legalized:{self.key}<-")
+            if self.valid:
+                print("This is likely a unicode character that is not typable.")
+            return None
+
 class Log(TypedDict):
     """
     A class used to represent a log. The logfile is a list of logs.
@@ -131,62 +177,3 @@ class KeystrokeEncoder(JSONEncoder):
                 'keystrokes': [self.default(keystroke) for keystroke in obj['keystrokes']]
             }
         return super().default(obj)
-
-class LegalKey:
-    """
-    A class used to represent a legal key. Not currently implemented
-    """
-    def __init__(self, key: str):
-        if not isinstance(key, str):
-            raise TypeError('key must be a string')
-        if not is_key_valid(key):
-            raise ValueError(f'Key {key} failed is_key_valid()')
-        self.key = key
-    def __repr__(self) -> str:
-        return f"key={self.key}"
-    def __str__(self):
-        return self.key
-    def __eq__(self, other):
-        if isinstance(other, LegalKey):
-            return self.key == other.key
-        elif isinstance(other, str):
-            return self.key == other
-        return False
-
-def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
-    """
-    Converts a list of Keystroke objects into a string, taking into account special keys.
-
-    Args:
-        keystrokes (List[Keystroke]): A list of Keystroke objects.
-
-    Returns:
-        str: The string representation of the keystrokes.
-    """
-    output_string = ""
-    word_count = 0
-    for keystroke in keystrokes:
-        if not keystroke.valid:
-            print(f"Invalid keystroke: {keystroke.key}")
-            continue
-        # This means keystroke.valid is true, so it is a valid keypress
-        key = keystroke.key
-        # Handle special keys
-        if key in SPECIAL_KEYS:
-            special_key = SPECIAL_KEYS[key]
-            if special_key == Key.backspace and output_string != '':
-                output_string = output_string[:-1]  # Remove the last character
-            elif special_key == Key.space:
-                output_string += ' '
-                word_count += 1
-            elif special_key == Key.enter:
-                output_string += '\n'
-            elif special_key == Key.tab:
-                output_string += '\t'
-            else:
-                pass # Ignore CapsLock and Shift
-        else:
-            # Append the character to the output string
-            # It is 1 character because it passed is_key_valid() and is not in SPECIAL_KEYS
-            output_string += key.strip("'")
-    return output_string

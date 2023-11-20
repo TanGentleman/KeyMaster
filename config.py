@@ -2,6 +2,7 @@ from os import path
 from pynput.keyboard import Key
 ROOT = path.dirname(path.abspath(__file__)) # Get the absolute path of the current script
 LOG_DIR = path.join(ROOT, "Logfiles") # Define the path for the logfiles directory
+DOCS_DIR = path.join(ROOT, "Docs") # Define the path for the docs directory
 # Define the paths for the logfiles
 ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")

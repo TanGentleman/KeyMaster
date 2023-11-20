@@ -82,10 +82,10 @@ class KeySimulator:
 
         string_length = len(string)
         for i in range(string_length):
-            char = string[i]
             if word_count == self.max_words:
                 print(f"Reached max words: {self.max_words}")
                 break
+            char = string[i]
             keystroke = self.generate_keystroke(char)
             if keystroke is None:
                 continue
@@ -109,10 +109,13 @@ class KeySimulator:
                         time = SHIFT_SPEED
                     key = 'Key.shift'
                     keystrokes.append(Keystroke(key, time))
-
             if keystrokes == []:
                 keystroke.time = None
             keystrokes.append(keystroke)
+            # Should I stop generation at stop key too?
+            if char == STOP_KEY:
+                print('STOP key found. Halting keystroke generation.')
+                break
 
         return keystrokes
     
@@ -131,10 +134,12 @@ class KeySimulator:
 
         if char in self.encoded_char_dict:
             key_as_string = str(self.encoded_char_dict[char])
+        # This below line should be modified to be consistent with validation.py
         elif char.isprintable():
             # Add '' around the character
             key_as_string = f"'{char}'"
         else:
+            print(f'Invalid character: {char} -> {ord(char)}')
             return None
         delay = round(delay1 + delay2, 4)
         return Keystroke(key_as_string, delay)
