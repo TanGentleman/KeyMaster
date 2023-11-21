@@ -1,13 +1,15 @@
 from pynput.keyboard import Controller
 from time import time as get_time
 from time import sleep
-import numpy as np
+from numpy import random
 from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_whitespace_dict, sim_encoded_char_dict
 from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 
 from typing import List, Dict
 from validation import Keystroke, Key
 
+import logging
+logging.basicConfig(encoding='utf-8', level=logging.INFO)
 class KeySimulator:
     """
     A class used to simulate keystrokes and log them.
@@ -25,24 +27,22 @@ class KeySimulator:
         max_duration (float): The maximum duration of the simulation.
     """
 
-    def __init__(self, speed_multiplier: float | int = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
-                 delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
-                 min_delay: float = MIN_DELAY, whitespace_keys: dict = sim_whitespace_dict, 
-                 encoded_char_dict = sim_encoded_char_dict, special_keys: Dict[str, Key] = SPECIAL_KEYS,
-                 disabled = SIM_DISABLE, max_duration = SIM_MAX_DURATION) -> None:
+    def __init__(self, disabled = SIM_DISABLE, max_duration = SIM_MAX_DURATION,
+                 speed_multiplier: float | int = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
+                 min_delay: float = MIN_DELAY, delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
+                 encoded_char_dict = sim_encoded_char_dict, special_keys: Dict[str, Key] = SPECIAL_KEYS) -> None:
         """
         Initialize the KeySimulator with the given parameters.
         """
-        self.speed_multiplier = float(speed_multiplier)
+        self.disabled = disabled
+        self.max_duration = max_duration
+        self.speed_multiplier = speed_multiplier
         self.delay_mean = delay_mean
         self.delay_standard_deviation = delay_standard_deviation
         self.max_words = max_words
         self.min_delay = min_delay
-        self.whitespace_keys = whitespace_keys
-        self.special_keys = special_keys
         self.encoded_char_dict = encoded_char_dict
-        self.disabled = disabled
-        self.max_duration = max_duration
+        self.special_keys = special_keys
     
     def calculate_delay(self, speed_multiple: float | int | None) -> float:
         """
@@ -61,13 +61,13 @@ class KeySimulator:
         speed_multiple = float(speed_multiple)
         if speed_multiple <= 0:
             # ERROR
-            print(f"Speed by multiple must be greater than 0. Received {speed_multiple}")
+            logging.error(f"Invalid speed multiplier: {speed_multiple}. Setting to 1")
             speed_multiple = 1
-        delay = np.random.normal(self.delay_mean/(speed_multiple), self.delay_standard_deviation/speed_multiple)
+        delay = random.normal(self.delay_mean/(speed_multiple), self.delay_standard_deviation/speed_multiple)
         if delay < self.min_delay:
             # print(f"Delay too low: {delay}")
             delay = self.min_delay + delay/10
-        return delay
+        return round(delay, 4)
     
     def generate_keystrokes_from_string(self, string: str) -> List[Keystroke]:
         """
@@ -83,7 +83,7 @@ class KeySimulator:
         string_length = len(string)
         for i in range(string_length):
             if word_count == self.max_words:
-                print(f"Reached max words: {self.max_words}")
+                logging.info(f"Reached max words: {self.max_words}")
                 break
             char = string[i]
             keystroke = self.generate_keystroke(char)
@@ -101,7 +101,7 @@ class KeySimulator:
             # Check if a shift key needs to be added
             if shift_eligible(last_key):
                 if char.isupper() or (char in SHIFTED_CHARS):
-                    print(f"Found shifted key: {char}")
+                    logging.info(f"Inserting shift before key: {char}")
                     # Add a shift keypress
                     if keystrokes == []:
                         time = None
@@ -114,7 +114,7 @@ class KeySimulator:
             keystrokes.append(keystroke)
             # Should I stop generation at stop key too?
             if char == STOP_KEY:
-                print('STOP key found. Halting keystroke generation.')
+                logging.warning('STOP key found. Halting keystroke generation.')
                 break
 
         return keystrokes
@@ -122,27 +122,28 @@ class KeySimulator:
     def generate_keystroke(self, char: str) -> Keystroke | None:
         """
         Generate a single keystroke from a character.
+        :param char: The character to generate a keystroke for.             
+        :return: A Keystroke object or  None if the character is invalid.
         """
-        try:
-            assert(len(char) == 1)
-        except AssertionError:
-            print(f"Character length > 1: {char}")
+        if len(char) != 1:
+            logging.error(f"generate_keystroke: Character length is not 1: {char}")
             return None
         delay1 = self.calculate_delay(1)
         delay2 = self.calculate_delay(1.5)
-        key_as_string = ''
+        key_string = ''
 
         if char in self.encoded_char_dict:
-            key_as_string = str(self.encoded_char_dict[char])
-        # This below line should be modified to be consistent with validation.py
+            key_string = str(self.encoded_char_dict[char])
+
         elif char.isprintable():
             # Add '' around the character
-            key_as_string = f"'{char}'"
+            key_string = f"'{char}'"
         else:
-            print(f'WARNING: Invalid character: {char} -> {ord(char)}')
+            logging.error(f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
             return None
-        delay = round(delay1 + delay2, 4)
-        return Keystroke(key_as_string, delay)
+        delay = delay1 + delay2
+        return Keystroke(key_string, delay)
+    
     
     def simulate_keystrokes(self, keystrokes: List[Keystroke]) -> None:
         """
@@ -152,23 +153,22 @@ class KeySimulator:
             keystrokes (List[Keystroke], optional): The list of keystrokes to simulate. 
         """
         if not keystrokes:
-            print("No keystrokes found.")
+            logging.error("No keystrokes found.")
             return
         if self.disabled:
-            print("Simulation disabled.")
+            logging.error("Simulation disabled.")
             return
-        start_time = get_time()
-        special_key_dict = self.special_keys
-
         keyboard = Controller()
+        special_key_dict = self.special_keys
+        start_time = get_time()
         none_count = 0
         for keystroke in keystrokes:
             if not keystroke.valid:
-                print(f"Invalid key: {keystroke.key}")
+                logging.error(f"Invalid key: {keystroke.key}")
                 continue
             # Check if max duration has been reached
             if get_time() - start_time > self.max_duration:
-                print(f"Max duration reached: {self.max_duration} seconds")
+                logging.info(f"Max duration reached: {self.max_duration} seconds")
                 break
 
             key = keystroke.key
@@ -176,7 +176,7 @@ class KeySimulator:
             if time is None:
                 none_count += 1
                 if none_count > 1:
-                    print('Critical error: None value marks first character. Only use once')
+                    logging.error('Critical error: None value marks first character. Only use once')
                     break
                 # What should this time diff be?
                 delay = 0.0
@@ -201,10 +201,10 @@ class KeySimulator:
                     keyboard.type(key)
 
                 if key == STOP_KEY:
-                    print('STOP key found. Stopping simulation.')
+                    logging.warning('STOP key found. Stopping simulation.')
                     break
             except Exception as e:
-                print(f"An error occurred: {e}")
+                logging.critical(f"An error occurred: {e}")
                 break
     
 def main(input_string:str = "hey look ma, a simulation!"):
