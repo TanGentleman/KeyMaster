@@ -2,7 +2,7 @@ from pynput.keyboard import Controller
 from time import time as get_time
 from time import sleep
 from numpy import random
-from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_whitespace_dict, sim_encoded_char_dict
+from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_encoded_char_dict
 from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 
 from typing import List, Dict

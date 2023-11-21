@@ -80,13 +80,13 @@ class KeyLogger:
 		# Right now, all Keystroke objects from this function have the property valid
 		# I prefer using a Key or KeyCode object as the input key
 		if is_key_valid(keypress):
-			key_as_string = str(keypress)
+			key_string = str(keypress)
 			# Mark first character delay as None
 			if not self.keystrokes:
-				keystroke = Keystroke(key_as_string, None)
+				keystroke = Keystroke(key_string, None)
 			else:
 				delay = round(delay, ROUND_DIGITS) # Round to 4 decimal places
-				keystroke = Keystroke(key_as_string, delay)
+				keystroke = Keystroke(key_string, delay)
 
 			assert(keystroke.valid is True)
 			self.keystrokes.append(keystroke)

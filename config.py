@@ -1,14 +1,12 @@
 from os import path
 from pynput.keyboard import Key
+
+# Set paths to json logs.
 ROOT = path.dirname(path.abspath(__file__)) # Get the absolute path of the current script
 LOG_DIR = path.join(ROOT, "Logfiles") # Define the path for the logfiles directory
 DOCS_DIR = path.join(ROOT, "Docs") # Define the path for the docs directory
-# Define the paths for the logfiles
 ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
-
-# Keyboard Listener timeout duration in seconds
-LISTEN_TIMEOUT_DURATION = 30
 
 ### SIMULATION.PY CONFIG ###
 SIM_MAX_DURATION = 30
@@ -23,10 +21,12 @@ SIM_ALLOW_ENTER_AND_TAB = True
 SIM_SPEED_MULTIPLE = 5
 
 ### KEYLOGGER.PY CONFIG ###
+LISTEN_TIMEOUT_DURATION = 30
 MAX_WORDS = 50
 SPEEDHACK = True # Only applies for KeyLogger class, this will be changed
 STOP_KEY = "*" # This key is used to stop the listener when pressed
 
+# Misc
 ROUND_DIGITS = 4 # This is for logfile timestamps
 
 # *** KEY VALIDATION ***
@@ -51,11 +51,6 @@ WEIRD_KEYS = { # Quirks of str(keypress) when the keypress is backslash or apost
 }
 
 if SIM_ALLOW_ENTER_AND_TAB:
-    sim_whitespace_dict = {
-        '\n': Key.enter,
-        '\t': Key.tab,
-        ' ': Key.space,
-    }
     sim_encoded_char_dict = {
         ' ': str(Key.space),
         '\t': str(Key.tab),
@@ -64,7 +59,6 @@ if SIM_ALLOW_ENTER_AND_TAB:
         "'": '"\'"'
     }
 else:
-    sim_whitespace_dict = {' ': Key.space}
     sim_encoded_char_dict = {
         ' ': str(Key.space),
         '\\': "'\\\\'",

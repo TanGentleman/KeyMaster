@@ -50,24 +50,23 @@ def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
             return False
         key = str(key)
     # We know isinstance(key, str)
-    key_as_string = key
+    key_string = key
     # A string like 'a' is valid, but 'Key.alt' is not
-    if key_as_string in BANNED_KEYS:
+    if key_string in BANNED_KEYS:
         return False
-    elif key_as_string in SPECIAL_KEYS:
+    elif key_string in SPECIAL_KEYS:
         return True
-    if key_as_string in WEIRD_KEYS:
+    if key_string in WEIRD_KEYS:
         return True
-    # Check if key is wrapped in single quotes
-    if key_as_string[0] != "'" or key_as_string[-1] != "'":
-        print(f"Warning! Key is not wrapped in single quotes: {key_as_string}")
-        pass
     # Check the length of the key stripped of single quotes
-    key_as_string = key_as_string.strip("'")
+    key_string = key_string.strip("'")
     # This means that both wrapped and unwrapped chars are valid
+    if len(key_string) != 1:
+        print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
+        return False
     if strict:
-        return len(key_as_string) == 1 and key_as_string in VALID_KEYBOARD_CHARS
-    return len(key_as_string) == 1 and key_as_string.isprintable()
+        return key_string in VALID_KEYBOARD_CHARS
+    return key_string.isprintable()
 
 class LegalKey:
     """
@@ -80,7 +79,10 @@ class LegalKey:
     def __init__(self, key: str, is_special: bool):
         if not isinstance(key, str) or not isinstance(is_special, bool):
             raise TypeError('key must be a string and is_special must be a bool')
-        assert(is_key_valid(key, strict=True))
+        if is_special:
+            assert(key in SPECIAL_KEYS)
+        else:
+            assert(len(key) == 1 and key in VALID_KEYBOARD_CHARS)
         self.key = key
         self.is_special = is_special
     def __repr__(self) -> str:
@@ -110,7 +112,7 @@ class Keystroke:
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
-        self.typeable = is_key_valid(key, strict=True)
+        self.unicode = self.valid and self.key.strip("'") not in VALID_KEYBOARD_CHARS
     def __iter__(self) -> Iterator[Tuple[str, float | None]]:
         yield self.key, self.time
     def __repr__(self) -> str:
@@ -121,11 +123,18 @@ class Keystroke:
         elif isinstance(other, str):
             return self.key == other
         return False
+    
     def legalize(self) -> LegalKey | None:
         """
         Returns a LegalKey object or None if the key is not valid.
         """
-        if self.typeable:
+        if self.unicode:
+            if self.valid:
+                print(f"Unicode char {self.key} restricted.")
+            else:
+                print(f"Invalid char not legalized:{self.key}<-")
+            return None
+        else:
             is_special = False
             # Assertions should always pass
             if self.key in SPECIAL_KEYS:
@@ -139,11 +148,6 @@ class Keystroke:
                 legal_key = self.key.strip("'")
                 assert(len(legal_key) == 1 and legal_key in VALID_KEYBOARD_CHARS)
             return LegalKey(legal_key, is_special)
-        else:
-            print(f"Could not be legalized:{self.key}<-")
-            if self.valid:
-                print("This is likely a unicode character that is not typable.")
-            return None
 
 class Log(TypedDict):
     """

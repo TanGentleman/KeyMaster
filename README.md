@@ -1,8 +1,8 @@
-# Keystroke-AI
+# KeyMaster
 
 Command your keyboard! Even while afk :D 
 
-Check out the Meaty docstrings folder for documentation without the clutter of the function bodies.
+Check out the Docs folder for documentation without the clutter of the function bodies.
 
 ## Features
 Powerful classes for:
