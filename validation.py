@@ -14,7 +14,7 @@ def replace_weird_keys(input_string: str) -> str:
     Potentially quotes with different unicode representations could go here too.
     """
     replacements = {
-        '\u2028': '\n',  # replace line separator with newline
+        # '\u2028': '\n',  # replace line separator with newline
         # '\u2029': '\n',  # replace paragraph separator with newline
         # add more replacements here if needed
     }
@@ -58,12 +58,16 @@ def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
         return True
     if key_as_string in WEIRD_KEYS:
         return True
+    # Check if key is wrapped in single quotes
+    if key_as_string[0] != "'" or key_as_string[-1] != "'":
+        print(f"Warning! Key is not wrapped in single quotes: {key_as_string}")
+        pass
     # Check the length of the key stripped of single quotes
     key_as_string = key_as_string.strip("'")
     # This means that both wrapped and unwrapped chars are valid
     if strict:
         return len(key_as_string) == 1 and key_as_string in VALID_KEYBOARD_CHARS
-    return len(key_as_string) == 1
+    return len(key_as_string) == 1 and key_as_string.isprintable()
 
 class LegalKey:
     """
