@@ -1,5 +1,5 @@
 # This file is for the key validation function to explicitly typecheck classes.
-from typing import List, Union, Optional, Iterator, Tuple, TypedDict, Any
+from typing import List, Iterator, Tuple, TypedDict, Any
 from pynput.keyboard import Key, KeyCode
 from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
 from json import JSONDecoder, JSONEncoder
@@ -39,7 +39,7 @@ def clean_string(input_string: str) -> str:
     return filter_non_typable_chars(replace_weird_keys(input_string))
 
 # *** KEY VALIDATION ***
-def is_key_valid(key: Union[Key, KeyCode, str], strict = False) -> bool:
+def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
     """
     Function to check if the key is valid.
     """
@@ -92,7 +92,7 @@ class Keystroke:
     A class used to represent a keystroke. The validity is held in Keystroke.valid
     Convention is to wrap the key in single quotes if it is a character.
     """
-    def __init__(self, key: str, time: Optional[float]):
+    def __init__(self, key: str, time: float | None):
         """
         >>> Keystroke("'a'", None)
         Keystroke(key='a', time=None)
@@ -107,7 +107,7 @@ class Keystroke:
         self.time = time
         self.valid = is_key_valid(key)
         self.typeable = is_key_valid(key, strict=True)
-    def __iter__(self) -> Iterator[Tuple[str, Optional[float]]]:
+    def __iter__(self) -> Iterator[Tuple[str, float | None]]:
         yield self.key, self.time
     def __repr__(self) -> str:
         return f"Keystroke(key={self.key}, time={self.time})"

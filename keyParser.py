@@ -1,7 +1,7 @@
 import json
 import statistics
 import matplotlib.pyplot as plt
-from typing import List, Dict, Optional
+from typing import List, Dict
 from os import path
 from config import LOG_DIR, ABSOLUTE_REG_FILEPATH, STOP_KEY
 from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
@@ -43,7 +43,7 @@ class KeyParser:
         logs (list): The list of logs loaded from the file.
         exclude_outliers (bool): A flag indicating whether to exclude outliers.
     """
-    def __init__(self, filename: Optional[str] = '', exclude_outliers: bool = True) -> None:
+    def __init__(self, filename: str | None = '', exclude_outliers: bool = True) -> None:
         """
         Initialize the KeyParser and load logs.
 
@@ -109,7 +109,7 @@ class KeyParser:
                 return True
         return False
     
-    def id_by_index(self, index: int) -> Optional[str]:
+    def id_by_index(self, index: int) -> str | None:
         """
         Get the ID of the log at a given index. 
         Index begins at 1, as labeled in method print_strings.
@@ -134,7 +134,7 @@ class KeyParser:
             return self.logs[-1]['id']
         return self.logs[index-1]['id']
 
-    def id_from_substring(self, keyword: str) -> Optional[str]:
+    def id_from_substring(self, keyword: str) -> str | None:
         """
         Get the ID of the first log that contains a given substring.
 
@@ -149,7 +149,7 @@ class KeyParser:
                 return log['id']
         return None
 
-    def get_strings(self, identifier: Optional[str] = None) -> List[str]:
+    def get_strings(self, identifier: str | None = None) -> List[str]:
         """
         Get a list of all strings in the logs. If an identifier is provided, 
         only the associated string is included.
@@ -174,7 +174,7 @@ class KeyParser:
                     return [log['string']]
         return [log['string'] for log in self.logs]
     
-    def print_strings(self, max: int = 5, truncate: int = 25, identifier: Optional[str] = None) -> None:
+    def print_strings(self, max: int = 5, truncate: int = 25, identifier: str | None = None) -> None:
         """
         Prints strings from logs. If 'identifier' is provided, prints associated string.
         Strings longer than 'truncate' value are appended with "...[truncated]".
@@ -203,7 +203,7 @@ class KeyParser:
             # curr_string = curr_string.replace("\n", "\\n")
             print(f'{count}|{curr_string}')
 
-    def get_only_times(self, identifier: Optional[str] = None, exclude_outliers: Optional[bool] = None) -> List[float]:
+    def get_only_times(self, identifier: str | None = None, exclude_outliers: bool | None = None) -> List[float]:
         """
         Get a list of all keystroke delay times.
 
@@ -242,7 +242,7 @@ class KeyParser:
             print(f"Removed {outlier_count} outliers.")
         return times
     
-    def wpm(self, identifier: Optional[str] = None) -> Optional[float]:
+    def wpm(self, identifier: str | None = None) -> float | None:
         """
         Calculate the average words per minute.
         Formula is CPM/5, where CPM is characters per minute.
@@ -285,7 +285,7 @@ class KeyParser:
         cpm = (num_chars / total_seconds) * 60
         return round(cpm / 5, 1)
     
-    def get_highest_keystroke_times(self, identifier: Optional[str] = None) -> List[float]:
+    def get_highest_keystroke_times(self, identifier: str | None = None) -> List[float]:
         """
         Get the highest keystroke time for each log.
 
@@ -316,7 +316,7 @@ class KeyParser:
                 highest_times.append(max(times))
         return highest_times
     
-    def get_average_delay(self, identifier: Optional[str] = None) -> Optional[float]:
+    def get_average_delay(self, identifier: str | None = None) -> float | None:
         """
         Get the average time between keystrokes.
 
@@ -339,7 +339,7 @@ class KeyParser:
             return 0
         return round(sum(times) / len(times), 4)
 
-    def get_std_deviation(self, identifier: Optional[str] = None) -> Optional[float]:
+    def get_std_deviation(self, identifier: str | None = None) -> float | None:
         """
         Get the standard deviation of the time between keystrokes.
 
@@ -361,8 +361,8 @@ class KeyParser:
             return 0
         return round(statistics.stdev(times), 4)
     
-    def visualize_keystroke_times(self, identifier: Optional[str] = None, keystrokes: Optional[List[Keystroke]] = None, 
-                                  exclude_outliers: Optional[bool] = None) -> None:
+    def visualize_keystroke_times(self, identifier: str | None = None, keystrokes: List[Keystroke] | None = None, 
+                                  exclude_outliers: bool | None = None) -> None:
         """
         Plots the average keystroke time for each character.
 
@@ -400,7 +400,7 @@ class KeyParser:
         plt.title('Average Keystroke Time for Each Character' + line_2)
         plt.show()
 
-    def get_keystrokes(self, identifier: Optional[str] = None) -> List[Keystroke]:
+    def get_keystrokes(self, identifier: str | None = None) -> List[Keystroke]:
         """
        Get a list of all keystrokes in the logs.
 
@@ -421,7 +421,7 @@ class KeyParser:
             
         return keystrokes
 
-    def map_chars_to_times(self, keystrokes: Optional[List[Keystroke]] = None, exclude_outliers: Optional[bool] = None) -> Dict[str, float]:
+    def map_chars_to_times(self, keystrokes: List[Keystroke] | None = None, exclude_outliers: bool | None = None) -> Dict[str, float]:
         """
         Calculates the average keystroke time for each character based on the provided keystrokes.
 

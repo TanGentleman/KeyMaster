@@ -5,7 +5,7 @@ import numpy as np
 from config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_whitespace_dict, sim_encoded_char_dict
 from config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 
-from typing import List, Union, Optional, Dict
+from typing import List, Dict
 from validation import Keystroke, Key
 
 class KeySimulator:
@@ -25,7 +25,7 @@ class KeySimulator:
         max_duration (float): The maximum duration of the simulation.
     """
 
-    def __init__(self, speed_multiplier: Union[float, int] = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
+    def __init__(self, speed_multiplier: float | int = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
                  delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
                  min_delay: float = MIN_DELAY, whitespace_keys: dict = sim_whitespace_dict, 
                  encoded_char_dict = sim_encoded_char_dict, special_keys: Dict[str, Key] = SPECIAL_KEYS,
@@ -44,7 +44,7 @@ class KeySimulator:
         self.disabled = disabled
         self.max_duration = max_duration
     
-    def calculate_delay(self, speed_multiple: Union[float, int, None]) -> float:
+    def calculate_delay(self, speed_multiple: float | int | None) -> float:
         """
         Get a normally distributed delay between keystrokes.
 
@@ -119,7 +119,7 @@ class KeySimulator:
 
         return keystrokes
     
-    def generate_keystroke(self, char: str) -> Optional[Keystroke]:
+    def generate_keystroke(self, char: str) -> Keystroke | None:
         """
         Generate a single keystroke from a character.
         """
@@ -139,7 +139,7 @@ class KeySimulator:
             # Add '' around the character
             key_as_string = f"'{char}'"
         else:
-            print(f'Invalid character: {char} -> {ord(char)}')
+            print(f'WARNING: Invalid character: {char} -> {ord(char)}')
             return None
         delay = round(delay1 + delay2, 4)
         return Keystroke(key_as_string, delay)

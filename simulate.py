@@ -7,12 +7,10 @@ from time import sleep
 from typing import List
 
 LOGGING_ON = True
-LISTENFIRST = True
 PRINT_KEYS = False
 DEFAULT_STRING = "hey look ma, it's a simulation!"
 
-## RINSE TO SIMULATE HUMAN INPUT (Removes unicode characters)
-RINSE_STRING = True
+ALLOW_UNICODE = True
 
 VALIDATE_WITH_PARSER = True
 if VALIDATE_WITH_PARSER:
@@ -97,10 +95,10 @@ def clipboard_main() -> None:
     if not clipboard_contents:
         print("No text found in clipboard.")
         return None
-    if RINSE_STRING:
-        input_string = clean_string(clipboard_contents)
-    else:
+    if ALLOW_UNICODE:
         input_string = clipboard_contents
+    else:
+        input_string = clean_string(clipboard_contents)
     simulate_from_string(input_string)
 ### This supports no-UI Shortcuts integration.
 # Create a keyboard shortcut to run a shell script `python simulate.py "*Clipboard*"`

@@ -5,7 +5,7 @@ from uuid import uuid4
 from os import path
 from config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
 from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
-from typing import List, Optional, Union
+from typing import List
 from threading import Timer
 
 VALIDATE_WITH_PARSER = True
@@ -18,12 +18,12 @@ class KeyLogger:
 	This class is responsible for capturing and storing keystrokes values and timings.
 	It also keeps track of the total number of words typed and the entire string of characters typed.
 	"""
-	def __init__(self, filename: Optional[str] = "") -> None:
+	def __init__(self, filename: str | None = "") -> None:
 		"""
 		Initialize the KeyLogger.
 
 		Args:
-			filename (str, optional): The filename to save the log to.
+			filename (str or None): The filename to save the log to.
 			Defaults to ABSOLUTE_REG_FILEPATH.
 			None value treated as null path.
 		"""
@@ -44,7 +44,7 @@ class KeyLogger:
 				filename = path.join(LOG_DIR, filename)
 		self.filename = filename
 
-		self.timer:Optional[Timer] = None
+		self.timer: Timer | None = None
 		self.duration = float(LISTEN_TIMEOUT_DURATION)
 
 	def reset(self) -> None:
@@ -58,7 +58,7 @@ class KeyLogger:
 		self.prev_time = time()
 
 	# on_press still needs to be tidied up a bit
-	def on_press(self, keypress: Union[Key, KeyCode, None]) -> None:
+	def on_press(self, keypress: Key | KeyCode | None) -> None:
 		"""
 		Handles key press events and logs valid Keystroke events.
 
@@ -109,7 +109,7 @@ class KeyLogger:
 				self.typed_string = self.typed_string[:-1]
 		return None
 
-	def stop_listener_condition(self, keypress: Union[Key, KeyCode]) -> bool:
+	def stop_listener_condition(self, keypress: Key | KeyCode) -> bool:
 		"""
 		Function to determine whether to stop the listener.
 
@@ -127,7 +127,7 @@ class KeyLogger:
 			return keypress.char == STOP_KEY
 		return False
 	
-	def on_release(self, keypress: Union[Key, KeyCode, None]) -> None:
+	def on_release(self, keypress: Key | KeyCode | None) -> None:
 		"""
 		Handles key release events. Stop the listener when stop condition is met.
 
@@ -232,7 +232,7 @@ class KeyLogger:
 		Function to save the log to a file.
 
 		Args:
-			reset (bool, optional): Whether to reset the logger after saving the log. Defaults to False.
+			reset (bool): Whether to reset the logger after saving the log. Defaults to False.
 
 		Returns:
 			bool: True if the log was saved successfully, False otherwise.

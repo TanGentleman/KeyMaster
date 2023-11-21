@@ -1,7 +1,7 @@
 import re
 from config import ROOT
 from os import path
-from typing import Optional, List
+from typing import List
 
 DEFAULT_FILE = 'keySimulator.py'
 FILE_TO_WRITE = 'docstrings.py'
@@ -18,7 +18,7 @@ def find_instances(string: str) -> List[str]:
     print(f'{len(class_matches)} classes found and {len(function_matches)} functions found')
     return class_matches + function_matches
 
-def read_file(filename: str) -> Optional[str]:
+def read_file(filename: str) -> str | None:
     absolute_filepath = path.join(ROOT, filename)
     try:
         with open(absolute_filepath, 'r') as f:
