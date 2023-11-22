@@ -1,7 +1,10 @@
+# Standard library imports
 import re
-from config import ROOT
 from os import path
 from typing import List
+
+# KeyMaster imports
+from utils.config import ROOT
 
 DEFAULT_FILE = 'keySimulator.py'
 FILE_TO_WRITE = 'docstrings.py'

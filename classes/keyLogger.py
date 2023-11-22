@@ -1,17 +1,22 @@
-from pynput.keyboard import Key, KeyCode, Listener
+# Standard library imports
+from json import dump as json_dump
+from json import load as json_load
 from time import time, perf_counter
-import json
 from uuid import uuid4
-from os import path
-from config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
-from validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 from typing import List
 from threading import Timer
+from os import path
+
+# Third party imports
+from pynput.keyboard import Key, KeyCode, Listener
+# KeyMaster imports
+from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
+from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
 
 VALIDATE_WITH_PARSER = True
 if VALIDATE_WITH_PARSER:
-	from keyParser import validate_keystrokes
-	from keyParser import KeyParser
+	from .keyParser import validate_keystrokes
+	from .keyParser import KeyParser
 class KeyLogger:
 	"""
 	A class used to log keystrokes and calculate delays between each keypress.
@@ -266,14 +271,14 @@ class KeyLogger:
 			return False
 		try:
 			with open(self.filename, 'r+') as f:
-				logs = json.load(f, cls=KeystrokeDecoder)
+				logs = json_load(f, cls=KeystrokeDecoder)
 				logs.append(log)
 				f.seek(0)
-				json.dump(logs, f, cls=KeystrokeEncoder)
+				json_dump(logs, f, cls=KeystrokeEncoder)
 				print("Logfile updated.")
 		except FileNotFoundError:
 			with open(self.filename, 'w') as f:
-				json.dump([log], f, cls=KeystrokeEncoder)
+				json_dump([log], f, cls=KeystrokeEncoder)
 		except Exception as e:
 			print(f"An error occurred: {e}")
 			return False

@@ -1,9 +1,15 @@
 # This file is for the key validation function to explicitly typecheck classes.
-from typing import List, Iterator, Tuple, TypedDict, Any
-from pynput.keyboard import Key, KeyCode
-from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
+
+# Standard library imports
 from json import JSONDecoder, JSONEncoder
 import string
+from typing import List, Iterator, Tuple, TypedDict, Any
+
+# Third party imports
+from pynput.keyboard import Key, KeyCode
+
+# KeyMaster imports
+from .config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
 
 VALID_KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
 
@@ -185,3 +191,26 @@ class KeystrokeEncoder(JSONEncoder):
                 'keystrokes': [self.default(keystroke) for keystroke in obj['keystrokes']]
             }
         return super().default(obj)
+
+class KeystrokeList:
+    def __init__(self, keystrokes: List[Keystroke]):
+        if not isinstance(keystrokes, list):
+            raise TypeError('keystrokes must be a list')
+        self.keystrokes = keystrokes
+        self.length = len(keystrokes)
+    def __getitem__(self, index: int) -> Keystroke:
+        return self.keystrokes[index]
+    def __len__(self) -> int:
+        return self.length
+    def __repr__(self) -> str:
+        return "Keys:" + "".join('\n' + keystroke.key for keystroke in self.keystrokes)
+    def __eq__(self, other) -> bool:
+        if isinstance(other, KeystrokeList):
+            return self.keystrokes == other.keystrokes
+        return False
+# wrappedChar is a class equivalent to f"'{char}'"
+def is_wrapped_char(char: str) -> bool:
+    """
+    Check if a character is wrapped in single quotes.
+    """
+    return len(char) == 3 and char[0] == "'" and is_key_valid(char[1]) and char[2] == "'"

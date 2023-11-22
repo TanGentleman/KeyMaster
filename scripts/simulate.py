@@ -1,20 +1,21 @@
-from torch import log_
-from keyLogger import KeyLogger
-from config import ABSOLUTE_SIM_FILEPATH
-from validation import clean_string, Keystroke
-from keySimulator import KeySimulator
+# Standard library imports
 from time import sleep
 from typing import List
+
+# KeyMaster imports
+
+from classes.keyLogger import KeyLogger
+from classes.keySimulator import KeySimulator
+from utils.config import ABSOLUTE_SIM_FILEPATH
+from utils.validation import clean_string, Keystroke
+VALIDATE_WITH_PARSER = True
+if VALIDATE_WITH_PARSER:
+	from classes.keyParser import KeyParser
 
 LOGGING_ON = True
 PRINT_KEYS = False
 DEFAULT_STRING = "hey look ma, it's a simulation!"
-
 ALLOW_UNICODE = True
-
-VALIDATE_WITH_PARSER = True
-if VALIDATE_WITH_PARSER:
-	from keyParser import KeyParser
 
 def listen_for_keystrokes(logger: KeyLogger) -> List[Keystroke] | None:
     """

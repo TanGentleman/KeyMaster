@@ -1,10 +1,14 @@
+# Standard library imports
 from os import path
+
+# Third party imports
 from pynput.keyboard import Key
 
 # Set paths to json logs.
-ROOT = path.dirname(path.abspath(__file__)) # Get the absolute path of the current script
-LOG_DIR = path.join(ROOT, "Logfiles") # Define the path for the logfiles directory
-DOCS_DIR = path.join(ROOT, "Docs") # Define the path for the docs directory
+ROOT = path.dirname(path.dirname(path.abspath(__file__))) # abs path of the repo root directory
+
+LOG_DIR = path.join(ROOT, "logs") # Define the path for the logfiles directory
+DOCS_DIR = path.join(ROOT, "docs") # Define the path for the docs directory
 ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
 

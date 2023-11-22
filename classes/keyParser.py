@@ -1,12 +1,17 @@
-import json
+# Standard library imports
+from json import load as json_load
 import statistics
 import matplotlib.pyplot as plt
 from typing import List, Dict
 from os import path
-from config import LOG_DIR, ABSOLUTE_REG_FILEPATH, STOP_KEY
-from config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
-from validation import Keystroke, Log
+
+# Third party imports
 from pynput.keyboard import Key
+
+# KeyMaster imports
+from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, STOP_KEY
+from utils.config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
+from utils.validation import Keystroke, Log
 
 OUTLIER_CUTOFF = 0.8
 
@@ -76,7 +81,7 @@ class KeyParser:
             return []
         try:
             with open(self.filename, 'r') as f:
-                log_contents = json.load(f)
+                log_contents = json_load(f)
             logs:List[Log] = []
             for log in log_contents:
                 # Instantiate Keystrokes and replace them in each log

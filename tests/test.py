@@ -1,5 +1,8 @@
-from validation import clean_string
-### This file is used for Shortcuts. For instance, I have a keyboard shortcut to run a shell script `python simulate.py "$(pbpaste)"`
+# KeyMaster imports
+from utils.validation import clean_string
+
+# Test using a keyboard shortcut to run a shell script `python -m tests.test "$(pbpaste)"`
+# This will run the test with the contents of the clipboard.
 def main(input_string = "Test print statement!"):
     print(input_string)
 
