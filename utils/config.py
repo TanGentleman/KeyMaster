@@ -46,7 +46,7 @@ SPECIAL_KEYS = {
     'Key.tab': Key.tab,
     'Key.enter': Key.enter,
     }
-BANNED_KEYS = ["'√'"]
+BANNED_KEYS = ['√']
 WEIRD_KEYS = { # Quirks of str(keypress) when the keypress is backslash or apostrophe
 #   str(KeyCode.from_char('\\')) == "'\\\\'"
 #   str(KeyCode.from_char("'")) == '"\'"'

@@ -58,14 +58,14 @@ def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
     # We know isinstance(key, str)
     key_string = key
     # A string like 'a' is valid, but 'Key.alt' is not
-    if key_string in BANNED_KEYS:
-        return False
-    elif key_string in SPECIAL_KEYS:
+    if key_string in SPECIAL_KEYS:
         return True
     if key_string in WEIRD_KEYS:
         return True
     # Check the length of the key stripped of single quotes
     key_string = key_string.strip("'")
+    if key_string in BANNED_KEYS:
+        return False
     # This means that both wrapped and unwrapped chars are valid
     if len(key_string) != 1:
         print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
@@ -134,26 +134,34 @@ class Keystroke:
         """
         Returns a LegalKey object or None if the key is not valid.
         """
-        if self.unicode:
-            if self.valid:
-                print(f"Unicode char {self.key} restricted.")
-            else:
-                print(f"Invalid char not legalized:{self.key}<-")
+        if not self.valid:
+            print(f"Invalid char not legalized:{self.key}<-")
             return None
+        
+        if self.unicode:
+            print(f"Unicode char {self.key} restricted and not legalized.")
+            return None
+        
+        is_special = False
+        # Assertions should always pass
+        if self.key in SPECIAL_KEYS:
+            # What should a legal key look like for a special key?
+            print("Special key!")
+            is_special = True
+            legal_key = self.key
+        elif self.key in WEIRD_KEYS:
+            legal_key = WEIRD_KEYS[self.key]
         else:
-            is_special = False
-            # Assertions should always pass
-            if self.key in SPECIAL_KEYS:
-                # What should a legal key look like for a special key?
-                print("Special key! Legal key status is None")
-                is_special = True
-                legal_key = self.key
-            elif self.key in WEIRD_KEYS:
-                legal_key = WEIRD_KEYS[self.key]
-            else:
-                legal_key = self.key.strip("'")
-                assert(len(legal_key) == 1 and legal_key in VALID_KEYBOARD_CHARS)
-            return LegalKey(legal_key, is_special)
+            key = self.key.strip("'")
+            if key in BANNED_KEYS:
+                print(f"Banned key!->{self.key}")
+                return None
+            if len(key) != 1 or key not in VALID_KEYBOARD_CHARS:
+                print(f"Invalid key!->{self.key}")
+                return None
+            legal_key = key
+        return LegalKey(legal_key, is_special)
+        
 
 class Log(TypedDict):
     """
@@ -214,3 +222,84 @@ def is_wrapped_char(char: str) -> bool:
     Check if a character is wrapped in single quotes.
     """
     return len(char) == 3 and char[0] == "'" and is_key_valid(char[1]) and char[2] == "'"
+
+def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
+    """
+    Converts a list of Keystroke objects into a string, taking into account special keys.
+
+    Args:
+        keystrokes (List[Keystroke]): A list of Keystroke objects.
+
+    Returns:
+        str: The string representation of the keystrokes.
+    """
+    output_string = ""
+    word_count = 0
+    for keystroke in keystrokes:
+        if not keystroke.valid:
+            print(f"Invalid keystroke: {keystroke.key}")
+            continue
+        # This means keystroke.valid is true, so it is a valid keypress
+        key = keystroke.key
+        # Handle special keys
+        if key in SPECIAL_KEYS:
+            special_key = SPECIAL_KEYS[key]
+            if special_key == Key.backspace and output_string != '':
+                output_string = output_string[:-1]  # Remove the last character
+            elif special_key == Key.space:
+                output_string += ' '
+                word_count += 1
+            elif special_key == Key.enter:
+                output_string += '\n'
+            elif special_key == Key.tab:
+                output_string += '\t'
+            else:
+                continue # Ignore CapsLock and Shift
+        elif key in WEIRD_KEYS:
+            output_string += WEIRD_KEYS[key]
+        else:
+            key = key.strip("'")
+            if key in BANNED_KEYS:
+                continue
+            # Append the character to the output string
+            # It is 1 character because it passed is_key_valid() and is not in SPECIAL_KEYS
+            output_string += key
+    return output_string
+
+def validate_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
+    """
+    Validate a list of Keystroke objects against the logs.
+
+    Args:
+        keystrokes (List[Keystroke]): A list of Keystroke objects.
+        identifier (str, optional): The UUID or exact string to check for.
+
+    Returns:
+        bool: True if the keystrokes match the logs, False otherwise.
+    """
+    # Validate the keystrokes with the parser
+    validation_string = keystrokes_to_string(keystrokes)
+    if input_string != validation_string:
+        print("Warning: input string and keystrokes do not exactly match!")
+        if len(input_string) != len(validation_string):
+            print(f"String lengths do not match.")
+        # Find the first character that differs
+        max_length = max(len(input_string), len(validation_string))
+        for i in range(max_length):
+            # safety check
+            if i >= len(input_string):
+                print(f"Validation string found extra char at index {i}: {(validation_string[i])} <-")
+                break
+            
+            elif i >= len(validation_string):
+                print(f"Typed string has extra char at index {i}: {(input_string[i])} <-")
+                break
+            typed_char = input_string[i]
+            validation_char = validation_string[i]
+            if typed_char != validation_char:
+                print(f"Found differing character!")
+                print(f"Typed string: {typed_char} <-")
+                print(f"Validation string: {validation_char} <-")
+                break
+        return False
+    return True

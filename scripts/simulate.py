@@ -3,14 +3,12 @@ from time import sleep
 from typing import List
 
 # KeyMaster imports
-
 from classes.keyLogger import KeyLogger
 from classes.keySimulator import KeySimulator
 from utils.config import ABSOLUTE_SIM_FILEPATH
-from utils.validation import clean_string, Keystroke
-VALIDATE_WITH_PARSER = True
-if VALIDATE_WITH_PARSER:
-	from classes.keyParser import KeyParser
+from utils.validation import Keystroke, clean_string, keystrokes_to_string
+
+VALIDATE_STRING = True
 
 LOGGING_ON = True
 PRINT_KEYS = False
@@ -53,10 +51,9 @@ def validate_and_save_keystrokes(keystrokes: List[Keystroke], input_string: str)
     logger = KeyLogger(ABSOLUTE_SIM_FILEPATH)
     legit = logger.is_log_legit(keystrokes, input_string)
     if not legit:
-        if VALIDATE_WITH_PARSER and KeyParser is not None:
+        if VALIDATE_STRING:
             print("Replacing string with keystroke validated copy for log!")
-            parser = KeyParser(None)
-            log_string = parser.keystrokes_to_string(keystrokes)
+            log_string = keystrokes_to_string(keystrokes)
         else:
             print("WARNING: Internal log may not match keystrokes!")
             log_string = input_string
@@ -78,6 +75,7 @@ def listen_main() -> None:
         print(keystrokes)
     if LOGGING_ON:
         logger.save_log()
+    simulate_keystrokes(keystrokes)
 
 def simulate_from_string(input_string: str) -> None:
     keystrokes = generate_keystrokes_from_string(input_string)

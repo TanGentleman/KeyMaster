@@ -11,11 +11,10 @@ from os import path
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
 from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
-from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid
+from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid, validate_keystrokes
 
 VALIDATE_WITH_PARSER = True
 if VALIDATE_WITH_PARSER:
-	from .keyParser import validate_keystrokes
 	from .keyParser import KeyParser
 class KeyLogger:
 	"""

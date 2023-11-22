@@ -10,6 +10,7 @@ from pynput.keyboard import Controller
 # KeyMaster imports
 from utils.config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_encoded_char_dict
 from utils.config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
+from utils.config import ROUND_DIGITS
 from utils.validation import Keystroke, Key
 
 import logging
@@ -25,7 +26,6 @@ class KeySimulator:
         delay_standard_deviation (float): The standard deviation of the delay between keystrokes.
         max_words (int): The maximum number of words to simulate.
         min_delay (float): The minimum delay between keystrokes.
-        whitespace_keys (dict): A dictionary of whitespace characters and their corresponding keys.
         special_keys (dict): A dictionary of special keys and their corresponding keys.
         encoded_char_dict (dict): A dictionary of encoded characters and their corresponding strings.
         disabled (bool): Whether or not the simulation is disabled.
@@ -72,7 +72,7 @@ class KeySimulator:
         if delay < self.min_delay:
             # print(f"Delay too low: {delay}")
             delay = self.min_delay + delay/10
-        return round(delay, 4)
+        return delay
     
     def generate_keystrokes_from_string(self, string: str) -> List[Keystroke]:
         """
@@ -139,14 +139,13 @@ class KeySimulator:
 
         if char in self.encoded_char_dict:
             key_string = str(self.encoded_char_dict[char])
-
         elif char.isprintable():
             # Add '' around the character
             key_string = f"'{char}'"
         else:
             logging.error(f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
             return None
-        delay = delay1 + delay2
+        delay = round(delay1 + delay2, ROUND_DIGITS)
         return Keystroke(key_string, delay)
     
     
