@@ -268,38 +268,38 @@ def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
 
 def validate_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
     """
-    Validate a list of Keystroke objects against the logs.
+    Validate a list of Keystroke objects against a string.
 
     Args:
         keystrokes (List[Keystroke]): A list of Keystroke objects.
-        identifier (str, optional): The UUID or exact string to check for.
+        input_string (str): The string to validate against.
 
     Returns:
-        bool: True if the keystrokes match the logs, False otherwise.
+        bool: True if the decomposed keystrokes are identical to the input string.
     """
     # Validate the keystrokes with the parser
     validation_string = keystrokes_to_string(keystrokes)
-    if input_string != validation_string:
-        print("Warning: input string and keystrokes do not exactly match!")
-        if len(input_string) != len(validation_string):
-            print(f"String lengths do not match.")
-        # Find the first character that differs
-        max_length = max(len(input_string), len(validation_string))
-        for i in range(max_length):
-            # safety check
-            if i >= len(input_string):
-                print(f"Validation string found extra char at index {i}: {(validation_string[i])} <-")
-                break
-            
-            elif i >= len(validation_string):
-                print(f"Typed string has extra char at index {i}: {(input_string[i])} <-")
-                break
-            typed_char = input_string[i]
-            validation_char = validation_string[i]
-            if typed_char != validation_char:
-                print(f"Found differing character!")
-                print(f"Typed string: {typed_char} <-")
-                print(f"Validation string: {validation_char} <-")
-                break
-        return False
-    return True
+    if input_string == validation_string:
+        return True
+    print("Warning: input string and keystrokes do not exactly match!")
+    if len(input_string) != len(validation_string):
+        print(f"String lengths do not match.")
+    # Find the first character that differs
+    max_length = max(len(input_string), len(validation_string))
+    for i in range(max_length):
+        # safety check
+        if i >= len(input_string):
+            print(f"Validation string found extra char at index {i}: {(validation_string[i])} <-")
+            break
+
+        elif i >= len(validation_string):
+            print(f"Typed string has extra char at index {i}: {(input_string[i])} <-")
+            break
+        typed_char = input_string[i]
+        validation_char = validation_string[i]
+        if typed_char != validation_char:
+            print(f"Found differing character!")
+            print(f"Typed string: {typed_char} <-")
+            print(f"Validation string: {validation_char} <-")
+            break
+    return False
