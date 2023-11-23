@@ -4,56 +4,14 @@ from json import dump as json_dump
 import statistics
 import matplotlib.pyplot as plt
 from typing import List, Dict
-from os import path
-
 
 # KeyMaster imports
-from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH, STOP_KEY
+from utils.config import STOP_KEY
 from utils.validation import Keystroke, Log, KeystrokeEncoder
+from utils.helpers import get_filepath
 
 NUKABLE = True
 OUTLIER_CUTOFF = 0.8
-
-def get_filename(filename: str | None) -> str | None:
-    """
-    Set the filename to load logs from.
-
-    Args:
-        filename (str): The name of the file to load logs from.
-    """
-    if filename is None:
-        return None
-    
-    if not filename:
-        print("No filename provided.")
-        return None
-    
-    if filename == 'REG':
-        filename = ABSOLUTE_REG_FILEPATH
-    elif filename == 'SIM':
-        filename = ABSOLUTE_SIM_FILEPATH
-    else:
-        # No safet
-        filename = path.join(LOG_DIR, filename)
-    return filename
-
-def is_path_valid(filename: str | None) -> bool:
-    """
-    Check if the path is valid.
-
-    Args:
-        filename (str): The name of the file to load logs from.
-
-    Returns:
-        bool: True if the path is valid, False otherwise.
-    """
-    if not filename:
-        print("No filename provided.")
-        return False
-    if not path.exists(filename):
-        print("File does not exist.")
-        return False
-    return True
 
 # Function to see if an identifier is present in a log
 def is_id_in_log(identifier: str, log: Log) -> bool:
@@ -96,22 +54,10 @@ class KeyParser:
             filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_REG_FILEPATH.
             exclude_outliers (bool, optional): A flag indicating whether to exclude outliers. Defaults to True.
         """
-        self.filename = get_filename(filename)
+        self.filename = filename
+        self.exclude_outliers = exclude_outliers
         self.logs: List[Log] = self.extract_logs()
-        self.exclude_outliers: bool = exclude_outliers
 
-    def set_filename(self, filename: str) -> None:
-        """
-        Set the filename to load logs from.
-
-        Args:
-            filename (str): The name of the file to load logs from.
-        """
-        if not filename:
-            print("No filename provided.")
-            return
-        self.filename = get_filename(filename)
-    
     def load_logs(self) -> None:
         """
         Load logs from the file.
@@ -128,8 +74,12 @@ class KeyParser:
         if self.filename is None:
             # print("No filename assigned.")
             return []
+        filepath = get_filepath(self.filename)
+        if not filepath:
+            print("No filepath found.")
+            return []
         try:
-            with open(self.filename, 'r') as f:
+            with open(filepath, 'r') as f:
                 log_contents = json_load(f)
             logs:List[Log] = []
             for log in log_contents:
@@ -571,9 +521,11 @@ class KeyParser:
         print(f"Use KeyParser.confirm_nuke() to save changes.")
         self.logs = unique_logs
         self.modified = True
-       
+    
+    def confirm_nuke(self) -> None:
+        self.dump_modified_logs()
 
-    def dump_modified_logs(self):
+    def dump_modified_logs(self) -> None:
         """
         Save the changes to the logfile (likely made by nuke_duplicates).
         """
@@ -583,14 +535,10 @@ class KeyParser:
         if self.logs == self.extract_logs():
             print("No changes made.")
             return
-
         if self.filename is None:
-            print("No logfile set. Use KeyParser.set_file()")
+            print("No logfile set.")
             return
         
-        if not is_path_valid(self.filename):
-            print("Error: KeyParser.filename is not a valid path that exists.")
-            return
         if not self.modified:
             print("Error: KeyParser.modified is False! Set to true when self.logs does not match logfile")
         
@@ -601,7 +549,6 @@ class KeyParser:
         except Exception as e:
             print(f"An error occurred: {e}")
             return
-
 
 if __name__ == "__main__":
     parser = KeyParser()

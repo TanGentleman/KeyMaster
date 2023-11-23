@@ -11,18 +11,19 @@ from os import path
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
 from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
+from utils.helpers import get_filepath
 from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid, validate_keystrokes
 
 VALIDATE_WITH_PARSER = True
 if VALIDATE_WITH_PARSER:
-	from .keyParser import KeyParser
+	from classes.keyParser import KeyParser
 class KeyLogger:
 	"""
 	A class used to log keystrokes and calculate delays between each keypress.
 	This class is responsible for capturing and storing keystrokes values and timings.
 	It also keeps track of the total number of words typed and the entire string of characters typed.
 	"""
-	def __init__(self, filename: str | None = "") -> None:
+	def __init__(self, filename: str | None = "REG") -> None:
 		"""
 		Initialize the KeyLogger.
 
@@ -36,16 +37,6 @@ class KeyLogger:
 		self.typed_string: str = ""
 		# The first value of a keystrokes List will always have Keystroke.time = None, but we will init to time() anyways
 		self.prev_time: float = time()
-		if filename is None:
-			# This will be treated as a null value
-			pass
-		elif filename == "":
-			# This is the default keystrokes.json file (in ROOT folder for now)
-			filename = ABSOLUTE_REG_FILEPATH
-		else:
-			# Make absolute path if not already
-			if not path.isabs(filename):
-				filename = path.join(LOG_DIR, filename)
 		self.filename = filename
 
 		self.timer: Timer | None = None
@@ -207,9 +198,8 @@ class KeyLogger:
 				if none_count > 1:
 					print('None value marks first character. Only use once.')
 					return False
-		if VALIDATE_WITH_PARSER:
-			success = validate_keystrokes(keystrokes, input_string)
-			print(f"Keystrokes validated: {success}")
+		success = validate_keystrokes(keystrokes, input_string)
+		print(f"{len(keystrokes)} Keystrokes validated: {success}")
 		return True
 
 	def set_internal_log(self, keystrokes: List[Keystroke], input_string: str) -> bool:
@@ -265,18 +255,19 @@ class KeyLogger:
 		# Replace keystrokes in json using KeystrokeEncoder
 		# Append the log object to the file
 		logs: List[Log] = []
-		if self.filename is None:
+		filepath = get_filepath(self.filename)
+		if filepath is None:
 			print("Filename null. Log not saved.")
 			return False
 		try:
-			with open(self.filename, 'r+') as f:
+			with open(filepath, 'r+') as f:
 				logs = json_load(f, cls=KeystrokeDecoder)
 				logs.append(log)
 				f.seek(0)
 				json_dump(logs, f, cls=KeystrokeEncoder)
 				print("Logfile updated.")
 		except FileNotFoundError:
-			with open(self.filename, 'w') as f:
+			with open(filepath, 'w') as f:
 				json_dump([log], f, cls=KeystrokeEncoder)
 		except Exception as e:
 			print(f"An error occurred: {e}")

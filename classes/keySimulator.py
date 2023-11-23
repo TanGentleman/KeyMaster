@@ -10,7 +10,7 @@ from pynput.keyboard import Controller
 from utils.config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_encoded_char_dict
 from utils.config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 from utils.config import ROUND_DIGITS
-from utils.validation import Keystroke, Key, clean_string
+from utils.validation import Keystroke, Key
 
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
@@ -89,7 +89,6 @@ class KeySimulator:
         keystrokes: List[Keystroke] = []
         word_count = 0
 
-        string = clean_string(string)
         string_length = len(string)
         for i in range(string_length):
             if word_count == self.max_words:
