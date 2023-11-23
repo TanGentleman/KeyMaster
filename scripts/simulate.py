@@ -65,9 +65,6 @@ def listen_main(disable=False, logging = LOGGING_DEFAULT) -> None:
     if not keystrokes:
         print("No keystrokes found.")
         return
-    print("Starting simulation in 5 seconds...")
-    sleep(5)
-
     if PRINT_KEYS:
         print(keystrokes)
     if logging:
@@ -75,6 +72,9 @@ def listen_main(disable=False, logging = LOGGING_DEFAULT) -> None:
     if disable:
         print("Simulation disabled.")
         return
+
+    print("Starting simulation in 5 seconds...")
+    sleep(5)
     simulate_keystrokes(keystrokes)
 
 def simulate_from_string(input_string: str, disable = False, logging = LOGGING_DEFAULT) -> None:
@@ -113,21 +113,23 @@ if __name__ == "__main__":
     parser.add_argument("--disable", "-d", default=False, action='store_true', help="Disable simulation")
     parser.add_argument("--clipboard", "-c", action='store_true', help="Use clipboard as input")
     parser.add_argument("--listen", "-l", action='store_true', help="Listen for input")
-    parser.add_argument("-s", "--string", default=DEFAULT_STRING, help="The string to simulate")
+    parser.add_argument("--string", "-s", default=DEFAULT_STRING, help="The string to simulate")
 
     args = parser.parse_args()
 
     logging = not(args.no_log)
-    if logging:
-        print("Logging enabled.")
-    else:
-        print("Logging disabled.")
     disable = args.disable
+    input_string = args.string
+    if logging:
+        print("Logging ON.")
+    else:
+        print("Logging OFF.")
+    if disable:
+        print("Simulation OFF.")
+    
     if args.clipboard:
         clipboard_main(disable, logging)
     elif args.listen:
         listen_main(disable, logging)
-    elif args.string:
-        simulate_from_string(args.string, disable, logging)
     else:
-        print("This code should be unreachable now. The default string value is DEFAULT_STRING.")
+        simulate_from_string(input_string, disable, logging)
