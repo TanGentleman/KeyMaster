@@ -27,18 +27,18 @@ class KeySimulator:
         min_delay (float): The minimum delay between keystrokes.
         special_keys (dict): A dictionary of special keys and their corresponding keys.
         encoded_char_dict (dict): A dictionary of encoded characters and their corresponding strings.
-        disabled (bool): Whether or not the simulation is disabled.
+        disable (bool): Whether or not the simulation is disabled.
         max_duration (float): The maximum duration of the simulation.
     """
 
-    def __init__(self, disabled = SIM_DISABLE, max_duration = SIM_MAX_DURATION, max_words: int = SIM_MAX_WORDS,
+    def __init__(self, disable = SIM_DISABLE, max_duration = SIM_MAX_DURATION, max_words: int = SIM_MAX_WORDS,
                  speed_multiplier = SIM_SPEED_MULTIPLE, min_delay: float = MIN_DELAY,
                  delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
                  encoded_char_dict = sim_encoded_char_dict, special_keys: Dict[str, Key] = SPECIAL_KEYS) -> None:
         """
         Initialize the KeySimulator with the given parameters.
         """
-        self.disabled = disabled
+        self.disable = disable
         self.max_duration = float(max_duration)
         self.max_words = max_words
 
@@ -172,7 +172,7 @@ class KeySimulator:
         if not keystrokes:
             logging.error("No keystrokes found.")
             return
-        if self.disabled:
+        if self.disable:
             logging.error("Simulation disabled.")
             return
         

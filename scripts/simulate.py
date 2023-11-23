@@ -40,7 +40,7 @@ def generate_keystrokes_from_string(input_string: str) -> List[Keystroke] | None
     if not input_string:
         print("No input string provided.")
         return None
-    simulator = KeySimulator(disabled=True)
+    simulator = KeySimulator(disable=True)
     keystrokes = simulator.generate_keystrokes_from_string(input_string)
     if not keystrokes:
         print("No keystrokes found.")

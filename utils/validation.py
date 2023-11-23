@@ -1,4 +1,4 @@
-# This file is for the key validation function to explicitly typecheck classes.
+# This file is for validating keys across various types.
 
 # Standard library imports
 from json import JSONDecoder, JSONEncoder
@@ -9,22 +9,24 @@ from typing import List, Iterator, Tuple, TypedDict, Any
 from pynput.keyboard import Key, KeyCode
 
 # KeyMaster imports
-from .config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
+from utils.config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
 
 VALID_KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
+REPLACEMENTS = {
+        '\u2028': '\n',  # replace line separator with newline
+        '\u2029': '\n',  # replace paragraph separator with newline
+        # add more replacements here if needed
+    }
+REPLACE_UNICODE = False
 
-def replace_weird_keys(input_string: str) -> str:
+
+def replace_unicode_chars(input_string: str) -> str:
     """
     Replace weird keys with their string representations.
     I have found some present occasionally when copying text in the Notes app on macOS.
-    Potentially quotes with different unicode representations could go here too.
+    Potentially things like different unicode representations for quotes could go here too.
     """
-    replacements = {
-        # '\u2028': '\n',  # replace line separator with newline
-        # '\u2029': '\n',  # replace paragraph separator with newline
-        # add more replacements here if needed
-    }
-    for old, new in replacements.items():
+    for old, new in REPLACEMENTS.items():
         input_string = input_string.replace(old, new)
     return input_string
 
@@ -42,7 +44,9 @@ def clean_string(input_string: str) -> str:
     for c in input_string:
         if c not in VALID_KEYBOARD_CHARS:
             print(f"Invalid character: {c} -> {ord(c)}")
-    return filter_non_typable_chars(replace_weird_keys(input_string))
+    if REPLACE_UNICODE:
+        return filter_non_typable_chars(replace_unicode_chars(input_string))
+    return filter_non_typable_chars((input_string))
 
 # *** KEY VALIDATION ***
 def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
@@ -281,9 +285,8 @@ def validate_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
     validation_string = keystrokes_to_string(keystrokes)
     if input_string == validation_string:
         return True
-    print("Warning: input string and keystrokes do not exactly match!")
     if len(input_string) != len(validation_string):
-        print(f"String lengths do not match.")
+        print(f"Warning: validate_keystrokes: Lengths not equal.")
     # Find the first character that differs
     max_length = max(len(input_string), len(validation_string))
     for i in range(max_length):
@@ -293,13 +296,13 @@ def validate_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
             break
 
         elif i >= len(validation_string):
-            print(f"Typed string has extra char at index {i}: {(input_string[i])} <-")
+            print(f"Input string found extra char at index {i}: {(input_string[i])} <-")
             break
         typed_char = input_string[i]
         validation_char = validation_string[i]
         if typed_char != validation_char:
-            print(f"Found differing character!")
-            print(f"Typed string: {typed_char} <-")
+            print(f"String does not align with keystroke list!")
+            print(f"Input string: {typed_char} <-")
             print(f"Validation string: {validation_char} <-")
             break
     return False
