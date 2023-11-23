@@ -1,9 +1,8 @@
 # Standard library imports
-from time import time as get_time
 from time import sleep
 from numpy import random
 from typing import List, Dict
-
+from threading import Timer
 # Third party imports
 from pynput.keyboard import Controller
 
@@ -11,7 +10,7 @@ from pynput.keyboard import Controller
 from utils.config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_encoded_char_dict
 from utils.config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 from utils.config import ROUND_DIGITS
-from utils.validation import Keystroke, Key
+from utils.validation import Keystroke, Key, clean_string
 
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
@@ -32,22 +31,27 @@ class KeySimulator:
         max_duration (float): The maximum duration of the simulation.
     """
 
-    def __init__(self, disabled = SIM_DISABLE, max_duration = SIM_MAX_DURATION,
-                 speed_multiplier: float | int = SIM_SPEED_MULTIPLE, max_words: int = SIM_MAX_WORDS, 
-                 min_delay: float = MIN_DELAY, delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
+    def __init__(self, disabled = SIM_DISABLE, max_duration = SIM_MAX_DURATION, max_words: int = SIM_MAX_WORDS,
+                 speed_multiplier = SIM_SPEED_MULTIPLE, min_delay: float = MIN_DELAY,
+                 delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
                  encoded_char_dict = sim_encoded_char_dict, special_keys: Dict[str, Key] = SPECIAL_KEYS) -> None:
         """
         Initialize the KeySimulator with the given parameters.
         """
         self.disabled = disabled
-        self.max_duration = max_duration
-        self.speed_multiplier = speed_multiplier
-        self.delay_mean = delay_mean
-        self.delay_standard_deviation = delay_standard_deviation
+        self.max_duration = float(max_duration)
         self.max_words = max_words
+
+        self.speed_multiplier = float(speed_multiplier)
         self.min_delay = min_delay
+        self.delay_mean = float(delay_mean)
+        self.delay_standard_deviation = float(delay_standard_deviation)
+        
         self.encoded_char_dict = encoded_char_dict
         self.special_keys = special_keys
+
+        self.simulation_timer: Timer | None = None
+        self.stop = False
     
     def calculate_delay(self, speed_multiple: float | int | None) -> float:
         """
@@ -85,6 +89,7 @@ class KeySimulator:
         keystrokes: List[Keystroke] = []
         word_count = 0
 
+        string = clean_string(string)
         string_length = len(string)
         for i in range(string_length):
             if word_count == self.max_words:
@@ -148,7 +153,16 @@ class KeySimulator:
         delay = round(delay1 + delay2, ROUND_DIGITS)
         return Keystroke(key_string, delay)
     
-    
+    def stop_simulation(self) -> None:
+        """
+        Stop the simulation.
+        """
+        if self.stop:
+            return
+        self.stop = True
+        if self.simulation_timer:
+            self.simulation_timer.cancel()
+            
     def simulate_keystrokes(self, keystrokes: List[Keystroke]) -> None:
         """
         Function to simulate the given keystrokes.
@@ -162,18 +176,20 @@ class KeySimulator:
         if self.disabled:
             logging.error("Simulation disabled.")
             return
-        keyboard = Controller()
-        special_key_dict = self.special_keys
-        start_time = get_time()
+        
         none_count = 0
+        self.stop = False
+        # Initialize the keyboard controller
+        keyboard = Controller()
+        self.simulation_timer = Timer(self.max_duration, lambda: self.stop_simulation())
+        self.simulation_timer.start()
         for keystroke in keystrokes:
+            if self.stop:
+                logging.info(f'Duration {self.max_duration}s elapsed. Stopping simulation.')
+                break
             if not keystroke.valid:
                 logging.error(f"Invalid key: {keystroke.key}")
                 continue
-            # Check if max duration has been reached
-            if get_time() - start_time > self.max_duration:
-                logging.info(f"Max duration reached: {self.max_duration} seconds")
-                break
 
             key = keystroke.key
             time = keystroke.time
@@ -194,12 +210,12 @@ class KeySimulator:
             try:
                 if delay > 0:
                     sleep(delay)  # Wait for the time difference between keystrokes
-                if key in special_key_dict:
-                    keyboard.tap(special_key_dict[key])
+                if key in self.special_keys:
+                    keyboard.tap(self.special_keys[key])
                 elif key in WEIRD_KEYS:
                     keyboard.type(WEIRD_KEYS[key])
                 else:
-                    key = key.strip("\'")
+                    key = key.strip("'")
                     # IMPORTANT. This string may should have '' around it (Not required)
                     # My implementation throughout should ensure it gets logged with single quotes.
                     keyboard.type(key)
@@ -210,18 +226,24 @@ class KeySimulator:
             except Exception as e:
                 logging.critical(f"An error occurred: {e}")
                 break
+        self.stop_simulation()
     
-def main(input_string:str = "hey look ma, a simulation!"):
-    """
-    Simulate keystrokes from a string and log them.
+    def simulate_string(self, string: str) -> None:
+        """
+        Simulate the given string.
 
-    Args:
-        input_string (str): The string to simulate.
-    """
+        Args:
+            string (str): The string to simulate.
+        """
+        keystrokes = self.generate_keystrokes_from_string(string)
+        if not keystrokes:
+            logging.error("Given input was not simulated.")
+            return
+        self.simulate_keystrokes(keystrokes)
+        
+def main(input_string: str = "Hello World"):
     simulator = KeySimulator()
-    keystrokes = simulator.generate_keystrokes_from_string(input_string)
-    simulator.simulate_keystrokes(keystrokes)
-    return keystrokes
+    simulator.simulate_string(input_string)
 
 if __name__ == "__main__":
     import sys
