@@ -9,6 +9,36 @@ from utils.config import ROOT
 DEFAULT_FILE = 'keySimulator.py'
 FILE_TO_WRITE = 'docstrings.py'
 
+def extract_docs(input: str, output: str):
+    if not input:
+        return output
+    lines = input.splitlines() 
+    curr_lines = []
+    in_progress = False
+    for i in range(len(lines)):
+        line = lines[i]
+        if i+1 >= len(lines):
+            curr_lines.append(line)
+            output += "".join(curr_lines)
+            curr_lines = []
+            break
+        if "def " in line:
+            if curr_lines:
+                # reset cache
+                curr_lines = [] 
+            next_line = lines[i+1]:
+            if '"""' in next_line:
+                curr_lines.append(line)
+                curr_lines.append(next_line)
+                if in_progress:
+                    in_progress = not(in_progress)
+            else:
+                output += "".join(curr_lines)
+                curr_lines = []
+                
+    assert(curr_lines == [])
+    return output
+
 def find_instances(string: str) -> List[str]:
     classPattern = r'class .*?""".*?"""'
     functionPattern = r'def .*?""".*?"""'
