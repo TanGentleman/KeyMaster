@@ -50,14 +50,11 @@ def generate_keystrokes_from_string(input_string: str) -> List[Keystroke] | None
 def validate_and_save_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
     logger = KeyLogger(ABSOLUTE_SIM_FILEPATH)
     legit = logger.is_log_legit(keystrokes, input_string)
-    if not legit:
-        if VALIDATE_STRING:
-            print("Replacing string with keystroke validated copy for log!")
-            log_string = keystrokes_to_string(keystrokes)
-        else:
-            print("WARNING: Internal log may not match keystrokes!")
-            log_string = input_string
-    log_string = input_string
+    if legit:
+        log_string = input_string
+    else:
+        print("Using keystrokes instead of input string.")
+        log_string = keystrokes_to_string(keystrokes)
     logger.set_internal_log(keystrokes, log_string)
     return logger.save_log()
 
@@ -99,21 +96,24 @@ def clipboard_main() -> None:
     else:
         input_string = clean_string(clipboard_contents)
     simulate_from_string(input_string)
-### This supports no-UI Shortcuts integration.
-# Create a keyboard shortcut to run a shell script `python simulate.py "*Clipboard*"`
+
+### UI-less Shortcuts integration.
+# Create a keyboard shortcut to run shell script `python -m scripts.simulate.py -c`
 if __name__ == "__main__":
-    from sys import argv as args
-    length = len(args)
-    if length > 1:
-        if length > 2:
-            raise ValueError("Too many CLI arguments")
-        arg_string = args[1]
-        if arg_string == 'listen':
-            listen_main()
-        elif arg_string == '*Clipboard*':
-            clipboard_main()
-        else:
-            print("Gotta have a valid argument. Try 'Test' or '*Clipboard*'")
-            pass
+    import argparse
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument("--clipboard", "-c", action='store_true', help="Use clipboard as input")
+    parser.add_argument("--listen", "-l", action='store_true', help="Listen for input")
+    parser.add_argument("-s", "--string", default=DEFAULT_STRING, help="The string to simulate")
+
+    args = parser.parse_args()
+
+    if args.clipboard:
+        clipboard_main()
+    elif args.listen:
+        listen_main()
+    elif args.string:
+        simulate_from_string(args.string)
     else:
-        simulate_from_string(DEFAULT_STRING)
+        print("This code should be unreachable now. The default string value is DEFAULT_STRING.")
