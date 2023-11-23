@@ -10,7 +10,7 @@ from utils.validation import Keystroke, clean_string, keystrokes_to_string
 
 VALIDATE_STRING = True
 
-LOGGING_ON = True
+LOGGING_DEFAULT = True
 PRINT_KEYS = False
 DEFAULT_STRING = "hey look ma, it's a simulation!"
 ALLOW_UNICODE = True
@@ -58,7 +58,7 @@ def validate_and_save_keystrokes(keystrokes: List[Keystroke], input_string: str)
     logger.set_internal_log(keystrokes, log_string)
     return logger.save_log()
 
-def listen_main() -> None:
+def listen_main(disable=False, logging = LOGGING_DEFAULT) -> None:
     keystrokes = []
     logger = KeyLogger()
     keystrokes = listen_for_keystrokes(logger)
@@ -70,22 +70,28 @@ def listen_main() -> None:
 
     if PRINT_KEYS:
         print(keystrokes)
-    if LOGGING_ON:
+    if logging:
         logger.save_log()
+    if disable:
+        print("Simulation disabled.")
+        return
     simulate_keystrokes(keystrokes)
 
-def simulate_from_string(input_string: str) -> None:
+def simulate_from_string(input_string: str, disable = False, logging = LOGGING_DEFAULT) -> None:
     keystrokes = generate_keystrokes_from_string(input_string)
     if not keystrokes:
         print("No keystrokes found.")
         return
-    simulate_keystrokes(keystrokes)
-    if LOGGING_ON:
+    if logging:
         saved = validate_and_save_keystrokes(keystrokes, input_string)
         if not saved:
             print("Did not save to logfile.")
+    if disable:
+        print("Simulation disabled.")
+        return
+    simulate_keystrokes(keystrokes)
 
-def clipboard_main() -> None:
+def clipboard_main(disable = False, logging = LOGGING_DEFAULT) -> None:
     from pyperclip import paste as py_paste # type: ignore
     clipboard_contents = py_paste()
     if not clipboard_contents:
@@ -95,25 +101,33 @@ def clipboard_main() -> None:
         input_string = clipboard_contents
     else:
         input_string = clean_string(clipboard_contents)
-    simulate_from_string(input_string)
+    simulate_from_string(input_string, disable, logging)
 
 ### UI-less Shortcuts integration.
 # Create a keyboard shortcut to run shell script `python -m scripts.simulate.py -c`
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    
+    # Add logging flag
+    parser.add_argument("--no-log", "-n", default=False, action='store_true', help="Disable logging")
+    parser.add_argument("--disable", "-d", default=False, action='store_true', help="Disable simulation")
     parser.add_argument("--clipboard", "-c", action='store_true', help="Use clipboard as input")
     parser.add_argument("--listen", "-l", action='store_true', help="Listen for input")
     parser.add_argument("-s", "--string", default=DEFAULT_STRING, help="The string to simulate")
 
     args = parser.parse_args()
 
+    logging = not(args.no_log)
+    if logging:
+        print("Logging enabled.")
+    else:
+        print("Logging disabled.")
+    disable = args.disable
     if args.clipboard:
-        clipboard_main()
+        clipboard_main(disable, logging)
     elif args.listen:
-        listen_main()
+        listen_main(disable, logging)
     elif args.string:
-        simulate_from_string(args.string)
+        simulate_from_string(args.string, disable, logging)
     else:
         print("This code should be unreachable now. The default string value is DEFAULT_STRING.")
