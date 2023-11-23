@@ -1,19 +1,59 @@
 # Standard library imports
 from json import load as json_load
+from json import dump as json_dump
 import statistics
 import matplotlib.pyplot as plt
 from typing import List, Dict
 from os import path
 
-# Third party imports
-from pynput.keyboard import Key
 
 # KeyMaster imports
-from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, STOP_KEY
-from utils.config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
-from utils.validation import Keystroke, Log
+from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH, STOP_KEY
+from utils.validation import Keystroke, Log, KeystrokeEncoder
 
+NUKABLE = True
 OUTLIER_CUTOFF = 0.8
+
+def get_filename(filename: str | None) -> str | None:
+    """
+    Set the filename to load logs from.
+
+    Args:
+        filename (str): The name of the file to load logs from.
+    """
+    if filename is None:
+        return None
+    
+    if not filename:
+        print("No filename provided.")
+        return None
+    
+    if filename == 'REG':
+        filename = ABSOLUTE_REG_FILEPATH
+    elif filename == 'SIM':
+        filename = ABSOLUTE_SIM_FILEPATH
+    else:
+        # No safet
+        filename = path.join(LOG_DIR, filename)
+    return filename
+
+def is_path_valid(filename: str | None) -> bool:
+    """
+    Check if the path is valid.
+
+    Args:
+        filename (str): The name of the file to load logs from.
+
+    Returns:
+        bool: True if the path is valid, False otherwise.
+    """
+    if not filename:
+        print("No filename provided.")
+        return False
+    if not path.exists(filename):
+        print("File does not exist.")
+        return False
+    return True
 
 # Function to see if an identifier is present in a log
 def is_id_in_log(identifier: str, log: Log) -> bool:
@@ -48,7 +88,7 @@ class KeyParser:
         logs (list): The list of logs loaded from the file.
         exclude_outliers (bool): A flag indicating whether to exclude outliers.
     """
-    def __init__(self, filename: str | None = '', exclude_outliers: bool = True) -> None:
+    def __init__(self, filename: str | None = 'REG', exclude_outliers: bool = True) -> None:
         """
         Initialize the KeyParser and load logs.
 
@@ -56,19 +96,28 @@ class KeyParser:
             filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_REG_FILEPATH.
             exclude_outliers (bool, optional): A flag indicating whether to exclude outliers. Defaults to True.
         """
-        if filename is None:
-            self.filename = None
-        elif filename == '':
-            filename = ABSOLUTE_REG_FILEPATH
-        elif filename == 'SIM':
-            filename = path.join(LOG_DIR, 'simulated-keystrokes.json')
-        else:
-            filename = path.join(LOG_DIR, filename)
-
-        self.filename = filename
+        self.filename = get_filename(filename)
         self.logs: List[Log] = self.extract_logs()
         self.exclude_outliers: bool = exclude_outliers
 
+    def set_filename(self, filename: str) -> None:
+        """
+        Set the filename to load logs from.
+
+        Args:
+            filename (str): The name of the file to load logs from.
+        """
+        if not filename:
+            print("No filename provided.")
+            return
+        self.filename = get_filename(filename)
+    
+    def load_logs(self) -> None:
+        """
+        Load logs from the file.
+        """
+        self.logs = self.extract_logs()
+        
     def extract_logs(self) -> List[Log]:
         """
         Reads logfile and extracts logs.
@@ -194,7 +243,9 @@ class KeyParser:
             if not isPresent:
                 print("ID invalid, no strings found.")
                 return
-        string_list = self.get_strings(identifier)
+            string_list = self.get_strings(identifier)
+        else:
+            string_list = self.get_strings()
         print(f"Total strings: {len(string_list)}")
         count = 0
         for curr_string in string_list:
@@ -497,6 +548,60 @@ class KeyParser:
             plt.xlabel('Person')
             plt.ylabel('Count')
             plt.show()
+
+    def nuke_duplicates(self) -> None:
+        """
+        Remove duplicate logs from the logs list.
+        """
+        if not self.logs:
+            print("No logs found.")
+            return
+        unique_strings = []
+        unique_logs = []
+        for log in self.logs:
+            string = log['string']
+            if string not in unique_strings:
+                unique_strings.append(string)
+                unique_logs.append(log)
+
+        if len(unique_logs) == len(self.logs):
+            print("No duplicates found.")
+            return
+        print(f"Removed {len(self.logs) - len(unique_logs)} duplicates.")
+        print(f"Use KeyParser.confirm_nuke() to save changes.")
+        self.logs = unique_logs
+        self.modified = True
+       
+
+    def dump_modified_logs(self):
+        """
+        Save the changes to the logfile (likely made by nuke_duplicates).
+        """
+        if not self.logs:
+            print("No logs loaded.")
+            return
+        if self.logs == self.extract_logs():
+            print("No changes made.")
+            return
+
+        if self.filename is None:
+            print("No logfile set. Use KeyParser.set_file()")
+            return
+        
+        if not is_path_valid(self.filename):
+            print("Error: KeyParser.filename is not a valid path that exists.")
+            return
+        if not self.modified:
+            print("Error: KeyParser.modified is False! Set to true when self.logs does not match logfile")
+        
+        try:
+            with open(self.filename, 'w') as f:
+                json_dump(self.logs, f, cls=KeystrokeEncoder)
+                print("Logfile adjusted.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return
+
 
 if __name__ == "__main__":
     parser = KeyParser()
