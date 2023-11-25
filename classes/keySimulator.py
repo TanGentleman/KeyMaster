@@ -7,13 +7,15 @@ from threading import Timer
 from pynput.keyboard import Controller
 
 # KeyMaster imports
-from utils.config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, sim_encoded_char_dict
-from utils.config import SPECIAL_KEYS, WEIRD_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
+from utils.config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SIM_WHITESPACE_DICT, STOP_CODE
+from utils.config import SPECIAL_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
 from utils.config import ROUND_DIGITS
-from utils.validation import Keystroke, Key
+from utils.validation import Keystroke, Key, unwrap_key
 
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
+
+APOSTROPHE = "'"
 
 class KeySimulator:
     """
@@ -26,7 +28,7 @@ class KeySimulator:
         max_words (int): The maximum number of words to simulate.
         min_delay (float): The minimum delay between keystrokes.
         special_keys (dict): A dictionary of special keys and their corresponding keys.
-        encoded_char_dict (dict): A dictionary of encoded characters and their corresponding strings.
+        whitespace_dict (dict): A dictionary of encoded characters and their corresponding strings.
         disable (bool): Whether or not the simulation is disabled.
         max_duration (float): The maximum duration of the simulation.
     """
@@ -34,7 +36,7 @@ class KeySimulator:
     def __init__(self, disable = SIM_DISABLE, max_duration = SIM_MAX_DURATION, max_words: int = SIM_MAX_WORDS,
                  speed_multiplier = SIM_SPEED_MULTIPLE, min_delay: float = MIN_DELAY,
                  delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
-                 encoded_char_dict = sim_encoded_char_dict, special_keys: Dict[str, Key] = SPECIAL_KEYS) -> None:
+                 whitespace_dict = SIM_WHITESPACE_DICT, special_keys: Dict[str, Key] = SPECIAL_KEYS) -> None:
         """
         Initialize the KeySimulator with the given parameters.
         """
@@ -47,7 +49,7 @@ class KeySimulator:
         self.delay_mean = float(delay_mean)
         self.delay_standard_deviation = float(delay_standard_deviation)
         
-        self.encoded_char_dict = encoded_char_dict
+        self.whitespace_dict = whitespace_dict
         self.special_keys = special_keys
 
         self.simulation_timer: Timer | None = None
@@ -100,7 +102,8 @@ class KeySimulator:
                 continue
             if char == ' ':
                 word_count += 1
-            if not keystrokes:
+
+            if len(keystrokes) == 0:
                 last_key = None
             else:
                 last_key = keystrokes[-1].key
@@ -108,7 +111,7 @@ class KeySimulator:
             shift_eligible = lambda k: (k is None or k == ' ') or (k not in SHIFTED_CHARS and not k.isupper())
 
             # Check if a shift key needs to be added
-            if shift_eligible(last_key):
+            if shift_eligible(last_key): # isn't last key wrapped in apostrophes?
                 if char.isupper() or (char in SHIFTED_CHARS):
                     logging.info(f"Inserting shift before key: {char}")
                     # Add a shift keypress
@@ -116,7 +119,7 @@ class KeySimulator:
                         time = None
                     else:
                         time = SHIFT_SPEED
-                    key = 'Key.shift'
+                    key = str(Key.shift)
                     keystrokes.append(Keystroke(key, time))
             if keystrokes == []:
                 keystroke.time = None
@@ -141,11 +144,14 @@ class KeySimulator:
         delay2 = self.calculate_delay(1.5)
         key_string = ''
 
-        if char in self.encoded_char_dict:
-            key_string = str(self.encoded_char_dict[char])
+        if char in self.whitespace_dict:
+            key_string = (self.whitespace_dict[char])
         elif char.isprintable():
             # Add '' around the character
-            key_string = f"'{char}'"
+            if char == STOP_KEY:
+                key_string = STOP_CODE
+            else:
+                key_string = APOSTROPHE + char + APOSTROPHE
         else:
             logging.error(f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
             return None
@@ -191,6 +197,8 @@ class KeySimulator:
                 continue
 
             key = keystroke.key
+            if key == STOP_CODE:
+                key = STOP_KEY
             time = keystroke.time
             if time is None:
                 none_count += 1
@@ -211,13 +219,14 @@ class KeySimulator:
                     sleep(delay)  # Wait for the time difference between keystrokes
                 if key in self.special_keys:
                     keyboard.tap(self.special_keys[key])
-                elif key in WEIRD_KEYS:
-                    keyboard.type(WEIRD_KEYS[key])
                 else:
-                    key = key.strip("'")
-                    # IMPORTANT. This string may should have '' around it (Not required)
-                    # My implementation throughout should ensure it gets logged with single quotes.
-                    keyboard.type(key)
+                    # Decode the character
+                    key = unwrap_key(key)
+                    try:
+                        keyboard.tap(key)
+                    except Exception as e:
+                        logging.error(f"ERROR! Decoded key was not a character: {key}")
+                        continue
 
                 if key == STOP_KEY:
                     logging.warning('STOP key found. Stopping simulation.')

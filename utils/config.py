@@ -26,11 +26,14 @@ SIM_SPEED_MULTIPLE = 5
 
 ### KEYLOGGER.PY CONFIG ###
 LISTEN_TIMEOUT_DURATION = 30
+MAX_LOGGABLE_DELAY = 3
 MAX_WORDS = 50
 SPEEDHACK = True # Only applies for KeyLogger class, this will be changed
-STOP_KEY = "*" # This key is used to stop the listener when pressed
 
 # Misc
+STOP_KEY = "*" # This key is used to stop the listener when pressed
+STOP_CODE = 'STOP'
+APOSTROPHE = "'"
 ROUND_DIGITS = 4 # This is for logfile timestamps
 
 # *** KEY VALIDATION ***
@@ -47,27 +50,20 @@ SPECIAL_KEYS = {
     'Key.enter': Key.enter,
     }
 BANNED_KEYS = ['√']
-WEIRD_KEYS = { # Quirks of str(keypress) when the keypress is backslash or apostrophe
-#   str(KeyCode.from_char('\\')) == "'\\\\'"
-#   str(KeyCode.from_char("'")) == '"\'"'
-    "'\\\\'": '\\', # str(Key.backslash) -> '\\'
-    '"\'"': "'" # This is an apostrophe
-}
 
 if SIM_ALLOW_ENTER_AND_TAB:
-    sim_encoded_char_dict = {
+    whitespace_dict = {
         ' ': str(Key.space),
         '\t': str(Key.tab),
         '\n': str(Key.enter),
-        '\\': "'\\\\'",
-        "'": '"\'"'
+        # '\\': "'\\\\'",
+        # APOSTROPHE: '"\'"'
     }
 else:
-    sim_encoded_char_dict = {
+    whitespace_dict = {
         ' ': str(Key.space),
-        '\\': "'\\\\'",
-        "'": '"\'"'
     }
+SIM_WHITESPACE_DICT = whitespace_dict
     
 ### JSON format for keystrokes.json
 # [

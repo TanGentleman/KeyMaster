@@ -9,7 +9,7 @@ from typing import List, Iterator, Tuple, TypedDict, Any
 from pynput.keyboard import Key, KeyCode
 
 # KeyMaster imports
-from utils.config import SPECIAL_KEYS, BANNED_KEYS, WEIRD_KEYS
+from utils.config import APOSTROPHE, SPECIAL_KEYS, BANNED_KEYS, STOP_KEY, STOP_CODE
 
 VALID_KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
 REPLACEMENTS = {
@@ -18,7 +18,6 @@ REPLACEMENTS = {
         # add more replacements here if needed
     }
 REPLACE_UNICODE = False
-
 
 def replace_unicode_chars(input_string: str) -> str:
     """
@@ -48,6 +47,14 @@ def clean_string(input_string: str) -> str:
         return filter_non_typable_chars(replace_unicode_chars(input_string))
     return filter_non_typable_chars((input_string))
 
+def unwrap_key(key_string: str) -> str:
+    """
+    Decode a key string into a single character.
+    """
+    if len(key_string) == 3 and key_string[0] == APOSTROPHE and key_string[2] == APOSTROPHE:
+        key_string = key_string[1]
+    return key_string
+
 # *** KEY VALIDATION ***
 def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
     """
@@ -58,25 +65,30 @@ def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
     elif isinstance(key, KeyCode):
         if key.char is None:
             return False
-        key = str(key)
+        key = key.char
+        if key in BANNED_KEYS:
+            return False
+        return True
     # We know isinstance(key, str)
+    # We are likely being handed an encoded string (e.g. "'a'" or 'STOP' or 'Key.shift')
     key_string = key
-    # A string like 'a' is valid, but 'Key.alt' is not
+    if key_string == STOP_CODE:
+        return True
     if key_string in SPECIAL_KEYS:
         return True
-    if key_string in WEIRD_KEYS:
-        return True
-    # Check the length of the key stripped of single quotes
-    key_string = key_string.strip("'")
-    if key_string in BANNED_KEYS:
-        return False
-    # This means that both wrapped and unwrapped chars are valid
+    # Decode the character
+    key_string = unwrap_key(key_string)
+        
+    # Check the length of the key ensure a single character
     if len(key_string) != 1:
         print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
         return False
+    if key in BANNED_KEYS:
+        return False
+    # This means that both wrapped and unwrapped chars are valid
     if strict:
-        return key_string in VALID_KEYBOARD_CHARS
-    return key_string.isprintable()
+        return key in VALID_KEYBOARD_CHARS
+    return key.isprintable()
 
 class LegalKey:
     """
@@ -122,7 +134,7 @@ class Keystroke:
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
-        self.unicode = self.valid and self.key.strip("'") not in VALID_KEYBOARD_CHARS
+        self.unicode = self.valid and unwrap_key(self.key) not in VALID_KEYBOARD_CHARS
     def __iter__(self) -> Iterator[Tuple[str, float | None]]:
         yield self.key, self.time
     def __repr__(self) -> str:
@@ -147,16 +159,17 @@ class Keystroke:
             return None
         
         is_special = False
-        # Assertions should always pass
-        if self.key in SPECIAL_KEYS:
+        legal_key = ''
+        if self.key == 'STOP':
+            is_special = True
+            legal_key = STOP_KEY
+        elif self.key in SPECIAL_KEYS:
             # What should a legal key look like for a special key?
             print("Special key!")
             is_special = True
-            legal_key = self.key
-        elif self.key in WEIRD_KEYS:
-            legal_key = WEIRD_KEYS[self.key]
+            legal_key = APOSTROPHE + self.key + APOSTROPHE
         else:
-            key = self.key.strip("'")
+            key = unwrap_key(self.key)
             if key in BANNED_KEYS:
                 print(f"Banned key!->{self.key}")
                 return None
@@ -246,10 +259,14 @@ def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
         # This means keystroke.valid is true, so it is a valid keypress
         key = keystroke.key
         # Handle special keys
-        if key in SPECIAL_KEYS:
+        if key == STOP_CODE:
+            key = STOP_KEY
+            output_string += key
+        elif key in SPECIAL_KEYS:
             special_key = SPECIAL_KEYS[key]
-            if special_key == Key.backspace and output_string != '':
-                output_string = output_string[:-1]  # Remove the last character
+            if special_key == Key.backspace:
+                if output_string != '':
+                    output_string = output_string[:-1]  # Remove the last character
             elif special_key == Key.space:
                 output_string += ' '
                 word_count += 1
@@ -258,11 +275,9 @@ def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
             elif special_key == Key.tab:
                 output_string += '\t'
             else:
-                continue # Ignore CapsLock and Shift
-        elif key in WEIRD_KEYS:
-            output_string += WEIRD_KEYS[key]
+                continue # Ignore keys like CapsLock and Shift
         else:
-            key = key.strip("'")
+            key = unwrap_key(key)
             if key in BANNED_KEYS:
                 continue
             # Append the character to the output string

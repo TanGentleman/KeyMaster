@@ -5,12 +5,11 @@ from time import time, perf_counter
 from uuid import uuid4
 from typing import List
 from threading import Timer
-from os import path
 
 # Third party imports
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
-from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, MAX_WORDS, STOP_KEY, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION
+from utils.config import APOSTROPHE, MAX_WORDS, STOP_KEY, STOP_CODE, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION, MAX_LOGGABLE_DELAY
 from utils.helpers import get_filepath
 from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid, validate_keystrokes
 
@@ -32,13 +31,11 @@ class KeyLogger:
 			Defaults to ABSOLUTE_REG_FILEPATH.
 			None value treated as null path.
 		"""
-		self.keystrokes: List[Keystroke] = []
-		self.word_count: int = 0
-		self.typed_string: str = ""
-		# The first value of a keystrokes List will always have Keystroke.time = None, but we will init to time() anyways
-		self.prev_time: float = time()
 		self.filename = filename
-
+		self.keystrokes: List[Keystroke] = []
+		self.word_count = 0
+		self.typed_string = ""
+		self.prev_time = time()
 		self.timer: Timer | None = None
 		self.duration = float(LISTEN_TIMEOUT_DURATION)
 
@@ -58,7 +55,7 @@ class KeyLogger:
 		Handles key press events and logs valid Keystroke events.
 
 		This function is called whenever a key is pressed. 
-		It validates the keypress and appends the data
+		If key is valid, it is logged as a Keystroke object.
 		KeyLogger attributes modified: keystrokes, typed_string, word_count, prev_time
 
 		Args:
@@ -66,31 +63,35 @@ class KeyLogger:
 		"""
 		if keypress is None:
 			return None
+		
+		# Validate keypress
+		if not is_key_valid(keypress):
+			return None
+		
+		# Calculate delay between keystrokes
 		current_time = perf_counter()
 		delay = current_time - self.prev_time
-		if delay > 3:
-			delay = 3 + (delay / 1000)
+		self.prev_time = current_time
+		if delay > MAX_LOGGABLE_DELAY:
+			delay = MAX_LOGGABLE_DELAY + (delay / 1000)
+		delay = round(delay, ROUND_DIGITS)
 
-		# Alternatively, I could do Keystroke(str(keypress), delay) and then check if keypress is valid in Keystroke class
-		# Right now, all Keystroke objects from this function have the property valid
-		# I prefer using a Key or KeyCode object as the input key
-		if is_key_valid(keypress):
-			key_string = str(keypress)
-			# Mark first character delay as None
-			if not self.keystrokes:
-				keystroke = Keystroke(key_string, None)
+		if isinstance(keypress, KeyCode):
+			# This is a non-special character
+			if keypress.char is None:
+				return
+			key = keypress.char
+			if len(key) != 1:
+				print(f"CRITICAL: Keypress found with len!=1")
+				return
+			self.typed_string += key
+			# Mark stop key or wrap the key in single quotes
+			if key == STOP_KEY:
+				key = STOP_CODE
 			else:
-				delay = round(delay, ROUND_DIGITS) # Round to 4 decimal places
-				keystroke = Keystroke(key_string, delay)
-
-			assert(keystroke.valid is True)
-			self.keystrokes.append(keystroke)
-			self.prev_time = current_time # <----- Make sure this statement comes at an appropriate time.
-
-			# Append typed character to the string
-			if isinstance(keypress, KeyCode) and keypress.char is not None:
-				self.typed_string += keypress.char
-			elif keypress == Key.space:
+				key = APOSTROPHE + key + APOSTROPHE
+		else:
+			if keypress == Key.space:
 				self.typed_string += ' '
 				self.word_count += 1
 			elif keypress == Key.enter:
@@ -102,8 +103,20 @@ class KeyLogger:
 				if self.typed_string[-1] == ' ':
 					self.word_count -= 1
 				self.typed_string = self.typed_string[:-1]
-		return None
+			else:
+				# Ignore special keys that are not space, enter, tab, or backspace
+				return None
+			key = str(keypress)
 
+		# Create a Keystroke object and append it to the list
+		# If the list is empty, the first keystroke will have delay = None
+		if len(self.keystrokes) == 0:
+			keystroke = Keystroke(key, None)
+		else:
+			keystroke = Keystroke(key, delay)
+		self.keystrokes.append(keystroke)	
+		return None
+			
 	def stop_listener_condition(self, keypress: Key | KeyCode) -> bool:
 		"""
 		Function to determine whether to stop the listener.
@@ -169,6 +182,8 @@ class KeyLogger:
 			# Ensure the timer is stopped
 			if self.timer is not None:
 				self.timer.cancel()
+		
+		return None
 			
 
 	def is_log_legit(self, keystrokes: List[Keystroke], input_string: str) -> bool:
