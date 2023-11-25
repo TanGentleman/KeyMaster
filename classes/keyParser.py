@@ -520,7 +520,6 @@ class KeyParser:
         print(f"Removed {len(self.logs) - len(unique_logs)} duplicates.")
         print(f"Use KeyParser.confirm_nuke() to save changes.")
         self.logs = unique_logs
-        self.modified = True
     
     def confirm_nuke(self) -> None:
         self.dump_modified_logs()
@@ -539,11 +538,12 @@ class KeyParser:
             print("No logfile set.")
             return
         
-        if not self.modified:
-            print("Error: KeyParser.modified is False! Set to true when self.logs does not match logfile")
-        
+        filepath = get_filepath(self.filename)
+        if filepath is None:
+            print("No filepath found.")
+            return
         try:
-            with open(self.filename, 'w') as f:
+            with open(filepath, 'w') as f:
                 json_dump(self.logs, f, cls=KeystrokeEncoder)
                 print("Logfile adjusted.")
         except Exception as e:
