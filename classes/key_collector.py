@@ -186,19 +186,23 @@ class KeyLogger:
 		return None
 			
 
-	def is_log_legit(self, keystrokes: List[Keystroke], input_string: str) -> bool:
+	def is_loggable(self, keystrokes: List[Keystroke] | None = None, input_string: str | None = None) -> bool:
 		"""
-		Validates the input string and keystrokes to ensure well formatted Log.
-
-		This function ensures keystrokes are correctly formatted and input string is nonempty.
-
+		Checks the validity of a list of keystrokes and a string. If valid, it can be logged in a Log object.
+		By default, this function checks the internal keystrokes and input_string attributes.
+		
 		Args:
 			keystrokes (List[Keystroke]): The list of keystrokes to validate.
 			input_string (str): The input string to validate.
 
 		Returns:
-			bool: True if the input is valid Log material, False otherwise.
+			bool: True if the decomposed keystrokes match the input string. False otherwise.
 		"""
+		if keystrokes is None:
+			keystrokes = self.keystrokes
+		if input_string is None:
+			input_string = self.typed_string
+		
 		if not input_string:
 			print("No input string found. Log not legit")
 			return False
@@ -211,7 +215,7 @@ class KeyLogger:
 			if delay is None:
 				none_count += 1
 				if none_count > 1:
-					print('None value marks first character. Only use once.')
+					print('None value marks first character ONLY! Log not legit.')
 					return False
 		success = validate_keystrokes(keystrokes, input_string)
 		print(f"{len(keystrokes)} Keystrokes validated: {success}")
@@ -228,7 +232,7 @@ class KeyLogger:
 		Returns:
 			bool: True if state successfully replaced. False if arguments invalid.
 		"""
-		if not self.is_log_legit(keystrokes, input_string):
+		if not self.is_loggable(keystrokes, input_string):
 			print("Invalid log. Internal log not set")
 			return False
 		self.keystrokes = keystrokes
@@ -252,7 +256,7 @@ class KeyLogger:
 				self.reset()
 			return False
 		# ensure log is legit
-		legit = self.is_log_legit(self.keystrokes, self.typed_string)
+		legit = self.is_loggable()
 		if not legit:
 			print("Log is not legit. Did not update file.")
 			return False

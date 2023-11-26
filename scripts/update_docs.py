@@ -34,12 +34,16 @@ def extract_function_info(source):
                                                                             
     return function_info                                                     
 
-def write_to_markdown(function_info, filepath):
+def write_to_markdown(function_info, filepath) -> tuple[list[str], int]:
     """Writes function information to a markdown file."""
     with open(filepath, 'w') as file:
         file.write('# Function Documentation\n\n')
         file.write('This file contains documentation for all functions in the project.\n\n')
         wrap_in_grave = lambda x: "`" + x + "`"
+        errors = []
+        error_count = 0
+        ERROR_BASE = 'ERROR: FIX DOCSTRING. '
+        
         for info in function_info:
             function_name = wrap_in_grave("init" if "__init__" in info[0] else info[0])
             file.write(f'## Function: {function_name}\n')
@@ -52,7 +56,10 @@ def write_to_markdown(function_info, filepath):
                 file.write(info[2] + '\n')
                 continue
             if chunk_count > 3:
-                file.write(f'ERROR: FIX DOCSTRING. Chunk count {chunk_count} > 3\n')
+                error_message = f'Chunk count {chunk_count} > 3'
+                file.write(ERROR_BASE + error_message + '\n')
+                errors.append(error_message)
+                error_count += 1
                 continue
             # write docstring
             for i in range(len(content_chunks)):
@@ -68,6 +75,12 @@ def write_to_markdown(function_info, filepath):
                             continue
                         file.write(f'- {arg}\n')
                 elif i == 2:
+                    if 'Args:' in content_chunks[i]:
+                        error_message = 'Args should be chunk 2, not 3'
+                        file.write(ERROR_BASE + error_message + '\n')
+                        errors.append(error_message)
+                        error_count += 1
+                        continue
                     if 'Returns:' not in content_chunks[i]:
                         continue
                     return_block = content_chunks[i].split('\n')
@@ -76,6 +89,9 @@ def write_to_markdown(function_info, filepath):
                         if line.strip() == "Returns:":
                             continue
                         file.write(line + '\n')
+    if len(errors) != error_count:
+        print("Error count does not match error list length!")
+    return errors, error_count
 
 def main():                                                                  
     """                                                                      
@@ -93,7 +109,14 @@ def main():
         function_info = extract_function_info(source)  
         new_filename = f'docs_{filename[:-3]}.md'
         new_filepath = path.join(DOCS_DIR, new_filename)
-        write_to_markdown(function_info, new_filepath)
+        errors, error_count = write_to_markdown(function_info, new_filepath)
+        if error_count == 0:
+            print(f'File {filename} is now well documented.')
+        else:
+            count = 0
+            for error in errors:
+                count += 1
+                print(f'{count}.: {error}')
                                                                             
 if __name__ == "__main__":                                                   
     main()                                                                   

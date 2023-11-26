@@ -14,6 +14,7 @@ Clear the current state of the logger.
 Keystrokes, the typed string, and the word count will be set to default values.
 ## Function: `on_press`
 Handles key press events and logs valid Keystroke events.
+ERROR: FIX DOCSTRING. Args should be chunk 2, not 3
 ## Function: `stop_listener_condition`
 Function to determine whether to stop the listener.
 ### Parameters:
@@ -29,8 +30,14 @@ Handles key release events. Stop the listener when stop condition is met.
 ## Function: `start_listener`
 Function to start the key listener.
 The listener will only stop when stop_listener_condition returns True.
-## Function: `is_log_legit`
-ERROR: FIX DOCSTRING. Chunk count 4 > 3
+## Function: `is_loggable`
+Checks the validity of a list of keystrokes and a string. If valid, it can be logged in a Log object.
+By default, this function checks the internal keystrokes and input_string attributes.
+### Parameters:
+-         keystrokes (List[Keystroke]): The list of keystrokes to validate.
+-         input_string (str): The input string to validate.
+### Returns
+        bool: True if the decomposed keystrokes match the input string. False otherwise.
 ## Function: `set_internal_log`
 Replace the internal log with the provided keystrokes and input string.
 ### Parameters:
