@@ -19,7 +19,7 @@ def is_id_in_log(identifier: str, log: Log) -> bool:
     Check if a log with the identifier exists in the loaded logs.
 
     Args:
-        identifier (str): The UUID or exact string formatted as "*string". (* is the STOP_KEY)
+        identifier (str): The UUID or exact string formatted as STOP_KEY + string
         log (Log): The log to check.
 
     Returns:
@@ -33,8 +33,11 @@ def is_id_in_log(identifier: str, log: Log) -> bool:
         return False
     if log['id'] == identifier:
         return True
-    if identifier[-1] == STOP_KEY and log['string'] == identifier[1:]:
-        return True
+    if identifier[-1] == STOP_KEY:
+        if log['string'] == identifier[1:]:
+            return True
+        else:
+            print('Exact string not found.')
     return False
 
 class KeyParser:
@@ -556,4 +559,4 @@ class KeyParser:
 if __name__ == "__main__":
     parser = KeyParser()
     id = parser.id_from_substring("")
-    print('Parser working!' if id else 'Get some keystrokes logged!')
+    print('Parser active!' if id else 'Get some keystrokes logged!')

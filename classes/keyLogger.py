@@ -15,7 +15,7 @@ from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder,
 
 PARSER_TEST = True
 if PARSER_TEST:
-	from tests.test_parser import run_parser_tests
+	from tests.test_key_analyzer import run_parser_tests
 class KeyLogger:
 	"""
 	A class used to log keystrokes and calculate delays between each keypress.
