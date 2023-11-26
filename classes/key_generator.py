@@ -18,7 +18,7 @@ logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
 APOSTROPHE = "'"
 
-class KeySimulator:
+class KeyGenerator:
     """
     A class used to simulate keystrokes and log them.
 
@@ -39,7 +39,7 @@ class KeySimulator:
                  delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
                  whitespace_dict = SIM_WHITESPACE_DICT, special_keys: Dict[str, Key] = SPECIAL_KEYS) -> None:
         """
-        Initialize the KeySimulator with the given parameters.
+        Initialize the KeyGenerator with the given parameters.
         """
         self.disable = disable
         self.max_duration = float(max_duration)
@@ -251,7 +251,7 @@ class KeySimulator:
         self.simulate_keystrokes(keystrokes)
         
 def main(input_string: str = "Hello World"):
-    simulator = KeySimulator()
+    simulator = KeyGenerator()
     simulator.simulate_string(input_string)
 
 if __name__ == "__main__":
