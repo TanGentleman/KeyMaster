@@ -13,9 +13,9 @@ from utils.config import APOSTROPHE, MAX_WORDS, STOP_KEY, STOP_CODE, ROUND_DIGIT
 from utils.helpers import get_filepath
 from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid, validate_keystrokes
 
-VALIDATE_WITH_PARSER = True
-if VALIDATE_WITH_PARSER:
-	from classes.keyParser import KeyParser
+PARSER_TEST = True
+if PARSER_TEST:
+	from tests.test_parser import run_parser_tests
 class KeyLogger:
 	"""
 	A class used to log keystrokes and calculate delays between each keypress.
@@ -291,19 +291,6 @@ class KeyLogger:
 			self.reset()
 		return True
 
-def run_parser_tests(logger: KeyLogger, parser) -> None:
-	print("Running assertion checks on parser.")
-	assert(parser.logs == [])
-	new_parser_logs = [Log({"id": "None", "string": logger.typed_string, "keystrokes": logger.keystrokes})]
-	parser.logs = new_parser_logs
-	assert(parser.check_membership('None') is True)
-	assert(parser.get_keystrokes() == logger.keystrokes)
-	assert(parser.get_strings() == [logger.typed_string])
-	assert(parser.id_from_substring("") == "None")
-	
-	print("All assertion checks passed.")
-
-
 def main():
 	logger = KeyLogger()
 	logger.start_listener()
@@ -311,14 +298,12 @@ def main():
 	if not success:
 		print("Log not saved.")
 		return
-	if VALIDATE_WITH_PARSER and KeyParser is not None:
-		try:
-			print("Now testing KeyParser.")
-			parser = KeyParser(None)
-			run_parser_tests(logger, parser)
-		except:
+	if PARSER_TEST:
+		if run_parser_tests is None:
 			print(f"KeyParser error. Check the parser tests!")
 			return
+		print("Now testing KeyParser.")
+		run_parser_tests(logger)
 
 if __name__ == "__main__":
 	main()

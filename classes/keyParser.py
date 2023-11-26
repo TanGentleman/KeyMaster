@@ -522,6 +522,9 @@ class KeyParser:
         self.logs = unique_logs
     
     def confirm_nuke(self) -> None:
+        """
+        This is a fun alias for dump_modified_logs.
+        """
         self.dump_modified_logs()
 
     def dump_modified_logs(self) -> None:
