@@ -3,6 +3,7 @@ from time import sleep
 from numpy import random
 from typing import List, Dict
 from threading import Timer
+
 # Third party imports
 from pynput.keyboard import Controller
 
