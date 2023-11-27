@@ -9,13 +9,10 @@ from threading import Timer
 # Third party imports
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
-from utils.config import APOSTROPHE, MAX_WORDS, STOP_KEY, STOP_CODE, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION, MAX_LOGGABLE_DELAY
+from utils.config import APOSTROPHE, MAX_WORDS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION, MAX_LOGGABLE_DELAY
 from utils.helpers import get_filepath
 from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid, validate_keystrokes
 
-PARSER_TEST = True
-if PARSER_TEST:
-	from tests.test_key_analyzer import run_parser_tests
 class KeyLogger:
 	"""
 	A class used to log keystrokes and calculate delays between each keypress.
@@ -24,12 +21,11 @@ class KeyLogger:
 	"""
 	def __init__(self, filename: str | None = "REG") -> None:
 		"""
-		Initialize the KeyLogger.
+		Initialize the KeyLogger. If filename is None, the logger will not save to a file.
+		Defaults to keystrokes.json in the logs directory.
 
 		Args:
-			filename (str or None): The filename to save the log to.
-			Defaults to ABSOLUTE_REG_FILEPATH.
-			None value treated as null path.
+			filename (str or None): The filename to save the log to. Use 'REG' or 'SIM' for main logfiles.
 		"""
 		self.filename = filename
 		self.keystrokes: List[Keystroke] = []
@@ -49,25 +45,58 @@ class KeyLogger:
 		self.input_string = ""
 		self.prev_time = time()
 
-	# on_press still needs to be tidied up a bit
-	def on_press(self, keypress: Key | KeyCode | None) -> None:
+	def encode_keycode_char(self, key: str) -> str | None:
 		"""
-		Handles key press events and logs valid Keystroke events.
-
-		This function is called whenever a key is pressed. 
-		If key is valid, it is logged as a Keystroke object.
-		KeyLogger attributes modified: keystrokes, typed_string, word_count, prev_time
+		Encodes a KeyCode object into a string.
 
 		Args:
-			keypress (Keypress): The key press event to handle.
+			key (KeyCode): The KeyCode object to encode.
+
+		Returns:
+			str: The encoded KeyCode object.
 		"""
-		if keypress is None:
-			return None
+		if len(key) != 1:
+			raise ValueError("encode_keycode_char: Key length != 1")
 		
-		# Validate keypress
+		# Mark stop key or wrap the key in single quotes
+		if key == STOP_KEY:
+			encoded_key = STOP_CODE
+		else:
+			encoded_key = APOSTROPHE + key + APOSTROPHE
+		return encoded_key
+	
+	def encode_special_char(self, key: Key) -> str:
+		"""
+		Encodes a special key into a string.
+
+		Args:
+			key (Key): The Key object to encode.
+
+		Returns:
+			str: The encoded Key object.
+		"""
+		encoded_key = None
+		for key_string, value in SPECIAL_KEYS.items():
+			if value == key:
+				encoded_key = key_string
+
+		if encoded_key is None:
+			raise ValueError("encode_special_char: Key not found in SPECIAL_KEYS")
+		return encoded_key
+
+	def log_valid_keypress(self, keypress: Key | KeyCode) -> None:
+		"""
+		Logs a valid keypress to the internal keystrokes list.
+		Valid keypresses are alphanumeric characters, space, tab, enter, and backspace.
+
+		Args:
+			keypress (Key or KeyCode): The key press event to log.
+		"""
 		if not is_key_valid(keypress):
-			return None
+			print('CRITICAL: Only keys that pass is_key_valid .')
+			raise ValueError("log_valid_keypress: Invalid keypress. This should not happen.")
 		
+		encoded_key = ""
 		# Calculate delay between keystrokes
 		current_time = perf_counter()
 		delay = current_time - self.prev_time
@@ -81,42 +110,51 @@ class KeyLogger:
 			if keypress.char is None:
 				return
 			key = keypress.char
-			if len(key) != 1:
-				print(f"CRITICAL: Keypress found with len!=1")
-				return
 			self.typed_string += key
-			# Mark stop key or wrap the key in single quotes
-			if key == STOP_KEY:
-				key = STOP_CODE
-			else:
-				key = APOSTROPHE + key + APOSTROPHE
+			encoded_key = self.encode_keycode_char(key)
 		else:
-			if keypress == Key.space:
-				self.typed_string += ' '
-				self.word_count += 1
-			elif keypress == Key.enter:
-				self.typed_string += '\n'
-			elif keypress == Key.tab:
-				self.typed_string += '\t'
-			# logic for backspaces, including if going back on a space
-			elif keypress == Key.backspace and len(self.typed_string) > 0:
-				if self.typed_string[-1] == ' ':
-					self.word_count -= 1
-				self.typed_string = self.typed_string[:-1]
+			# This is a KeyCode object
+			if keypress in SPECIAL_KEYS.values():
+				encoded_key = self.encode_special_char(keypress)
+				if keypress == Key.space:
+					self.typed_string += ' '
+					self.word_count += 1
+				elif keypress == Key.enter:
+					self.typed_string += '\n'
+				elif keypress == Key.tab:
+					self.typed_string += '\t'
+				# logic for backspaces, including if going back on a space
+				elif keypress == Key.backspace and len(self.typed_string) > 0:
+					if self.typed_string[-1] == ' ':
+						self.word_count -= 1
+					self.typed_string = self.typed_string[:-1]
 			else:
-				# Ignore special keys that are not space, enter, tab, or backspace
 				return None
-			key = str(keypress)
-
+		if not encoded_key:
+			raise ValueError("log_valid_keypress: Unable to encode keypress. This should not happen.")
 		# Create a Keystroke object and append it to the list
 		# If the list is empty, the first keystroke will have delay = None
 		if len(self.keystrokes) == 0:
-			keystroke = Keystroke(key, None)
+			keystroke = Keystroke(encoded_key, None)
 		else:
-			keystroke = Keystroke(key, delay)
+			keystroke = Keystroke(encoded_key, delay)
 		self.keystrokes.append(keystroke)	
 		return None
-			
+	
+	# on_press still needs to be tidied up a bit
+	def on_press(self, keypress: Key | KeyCode | None) -> None:
+		"""Handles the event when a key is pressed."""
+
+		if keypress is None:
+			return None
+		
+		# Validate keypress
+		if not is_key_valid(keypress):
+			return None
+		# do a cool function
+		self.log_valid_keypress(keypress)
+		return None
+		
 	def stop_listener_condition(self, keypress: Key | KeyCode) -> bool:
 		"""
 		Function to determine whether to stop the listener.
@@ -295,19 +333,7 @@ class KeyLogger:
 			self.reset()
 		return True
 
-def main():
+if __name__ == "__main__":
 	logger = KeyLogger()
 	logger.start_listener()
-	success = logger.save_log()
-	if not success:
-		print("Log not saved.")
-		return
-	if PARSER_TEST:
-		if run_parser_tests is None:
-			print(f"KeyParser error. Check the parser tests!")
-			return
-		print("Now testing KeyParser.")
-		run_parser_tests(logger)
-
-if __name__ == "__main__":
-	main()
+	logger.save_log()

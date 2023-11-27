@@ -2,19 +2,33 @@
 
 This file contains documentation for all functions in the project.
 
-## Function: `main`
 ## Function: `init`
-Initialize the KeyLogger.
+Initialize the KeyLogger. If filename is None, the logger will not save to a file.
+Defaults to keystrokes.json in the logs directory.
 ### Parameters:
--         filename (str or None): The filename to save the log to.
--         Defaults to ABSOLUTE_REG_FILEPATH.
--         None value treated as null path.
+-         filename (str or None): The filename to save the log to. Use 'REG' or 'SIM' for main logfiles.
 ## Function: `reset`
 Clear the current state of the logger.
 Keystrokes, the typed string, and the word count will be set to default values.
+## Function: `encode_keycode_char`
+Encodes a KeyCode object into a string.
+### Parameters:
+-         key (KeyCode): The KeyCode object to encode.
+### Returns
+        str: The encoded KeyCode object.
+## Function: `encode_special_char`
+Encodes a special key into a string.
+### Parameters:
+-         key (Key): The Key object to encode.
+### Returns
+        str: The encoded Key object.
+## Function: `log_valid_keypress`
+Logs a valid keypress to the internal keystrokes list.
+Valid keypresses are alphanumeric characters, space, tab, enter, and backspace.
+### Parameters:
+-         keypress (Key or KeyCode): The key press event to log.
 ## Function: `on_press`
-Handles key press events and logs valid Keystroke events.
-ERROR: FIX DOCSTRING. Args should be chunk 2, not 3
+Handles the event when a key is pressed.
 ## Function: `stop_listener_condition`
 Function to determine whether to stop the listener.
 ### Parameters:
