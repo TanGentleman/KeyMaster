@@ -16,13 +16,16 @@ ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
 ### SIMULATION.PY CONFIG ###
 SIM_MAX_DURATION = 30
 SIM_DISABLE = False
+SHOW_SHIFT_INSERTIONS = True
 
 SIM_DELAY_MEAN = 0.06
 SIM_DELAY_STD_DEV = 0.015
 SIM_MAX_WORDS = 300
 MIN_DELAY = 0.03
 
-SIM_ALLOW_ENTER_AND_TAB = True
+ALLOW_SIMULATING_UNICODE = True
+ALLOW_SIMULATING_NEWLINES = True
+
 SIM_SPEED_MULTIPLE = 5
 
 ### KEYLOGGER.PY CONFIG ###
@@ -53,7 +56,7 @@ SPECIAL_KEYS = {
     'Key.enter': Key.enter,
     }
 
-if SIM_ALLOW_ENTER_AND_TAB:
+if ALLOW_SIMULATING_NEWLINES:
     whitespace_dict = {
         ' ': str(Key.space),
         '\t': str(Key.tab),
@@ -62,6 +65,7 @@ if SIM_ALLOW_ENTER_AND_TAB:
 else:
     whitespace_dict = {
         ' ': str(Key.space),
+        '\t': str(Key.tab),
     }
 SIM_WHITESPACE_DICT = whitespace_dict
     

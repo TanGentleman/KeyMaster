@@ -8,8 +8,8 @@ from threading import Timer
 from pynput.keyboard import Controller
 
 # KeyMaster imports
-from utils.config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SIM_WHITESPACE_DICT, STOP_CODE
-from utils.config import SPECIAL_KEYS, STOP_KEY, SIM_DISABLE, SHIFTED_CHARS, SHIFT_SPEED, SIM_MAX_DURATION
+from utils.config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
+from utils.config import STOP_KEY, STOP_CODE, SPECIAL_KEYS, SIM_WHITESPACE_DICT, SIM_DISABLE, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
 from utils.config import ROUND_DIGITS
 from utils.validation import Keystroke, Key, unwrap_key
 
@@ -114,7 +114,8 @@ class KeyGenerator:
             # Check if a shift key needs to be added
             if shift_eligible(last_key): # isn't last key wrapped in apostrophes?
                 if char.isupper() or (char in SHIFTED_CHARS):
-                    logging.info(f"Inserting shift before key: {char}")
+                    if SHOW_SHIFT_INSERTIONS:
+                        logging.info(f"Inserting shift before key {i}: {char}")
                     # Add a shift keypress
                     if keystrokes == []:
                         time = None

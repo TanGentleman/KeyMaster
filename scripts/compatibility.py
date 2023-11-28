@@ -5,10 +5,11 @@
 import re
 
 # KeyMaster imports
-from utils.validation import Keystroke, clean_string
+from utils.validation import Keystroke
+from utils.helpers import clean_string
 SIMULATE = True
 if SIMULATE:
-    from classes.keySimulator import KeySimulator
+    from classes.key_generator import KeyGenerator
 
 
 # Input strings for "This" and "Hey there my name tan*"
@@ -39,9 +40,9 @@ def main(input_string = "Test print statement!"):
     # Print the resulting list of Keystroke objects
     for obj in keystroke_objects:
         print(obj)
-    if SIMULATE and KeySimulator is not None:
+    if SIMULATE and KeyGenerator is not None:
         print('now simulating')
-        simulator = KeySimulator()
+        simulator = KeyGenerator()
         simulator.simulate_keystrokes(keystroke_objects)
 
 if __name__ == "__main__":

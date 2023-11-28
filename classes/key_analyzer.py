@@ -19,11 +19,11 @@ def is_id_in_log(identifier: str, log: Log) -> bool:
     Check if a log with the identifier exists in the loaded logs.
 
     Args:
-        identifier (str): The UUID or exact string formatted as STOP_KEY + string
-        log (Log): The log to check.
+        `identifier` (`str`): The UUID or exact string formatted as STOP_KEY + string
+        `log` (`Log`): The log to check.
 
     Returns:
-        bool: True if a log with the given UUID or exact string exists, False otherwise.
+        `bool`: True if a log with the given UUID or exact string exists, False otherwise.
     """
     if not identifier:
         print("No identifier provided.")
@@ -40,22 +40,16 @@ def is_id_in_log(identifier: str, log: Log) -> bool:
             print('Exact string not found.')
     return False
 
+
 class KeyParser:
     """
     A class used to parse and analyze keystroke logs.
-
-    Attributes:
-        filename (str): The name of the file to load logs from.
-        logs (list): The list of logs loaded from the file.
-        exclude_outliers (bool): A flag indicating whether to exclude outliers.
+    The logs can be loaded from a file or passed in as a list of Log objects.
+    A None value for filename will initialize an empty KeyParser.
     """
     def __init__(self, filename: str | None = 'REG', exclude_outliers: bool = True) -> None:
         """
-        Initialize the KeyParser and load logs.
-
-        Args:
-            filename (str, optional): The name of the file to load logs from. Defaults to ABSOLUTE_REG_FILEPATH.
-            exclude_outliers (bool, optional): A flag indicating whether to exclude outliers. Defaults to True.
+        Initialize the KeyParser and load logs. None value for filename will initialize an empty KeyParser.
         """
         self.filename = filename
         self.exclude_outliers = exclude_outliers
@@ -72,7 +66,7 @@ class KeyParser:
         Reads logfile and extracts logs.
 
         Returns:
-            list: A list of logs loaded from the file. If an error occurs, an empty list is returned.
+            `list`: A list of logs loaded from the file. If an error occurs, an empty list is returned.
         """
         if self.filename is None:
             # print("No filename assigned.")
@@ -103,10 +97,10 @@ class KeyParser:
         Check if a log with the identifier exists in the loaded logs.
 
         Args:
-            identifier (str): The UUID or exact string to check for.
+            `identifier` (`str`): The UUID or exact string to check for.
 
         Returns:
-            bool: True if a log with the given UUID or exact string exists, False otherwise.
+            `bool`: True if a log with the given UUID or exact string exists, False otherwise.
         """
         if not identifier:
             print("No identifier provided.")
@@ -119,13 +113,13 @@ class KeyParser:
     def id_by_index(self, index: int) -> str | None:
         """
         Get the ID of the log at a given index. 
-        Index begins at 1, as labeled in method print_strings.
+        Index begins at 1, as labeled in method `print_strings`.
 
         Args:
-            index (int): The index of the log to get the ID of.
+            `index` (`int`): The index of the log to get the ID of.
 
         Returns:
-            str or None: The ID of the log at the given index. If no such log is found, None is returned.
+            `str` or `None`: The ID of the log at the given index. If no such log is found, `None` is returned.
         """
         if not self.logs:
             print("No logs found. Returning None.")
@@ -146,10 +140,10 @@ class KeyParser:
         Get the ID of the first log that contains a given substring.
 
         Args:
-            keyword (str): The substring to search for.
+            `keyword` (`str`): The substring to search for.
 
         Returns:
-            str or None: The ID of the first log that contains the substring. If no such log is found, None is returned.
+            `str` or `None`: The ID of the first log that contains the substring. If no such log is found, `None` is returned.
         """
         for log in self.logs:
             if keyword == log['string'] or keyword in log['string']:
@@ -162,10 +156,10 @@ class KeyParser:
         only the associated string is included.
 
         Args:
-            identifier (str, optional): The UUID or exact string to check for.
+            `identifier` (`str`, optional): The UUID or exact string to check for.
 
         Returns:
-            list: A list of all strings in the logs. If an identifier is provided, 
+            `list`: A list of all strings in the logs. If an identifier is provided, 
             the list contains the string associated with that identifier. 
             If the identifier is not found, an empty list is returned.
         """
@@ -183,13 +177,13 @@ class KeyParser:
     
     def print_strings(self, max: int = 5, truncate: int = 25, identifier: str | None = None) -> None:
         """
-        Prints strings from logs. If 'identifier' is provided, prints associated string.
-        Strings longer than 'truncate' value are appended with "...[truncated]".
+        Prints strings from logs. If `identifier` is provided, prints associated string.
+        Strings longer than `truncate` value are appended with "...[truncated]".
 
         Args:
-            max (int): Maximum number of strings to print. Defaults to 5.
-            truncate (int): Maximum number of characters to print. Defaults to 25.
-            identifier (str, optional): The UUID or exact string to check for.
+            `max` (int): Maximum number of strings to print. Defaults to 5.
+            `truncate` (int): Maximum number of characters to print. Defaults to 25.
+            `identifier` (str, optional): The UUID or exact string to check for.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
@@ -217,10 +211,10 @@ class KeyParser:
         Get a list of all keystroke delay times.
 
         Args:
-            identifier (str, optional): The UUID or exact string to check for.
+            `identifier` (str, optional): The UUID or exact string to check for.
 
         Returns:
-            List[float]: A list of float values.
+            `List[float]`: A list of float values.
         """
         keystrokes = []
         if identifier is not None:
@@ -257,10 +251,10 @@ class KeyParser:
         Formula is CPM/5, where CPM is characters per minute.
 
         Args:
-            identifier (str, optional): The UUID or exact string to check for.
+            `identifier` (str, optional): The UUID or exact string to check for.
 
         Returns:
-            float or None: If no characters are found, None is returned.
+            `float` or `None`: If no characters are found, None is returned.
         """
         if not self.logs:
             print("No logs found.")
@@ -299,10 +293,10 @@ class KeyParser:
         Get the highest keystroke time for each log.
 
         Args:
-            identifier (str, optional): The UUID or exact string to check for.
+            `identifier` (str, optional): The UUID or exact string to check for.
 
         Returns:
-            list: A list of float values.
+            `list`: A list of float values.
         """
         if not self.logs:
             print("No logs found.")
@@ -330,10 +324,10 @@ class KeyParser:
         Get the average time between keystrokes.
 
         Args:
-            identifier (str, optional): The UUID or exact string to check for.
+            `identifier` (str, optional): The UUID or exact string to check for.
 
         Returns:
-            float or None: If no keystroke times are found, None is returned.
+            `float` or `None`: Return average delay in seconds. If no keystroke times are found, None is returned.
         """
         times = []
         if identifier is not None:
@@ -352,11 +346,11 @@ class KeyParser:
         """
         Get the standard deviation of the time between keystrokes.
 
-        Args:
-            identifier (str, optional): The UUID or exact string to check for.
+        `Args`:
+            `identifier (`str`, optional): The UUID or exact string to check for.
 
         Returns:
-            float or None: If insufficient keystrokes are found, None is returned.
+            `float` or `None`: If insufficient keystrokes are found, None is returned.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
@@ -376,9 +370,9 @@ class KeyParser:
         Plots the average keystroke time for each character.
 
         Args:
-            identifier (str, optional): The UUID or exact string to check for.
-            keystrokes (list, optional): A list of Keystroke items.
-            exclude_outliers (bool, optional): A flag indicating whether to exclude outliers.
+            `identifier` (`str`, optional): The UUID or exact string to check for.
+            `keystrokes`: (`KeystrokeList`, optional): A list of Keystroke items.
+            `exclude_outliers` (bool, optional): A flag indicating whether to exclude outliers.
         """
         if identifier is not None:
             isPresent = self.check_membership(identifier)
@@ -420,11 +414,14 @@ class KeyParser:
             list: A list of Keystroke items.
         """
         keystrokes: List[Keystroke] = []
+        if identifier is not None:
+            isPresent = self.check_membership(identifier)
+            if isPresent is False:
+                return []
         for log in self.logs:
-            if identifier is not None:
-                if log['id'] == identifier or log['string'] == identifier:
-                    keystrokes.extend(log['keystrokes'])
-                    return keystrokes
+            if identifier is not None and is_id_in_log(identifier, log):
+                keystrokes.extend(log['keystrokes'])
+                break
             else:
                 keystrokes.extend(log['keystrokes'])
             
@@ -435,10 +432,10 @@ class KeyParser:
         Calculates the average keystroke time for each character based on the provided keystrokes.
 
         Args:
-            keystrokes (list, optional): A list of Keystroke items.
+            `keystrokes` (list, optional): A list of Keystroke items.
 
         Returns:
-            dict: A dictionary mapping each character to its average keystroke time.
+            `dict`: A dictionary mapping each character to its average keystroke time.
         """
         character_times: Dict[str, float] = {}
         character_counts: Dict[str, int] = {}

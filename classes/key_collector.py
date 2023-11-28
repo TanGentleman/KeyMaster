@@ -10,8 +10,8 @@ from threading import Timer
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
 from utils.config import APOSTROPHE, MAX_WORDS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION, MAX_LOGGABLE_DELAY
-from utils.helpers import get_filepath
-from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, is_key_valid, validate_keystrokes
+from utils.helpers import get_filepath, is_key_valid
+from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, validate_keystrokes
 
 class KeyLogger:
 	"""
@@ -25,7 +25,7 @@ class KeyLogger:
 		Defaults to keystrokes.json in the logs directory.
 
 		Args:
-			filename (str or None): The filename to save the log to. Use 'REG' or 'SIM' for main logfiles.
+			`filename` (`str` or `None`): The filename to save the log to. Use 'REG' or 'SIM' for main logfiles.
 		"""
 		self.filename = filename
 		self.keystrokes: List[Keystroke] = []
@@ -38,22 +38,25 @@ class KeyLogger:
 	def reset(self) -> None:
 		"""
 		Clear the current state of the logger.
-		Keystrokes, the typed string, and the word count will be set to default values.
 		"""
 		self.keystrokes = []
 		self.word_count = 0
 		self.input_string = ""
 		self.prev_time = time()
 
-	def encode_keycode_char(self, key: str) -> str | None:
+	def set_filename(self, filename: str) -> None:
 		"""
-		Encodes a KeyCode object into a string.
+		Set the filename to save logs to.
 
 		Args:
-			key (KeyCode): The KeyCode object to encode.
+			`filename` (`str`): The filename to save the log to.
+		"""
+		self.filename = filename
 
-		Returns:
-			str: The encoded KeyCode object.
+	def encode_keycode_char(self, key: str) -> str | None:
+		"""
+		Encodes a character by wrapping it in single quotes.
+		The STOP_KEY is encoded as STOP_CODE. For example, '*' may now be 'STOP'.
 		"""
 		if len(key) != 1:
 			raise ValueError("encode_keycode_char: Key length != 1")
@@ -67,13 +70,7 @@ class KeyLogger:
 	
 	def encode_special_char(self, key: Key) -> str:
 		"""
-		Encodes a special key into a string.
-
-		Args:
-			key (Key): The Key object to encode.
-
-		Returns:
-			str: The encoded Key object.
+		Encodes a special key as a string.
 		"""
 		encoded_key = None
 		for key_string, value in SPECIAL_KEYS.items():
@@ -90,7 +87,7 @@ class KeyLogger:
 		Valid keypresses are alphanumeric characters, space, tab, enter, and backspace.
 
 		Args:
-			keypress (Key or KeyCode): The key press event to log.
+			`keypress` (`Key` or `KeyCode`): The key press event to log.
 		"""
 		if not is_key_valid(keypress):
 			print('CRITICAL: Only keys that pass is_key_valid .')
@@ -143,11 +140,11 @@ class KeyLogger:
 	
 	# on_press still needs to be tidied up a bit
 	def on_press(self, keypress: Key | KeyCode | None) -> None:
-		"""Handles the event when a key is pressed."""
-
+		"""
+		Handles the event when a key is pressed.
+		"""
 		if keypress is None:
 			return None
-		
 		# Validate keypress
 		if not is_key_valid(keypress):
 			return None
@@ -157,31 +154,19 @@ class KeyLogger:
 		
 	def stop_listener_condition(self, keypress: Key | KeyCode) -> bool:
 		"""
-		Function to determine whether to stop the listener.
-
-		Args:
-			keypress (Keypress): The key press event to handle.
-
-		Returns:
-			bool: True if the listener should stop, False otherwise.
+		Checks if the keypress triggers a stop condition.
 		"""
 		if keypress == Key.esc:
 			return True
-		elif self.word_count >= MAX_WORDS:
-			return False
-		elif isinstance(keypress, KeyCode) and keypress.char is not None:
+		if self.word_count >= MAX_WORDS:
+			return True
+		if isinstance(keypress, KeyCode) and keypress.char is not None:
 			return keypress.char == STOP_KEY
 		return False
 	
 	def on_release(self, keypress: Key | KeyCode | None) -> None:
 		"""
 		Handles key release events. Stop the listener when stop condition is met.
-
-		Args:
-			keypress (Keypress): The key press event to handle.
-
-		Returns:
-			False or None: False if the maximum word count is reached. This stops the listener.
 		"""
 		if keypress is None:
 			return None
@@ -230,11 +215,11 @@ class KeyLogger:
 		By default, this function checks the internal keystrokes and input_string attributes.
 		
 		Args:
-			keystrokes (List[Keystroke]): The list of keystrokes to validate.
-			input_string (str): The input string to validate.
+			`keystrokes` (`List[Keystroke]`): The list of keystrokes to validate.
+			`input_string` (`str`): The input string to validate.
 
 		Returns:
-			bool: True if the decomposed keystrokes match the input string. False otherwise.
+			`bool`: True if the decomposed keystrokes match the input string. False otherwise.
 		"""
 		if keystrokes is None:
 			keystrokes = self.keystrokes
@@ -257,15 +242,18 @@ class KeyLogger:
 					return False
 		success = validate_keystrokes(keystrokes, input_string)
 		print(f"{len(keystrokes)} Keystrokes validated: {success}")
-		return True
+		# I want to solve banned key problem, but for now, just return success
+		# Eventually, one should be able to store banned keys in simulated string, 
+		# so string should be adjusted before using as an argument here
+		return success
 
 	def set_internal_log(self, keystrokes: List[Keystroke], input_string: str) -> bool:
 		"""
 		Replace the internal log with the provided keystrokes and input string.
 
 		Args:
-			keystrokes (List[Keystroke]): The list of keystrokes to replace self.keystrokes with.
-			input_string (str): The input string to replace self.typed_string with.
+			`keystrokes` (`List[Keystroke]`): The list of keystrokes to replace self.keystrokes with.
+			`input_string` (`str`): The input string to replace self.typed_string with.
 
 		Returns:
 			bool: True if state successfully replaced. False if arguments invalid.
@@ -283,11 +271,15 @@ class KeyLogger:
 		Function to save the log to a file.
 
 		Args:
-			reset (bool): Whether to reset the logger after saving the log. Defaults to False.
+			`reset` (`bool`): Whether to reset the logger after saving the log. Defaults to False.
 
 		Returns:
-			bool: True if the log was saved successfully, False otherwise.
+			`bool`: True if the log was saved successfully, False otherwise.
 		"""
+		filepath = get_filepath(self.filename)
+		if filepath is None:
+			print("Filename null. Log not saved.")
+			return False
 		if not self.typed_string:
 			print("No keystrokes to save.")
 			if reset:
@@ -312,10 +304,6 @@ class KeyLogger:
 		# Replace keystrokes in json using KeystrokeEncoder
 		# Append the log object to the file
 		logs: List[Log] = []
-		filepath = get_filepath(self.filename)
-		if filepath is None:
-			print("Filename null. Log not saved.")
-			return False
 		try:
 			with open(filepath, 'r+') as f:
 				logs = json_load(f, cls=KeystrokeDecoder)

@@ -3,17 +3,17 @@ from time import sleep
 from typing import List
 
 # KeyMaster imports
-from classes.keyLogger import KeyLogger
-from classes.keySimulator import KeySimulator
-from utils.config import ABSOLUTE_SIM_FILEPATH
-from utils.validation import Keystroke, clean_string, keystrokes_to_string
+from classes.key_collector import KeyLogger
+from classes.key_generator import KeyGenerator
+from utils.config import ABSOLUTE_SIM_FILEPATH, ALLOW_SIMULATING_UNICODE
+from utils.validation import Keystroke, keystrokes_to_string
+from utils.helpers import clean_string
 
 VALIDATE_STRING = True
 
 LOGGING_DEFAULT = True
 PRINT_KEYS = False
 DEFAULT_STRING = "hey look ma, it's a simulation!"
-ALLOW_UNICODE = True
 
 def listen_for_keystrokes(logger: KeyLogger) -> List[Keystroke] | None:
     """
@@ -31,16 +31,16 @@ def listen_for_keystrokes(logger: KeyLogger) -> List[Keystroke] | None:
 
 def simulate_keystrokes(keystrokes: List[Keystroke]) -> None:
     """
-    Test the KeySimulator class by simulating keystrokes from a string.
+    Test the KeyGenerator class by simulating keystrokes from a string.
     """
-    simulator = KeySimulator()
+    simulator = KeyGenerator()
     simulator.simulate_keystrokes(keystrokes)
 
 def generate_keystrokes_from_string(input_string: str) -> List[Keystroke] | None:
     if not input_string:
         print("No input string provided.")
         return None
-    simulator = KeySimulator(disable=True)
+    simulator = KeyGenerator(disable=True)
     keystrokes = simulator.generate_keystrokes_from_string(input_string)
     if not keystrokes:
         print("No keystrokes found.")
@@ -49,7 +49,7 @@ def generate_keystrokes_from_string(input_string: str) -> List[Keystroke] | None
 
 def validate_and_save_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
     logger = KeyLogger(ABSOLUTE_SIM_FILEPATH)
-    legit = logger.is_log_legit(keystrokes, input_string)
+    legit = logger.is_loggable(keystrokes, input_string)
     if legit:
         log_string = input_string
     else:
@@ -97,7 +97,7 @@ def clipboard_main(disable = False, logging = LOGGING_DEFAULT) -> None:
     if not clipboard_contents:
         print("No text found in clipboard.")
         return None
-    if ALLOW_UNICODE:
+    if ALLOW_SIMULATING_UNICODE:
         input_string = clipboard_contents
     else:
         input_string = clean_string(clipboard_contents)
@@ -109,6 +109,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     # Add logging flag
+    parser.add_argument("--no-newlines", "-nn", default=False, action='store_true', help="Disable simulating newlines and tabs")
     parser.add_argument("--no-log", "-n", default=False, action='store_true', help="Disable logging")
     parser.add_argument("--disable", "-d", default=False, action='store_true', help="Disable simulation")
     parser.add_argument("--clipboard", "-c", action='store_true', help="Use clipboard as input")
@@ -116,6 +117,9 @@ if __name__ == "__main__":
     parser.add_argument("--string", "-s", default=DEFAULT_STRING, help="The string to simulate")
 
     args = parser.parse_args()
+
+    ### TODO: Add newline and tab disabling
+    # Currently, config.py holds ALLOW_SIMULATING_NEWLINES
 
     logging = not(args.no_log)
     disable = args.disable

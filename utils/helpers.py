@@ -31,6 +31,10 @@ def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
         
     # Check the length of the key ensure a single character
     if len(key_string) != 1:
+        # Banned key enters this clause as well, still wrapped.
+        # Technically this is unsafe for values of length 0, but that should never happen.
+        if key_string[1] in BANNED_KEYS:
+            return False
         print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
         # When this is inside a helper function, raise an exception instead
         # raise ValueError("is_key_valid: Error. Char length must be 1.")
