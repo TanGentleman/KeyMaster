@@ -10,7 +10,7 @@ from utils.config import DOCS_DIR, ROOT
 CLASSES_DIR = path.join(ROOT, "classes")
 
 # Iterate through folder to collect all filenames
-def get_filenames():
+def get_filenames() -> list[str]:
     """Returns a list of all filenames in the classes directory."""
     filenames = []
     for filename in listdir(CLASSES_DIR):
@@ -64,14 +64,25 @@ def write_to_markdown(function_info, filepath) -> tuple[list[str], int]:
             # write docstring
             for i in range(len(content_chunks)):
                 if i == 0:
-                    file.write(f'{content_chunks[i]}\n')
+                    info_string = content_chunks[i].strip()
+                    file.write(info_string + '\n')
                 elif i == 1:
                     if 'Args:' not in content_chunks[i]:
+                        if 'Returns:' in content_chunks[i]:
+                            # Write without the returns
+                            return_block = content_chunks[i].split('\n')
+                            file.write(f'### Returns\n')
+                            for line in return_block:
+                                line = line.strip()
+                                if line == "Returns:":
+                                    continue
+                                file.write(line + '\n')
                         continue
                     file.write(f'### Parameters:\n')
                     args_block = content_chunks[i].split('\n')
                     for arg in args_block:
-                        if arg.strip() == "Args:":
+                        arg = arg.strip()
+                        if arg == "Args:":
                             continue
                         file.write(f'- {arg}\n')
                 elif i == 2:
@@ -86,7 +97,8 @@ def write_to_markdown(function_info, filepath) -> tuple[list[str], int]:
                     return_block = content_chunks[i].split('\n')
                     file.write(f'### Returns\n')
                     for line in return_block:
-                        if line.strip() == "Returns:":
+                        line = line.strip()
+                        if line == "Returns:":
                             continue
                         file.write(line + '\n')
     if len(errors) != error_count:
@@ -116,7 +128,7 @@ def main():
             count = 0
             for error in errors:
                 count += 1
-                print(f'{count}.: {error}')
+                print(f'{count}. {error}')
                                                                             
 if __name__ == "__main__":                                                   
     main()                                                                   

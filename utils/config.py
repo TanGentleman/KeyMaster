@@ -1,5 +1,6 @@
 # Standard library imports
 from os import path
+import string
 
 # Third party imports
 from pynput.keyboard import Key
@@ -33,14 +34,16 @@ SPEEDHACK = True # Only applies for KeyLogger class, this will be changed
 # Misc
 STOP_KEY = "*" # This key is used to stop the listener when pressed
 STOP_CODE = 'STOP'
-APOSTROPHE = "'"
+BANNED_KEYS = ['√']
+SHIFT_SPEED = 0.2222 # This is the speed of all logical insertions of Key.shift when generating keystrokes
 ROUND_DIGITS = 4 # This is for logfile timestamps
 
-# *** KEY VALIDATION ***
-SHIFT_SPEED = 0.2222
+# DO NOT CHANGE
+EMPTY_WRAPPED_CHAR = "''"
+APOSTROPHE = "'"
 SHIFTED_CHARS = r'~!@#$%^&*()_+{}|:"<>?'
+KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
 
-# The below constant is used by the functions: config.is_key_valid, KeySimulator.simulate_keystrokes, and KeyLogger.on_press
 SPECIAL_KEYS = {
     'Key.space': Key.space,
     'Key.backspace': Key.backspace,
@@ -49,15 +52,12 @@ SPECIAL_KEYS = {
     'Key.tab': Key.tab,
     'Key.enter': Key.enter,
     }
-BANNED_KEYS = ['√']
 
 if SIM_ALLOW_ENTER_AND_TAB:
     whitespace_dict = {
         ' ': str(Key.space),
         '\t': str(Key.tab),
         '\n': str(Key.enter),
-        # '\\': "'\\\\'",
-        # APOSTROPHE: '"\'"'
     }
 else:
     whitespace_dict = {

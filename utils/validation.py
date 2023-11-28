@@ -2,97 +2,19 @@
 
 # Standard library imports
 from json import JSONDecoder, JSONEncoder
-import string
 from typing import List, Iterator, Tuple, TypedDict, Any
 
 # Third party imports
-from pynput.keyboard import Key, KeyCode
+from pynput.keyboard import Key
 
 # KeyMaster imports
-from utils.config import APOSTROPHE, SPECIAL_KEYS, BANNED_KEYS, STOP_KEY, STOP_CODE
-
-VALID_KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
-REPLACEMENTS = {
-        '\u2028': '\n',  # replace line separator with newline
-        '\u2029': '\n',  # replace paragraph separator with newline
-        # add more replacements here if needed
-    }
-REPLACE_UNICODE = False
-
-def replace_unicode_chars(input_string: str) -> str:
-    """
-    Replace weird keys with their string representations.
-    I have found some present occasionally when copying text in the Notes app on macOS.
-    Potentially things like different unicode representations for quotes could go here too.
-    """
-    for old, new in REPLACEMENTS.items():
-        input_string = input_string.replace(old, new)
-    return input_string
-
-def filter_non_typable_chars(input_string: str) -> str:
-    """
-    Filter out non-typable characters from a string.
-    Returns a string with only typable characters.
-    """
-    return ''.join(c for c in input_string if c in VALID_KEYBOARD_CHARS)
-
-def clean_string(input_string: str) -> str:
-    """
-    Returns a string with only typable characters.
-    """
-    for c in input_string:
-        if c not in VALID_KEYBOARD_CHARS:
-            print(f"Invalid character: {c} -> {ord(c)}")
-    if REPLACE_UNICODE:
-        return filter_non_typable_chars(replace_unicode_chars(input_string))
-    return filter_non_typable_chars((input_string))
-
-def unwrap_key(key_string: str) -> str:
-    """
-    Decode a key string into a single character.
-    """
-    if len(key_string) == 3 and key_string[0] == APOSTROPHE and key_string[2] == APOSTROPHE:
-        key_string = key_string[1]
-    return key_string
-
-# *** KEY VALIDATION ***
-def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
-    """
-    Function to check if the key is valid.
-    """
-    if isinstance(key, Key):
-        return key in SPECIAL_KEYS.values()
-    elif isinstance(key, KeyCode):
-        if key.char is None:
-            return False
-        key = key.char
-        if key in BANNED_KEYS:
-            return False
-        return True
-    # We know isinstance(key, str)
-    # We are likely being handed an encoded string (e.g. "'a'" or 'STOP' or 'Key.shift')
-    key_string = key
-    if key_string == STOP_CODE:
-        return True
-    if key_string in SPECIAL_KEYS:
-        return True
-    # Decode the character
-    key_string = unwrap_key(key_string)
-        
-    # Check the length of the key ensure a single character
-    if len(key_string) != 1:
-        print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
-        return False
-    if key in BANNED_KEYS:
-        return False
-    # This means that both wrapped and unwrapped chars are valid
-    if strict:
-        return key in VALID_KEYBOARD_CHARS
-    return key.isprintable()
+from utils.config import APOSTROPHE, SPECIAL_KEYS, BANNED_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
+from utils.helpers import unwrap_key, is_key_valid
 
 class LegalKey:
     """
     A class used to represent a legal key. Chars have no quote wrapping.
+    STOP_CODE 
     >>> LegalKey('a', False)
     key=a
     >>> LegalKey('Key.shift', True)
@@ -102,9 +24,11 @@ class LegalKey:
         if not isinstance(key, str) or not isinstance(is_special, bool):
             raise TypeError('key must be a string and is_special must be a bool')
         if is_special:
-            assert(key in SPECIAL_KEYS)
+            if key != STOP_CODE and key not in SPECIAL_KEYS:
+                raise ValueError('key must be a special key. These are defined in utils/config.py')
         else:
-            assert(len(key) == 1 and key in VALID_KEYBOARD_CHARS)
+            if len(key) != 1 or key not in KEYBOARD_CHARS:
+                raise ValueError('key must be typeable character')
         self.key = key
         self.is_special = is_special
     def __repr__(self) -> str:
@@ -127,14 +51,24 @@ class Keystroke:
         >>> Keystroke('Key.shift', 0.2222)
         Keystroke(key=Key.shift, time=0.222)
         """
-        if not isinstance(key, str) or key == '':
-            raise TypeError('key must be a nonempty string')
+        if not isinstance(key, str):
+            raise TypeError('encoded key must be a string')
         if not isinstance(time, float) and time is not None:
             raise TypeError('time must be a float or None')
+        if len(key) == 0 or key == EMPTY_WRAPPED_CHAR:
+            raise ValueError('encoded key must not be empty')
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
-        self.unicode = self.valid and unwrap_key(self.key) not in VALID_KEYBOARD_CHARS
+        self.unicode_char = None
+        if self.valid:
+            self.unicode_char = unwrap_key(self.key)
+        self.unicode_only = self.unicode_char and unwrap_key(self.key) not in KEYBOARD_CHARS
+
+        self.legal_key: LegalKey | None = None
+        if self.valid and not self.unicode_only:
+           self.legal_key = self.legalize()
+
     def __iter__(self) -> Iterator[Tuple[str, float | None]]:
         yield self.key, self.time
     def __repr__(self) -> str:
@@ -154,13 +88,13 @@ class Keystroke:
             print(f"Invalid char not legalized:{self.key}<-")
             return None
         
-        if self.unicode:
+        if self.unicode_only:
             print(f"Unicode char {self.key} restricted and not legalized.")
             return None
         
         is_special = False
         legal_key = ''
-        if self.key == 'STOP':
+        if self.key == STOP_CODE:
             is_special = True
             legal_key = STOP_KEY
         elif self.key in SPECIAL_KEYS:
@@ -173,13 +107,12 @@ class Keystroke:
             if key in BANNED_KEYS:
                 print(f"Banned key!->{self.key}")
                 return None
-            if len(key) != 1 or key not in VALID_KEYBOARD_CHARS:
+            if len(key) != 1 or key not in KEYBOARD_CHARS:
                 print(f"Invalid key!->{self.key}")
                 return None
             legal_key = key
         return LegalKey(legal_key, is_special)
         
-
 class Log(TypedDict):
     """
     A class used to represent a log. The logfile is a list of logs.
@@ -233,12 +166,6 @@ class KeystrokeList:
         if isinstance(other, KeystrokeList):
             return self.keystrokes == other.keystrokes
         return False
-# wrappedChar is a class equivalent to f"'{char}'"
-def is_wrapped_char(char: str) -> bool:
-    """
-    Check if a character is wrapped in single quotes.
-    """
-    return len(char) == 3 and char[0] == "'" and is_key_valid(char[1]) and char[2] == "'"
 
 def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
     """
@@ -294,7 +221,7 @@ def validate_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
         input_string (str): The string to validate against.
 
     Returns:
-        bool: True if the decomposed keystrokes are identical to the input string.
+        bool: True if the decomposed keystrokes match the input string.
     """
     # Validate the keystrokes with the parser
     validation_string = keystrokes_to_string(keystrokes)
