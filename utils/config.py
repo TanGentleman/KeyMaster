@@ -28,11 +28,10 @@ ALLOW_SIMULATING_NEWLINES = True
 
 SIM_SPEED_MULTIPLE = 5
 
-### KEYLOGGER.PY CONFIG ###
-LISTEN_TIMEOUT_DURATION = 30
+### KeyCollector CONFIG ###
+DEFAULT_LISTENER_DURATION = 30
 MAX_LOGGABLE_DELAY = 3
 MAX_WORDS = 50
-SPEEDHACK = True # Only applies for KeyLogger class, this will be changed
 
 # Misc
 STOP_KEY = "*" # This key is used to stop the listener when pressed
@@ -55,19 +54,6 @@ SPECIAL_KEYS = {
     'Key.tab': Key.tab,
     'Key.enter': Key.enter,
     }
-
-if ALLOW_SIMULATING_NEWLINES:
-    whitespace_dict = {
-        ' ': str(Key.space),
-        '\t': str(Key.tab),
-        '\n': str(Key.enter),
-    }
-else:
-    whitespace_dict = {
-        ' ': str(Key.space),
-        '\t': str(Key.tab),
-    }
-SIM_WHITESPACE_DICT = whitespace_dict
     
 ### JSON format for keystrokes.json
 # [

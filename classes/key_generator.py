@@ -8,9 +8,9 @@ from threading import Timer
 from pynput.keyboard import Controller
 
 # KeyMaster imports
-from utils.config import  MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
-from utils.config import STOP_KEY, STOP_CODE, SPECIAL_KEYS, SIM_WHITESPACE_DICT, SIM_DISABLE, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
-from utils.config import ROUND_DIGITS
+from utils.config import  KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
+from utils.config import STOP_KEY, STOP_CODE, SPECIAL_KEYS, SIM_DISABLE, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
+from utils.config import ROUND_DIGITS, ALLOW_SIMULATING_NEWLINES, ALLOW_SIMULATING_UNICODE
 from utils.validation import Keystroke, Key, unwrap_key
 
 import logging
@@ -35,26 +35,29 @@ class KeyGenerator:
     """
 
     def __init__(self, disable = SIM_DISABLE, max_duration = SIM_MAX_DURATION, max_words: int = SIM_MAX_WORDS,
-                 speed_multiplier = SIM_SPEED_MULTIPLE, min_delay: float = MIN_DELAY,
-                 delay_mean: float = SIM_DELAY_MEAN, delay_standard_deviation: float = SIM_DELAY_STD_DEV,
-                 whitespace_dict = SIM_WHITESPACE_DICT, special_keys: Dict[str, Key] = SPECIAL_KEYS) -> None:
+                 speed_multiplier = SIM_SPEED_MULTIPLE, allow_newlines = ALLOW_SIMULATING_NEWLINES, allow_unicode = ALLOW_SIMULATING_UNICODE) -> None:
         """
         Initialize the KeyGenerator with the given parameters.
         """
         self.disable = disable
+        self.allow_newlines = allow_newlines
+        self.allow_unicode = allow_unicode
+
         self.max_duration = float(max_duration)
         self.max_words = max_words
 
         self.speed_multiplier = float(speed_multiplier)
-        self.min_delay = min_delay
-        self.delay_mean = float(delay_mean)
-        self.delay_standard_deviation = float(delay_standard_deviation)
-        
-        self.whitespace_dict = whitespace_dict
-        self.special_keys = special_keys
 
         self.simulation_timer: Timer | None = None
         self.stop = False
+        self.whitespace_dict = {
+            ' ': str(Key.space),
+            '\t': str(Key.tab),
+            '\n': str(Key.enter)
+        }
+        if not self.allow_newlines:
+            self.whitespace_dict.pop('\n')
+        
     
     def calculate_delay(self, speed_multiple: float | int | None) -> float:
         """
@@ -75,13 +78,13 @@ class KeyGenerator:
             # ERROR
             logging.error(f"Invalid speed multiplier: {speed_multiple}. Setting to 1")
             speed_multiple = 1
-        delay = random.normal(self.delay_mean/(speed_multiple), self.delay_standard_deviation/speed_multiple)
-        if delay < self.min_delay:
+        delay = random.normal(SIM_DELAY_MEAN/(speed_multiple), SIM_DELAY_STD_DEV/speed_multiple)
+        if delay < MIN_DELAY:
             # print(f"Delay too low: {delay}")
-            delay = self.min_delay + delay/10
+            delay = MIN_DELAY + delay/10
         return delay
     
-    def generate_keystrokes_from_string(self, string: str) -> List[Keystroke]:
+    def generate_keystrokes_from_string(self, input_string: str) -> List[Keystroke]:
         """
         Generate valid Keystrokes from a string. Output object can be simulated.
 
@@ -89,15 +92,18 @@ class KeyGenerator:
             List[Keystroke]: A list of keystrokes.
         """
         # The rest of the code from the simulate_keystrokes function goes here.
+        if not input_string:
+            print("No input string provided.")
+            return []
         keystrokes: List[Keystroke] = []
         word_count = 0
 
-        string_length = len(string)
+        string_length = len(input_string)
         for i in range(string_length):
             if word_count == self.max_words:
                 logging.info(f"Reached max words: {self.max_words}")
                 break
-            char = string[i]
+            char = input_string[i]
             keystroke = self.generate_keystroke(char)
             if keystroke is None:
                 continue
@@ -142,10 +148,12 @@ class KeyGenerator:
         if len(char) != 1:
             logging.error(f"generate_keystroke: Character length is not 1: {char}")
             return None
+
         delay1 = self.calculate_delay(1)
         delay2 = self.calculate_delay(1.5)
         key_string = ''
-
+        
+        
         if char in self.whitespace_dict:
             key_string = (self.whitespace_dict[char])
         elif char.isprintable():
@@ -153,6 +161,9 @@ class KeyGenerator:
             if char == STOP_KEY:
                 key_string = STOP_CODE
             else:
+                if not self.allow_unicode and char not in KEYBOARD_CHARS:
+                    # logging.error(f"generate_keystroke: Unicode character not allowed: {char} -> {ord(char)}")
+                    return None
                 key_string = APOSTROPHE + char + APOSTROPHE
         else:
             logging.error(f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
@@ -219,8 +230,8 @@ class KeyGenerator:
             try:
                 if delay > 0:
                     sleep(delay)  # Wait for the time difference between keystrokes
-                if key in self.special_keys:
-                    keyboard.tap(self.special_keys[key])
+                if key in SPECIAL_KEYS:
+                    keyboard.tap(SPECIAL_KEYS[key])
                 else:
                     # Decode the character
                     key = unwrap_key(key)
