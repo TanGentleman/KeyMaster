@@ -54,6 +54,15 @@ def is_valid_wrapped_char(key: str) -> bool:
     """
     return len(key) == 3 and key[0] == APOSTROPHE and is_key_valid(key[1]) and key[2] == APOSTROPHE
 
+def is_valid_wrapped_special_key(key: str) -> bool:
+    """
+    Check if a special key is wrapped in single quotes.
+    """
+    if len(key) > 3 and key[0] == APOSTROPHE and key[-1] == APOSTROPHE:
+        key = key[1:-1]
+        return key == STOP_CODE or key in SPECIAL_KEYS
+    return False
+
 def unwrap_key(key_string: str) -> str:
     """
     Decode a key string into a single character.
@@ -104,7 +113,9 @@ def clean_string(input_string: str) -> str:
     """
     Returns a string with only typable characters.
     """
-    print(f"Invalid character: {c} -> {ord(c)}" for c in input_string if c not in KEYBOARD_CHARS)
+    for c in input_string:
+        if c not in KEYBOARD_CHARS:
+            print(f"Invalid character: {c} -> {ord(c)}")
     return filter_non_typable_chars((input_string))
 
 def clean_filename(filename: str) -> str:

@@ -42,7 +42,7 @@ class KeyLogger:
 		"""
 		self.keystrokes = KeystrokeList([])
 		self.word_count = 0
-		self.input_string = ""
+		self.typed_string = ""
 		self.prev_time = time()
 
 	def set_filename(self, filename: str) -> None:

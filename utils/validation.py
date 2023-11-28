@@ -3,14 +3,13 @@
 # Standard library imports
 from json import JSONDecoder, JSONEncoder
 from typing import List, Iterator, Tuple, TypedDict, Any
-from cycler import K
 
 # Third party imports
 from pynput.keyboard import Key
 
 # KeyMaster imports
 from utils.config import APOSTROPHE, SPECIAL_KEYS, BANNED_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
-from utils.helpers import unwrap_key, is_key_valid
+from utils.helpers import is_valid_wrapped_char, is_valid_wrapped_special_key, unwrap_key, is_key_valid
 
 class LegalKey:
     """
@@ -25,7 +24,7 @@ class LegalKey:
         if not isinstance(key, str) or not isinstance(is_special, bool):
             raise TypeError('key must be a string and is_special must be a bool')
         if is_special:
-            if key != STOP_CODE and key not in SPECIAL_KEYS:
+            if not is_valid_wrapped_special_key(key):
                 raise ValueError('key must be a special key. These are defined in utils/config.py')
         else:
             if len(key) != 1 or key not in KEYBOARD_CHARS:
@@ -62,10 +61,11 @@ class Keystroke:
         self.time = time
         self.valid = is_key_valid(key)
         self.unicode_char = None
-        if self.valid:
+        self.unicode_only = False
+        if is_valid_wrapped_char(self.key):
             self.unicode_char = unwrap_key(self.key)
-        self.unicode_only = self.unicode_char and unwrap_key(self.key) not in KEYBOARD_CHARS
-
+            if self.unicode_char not in KEYBOARD_CHARS:
+                self.unicode_only = True
         self.legal_key: LegalKey | None = None
         if self.valid and not self.unicode_only:
            self.legal_key = self.legalize()
@@ -81,17 +81,15 @@ class Keystroke:
             return self.key == other
         return False
     
-    def legalize(self) -> LegalKey | None:
+    def legalize(self) -> LegalKey:
         """
         Returns a LegalKey object or None if the key is not valid.
         """
         if not self.valid:
-            print(f"Invalid char not legalized:{self.key}<-")
-            return None
+            raise ValueError('Invalid char not legalized')
         
         if self.unicode_only:
-            print(f"Unicode char {self.key} restricted and not legalized.")
-            return None
+            raise ValueError('Unicode char not legalized')
         
         is_special = False
         legal_key = ''
@@ -101,12 +99,9 @@ class Keystroke:
             legal_key = APOSTROPHE + self.key + APOSTROPHE
         else:
             key = unwrap_key(self.key)
-            if key in BANNED_KEYS:
-                print(f"Banned key!->{self.key}")
-                return None
             if len(key) != 1 or key not in KEYBOARD_CHARS:
                 print(f"Invalid key!->{self.key}")
-                return None
+                raise ValueError('Legal keys are 1 character and must be typeable')
             legal_key = key
         return LegalKey(legal_key, is_special)
         
@@ -239,8 +234,7 @@ class KeystrokeEncoder(JSONEncoder):
         if isinstance(obj, Keystroke):                                       
             return [obj.key, obj.time]                                       
         elif isinstance(obj, KeystrokeList):                                 
-            # Directly return the list comprehension without calling         
-            self.default                                                                 
+            # Directly return the list comprehension without calling self.default                                                                 
             return [[keystroke.key, keystroke.time] for keystroke in obj]    
         elif isinstance(obj, dict) and 'id' in obj and 'string' in obj and 'keystrokes' in obj:                                                         
             # Directly encode the KeystrokeList within the dictionary        
