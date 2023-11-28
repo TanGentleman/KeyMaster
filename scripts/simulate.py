@@ -7,7 +7,6 @@ from typing import List
 # KeyMaster imports
 from classes.key_collector import KeyLogger
 from classes.key_generator import KeyGenerator
-from utils.config import ABSOLUTE_SIM_FILEPATH
 from utils.validation import Keystroke, keystrokes_to_string
 from utils.helpers import clean_string
 
@@ -46,7 +45,6 @@ def generate_keystrokes_from_string(input_string: str, allow_newlines = DEFAULT_
         print("No input string provided.")
         return []
     simulator = KeyGenerator(disable=True, allow_newlines=allow_newlines, allow_unicode=allow_unicode)
-    # TODO: Move generate_keystrokes_from_string to KeystrokeList class
     keystrokes = simulator.generate_keystrokes_from_string(input_string)
     if not keystrokes:
         print("No keystrokes found.")
@@ -54,7 +52,7 @@ def generate_keystrokes_from_string(input_string: str, allow_newlines = DEFAULT_
     return keystrokes
 
 def validate_and_save_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
-    logger = KeyLogger(ABSOLUTE_SIM_FILEPATH)
+    logger = KeyLogger('SIM')
     legit = logger.is_loggable(keystrokes, input_string)
     if legit:
         log_string = input_string
@@ -64,7 +62,7 @@ def validate_and_save_keystrokes(keystrokes: List[Keystroke], input_string: str)
     logger.set_internal_log(keystrokes, log_string)
     return logger.save_log()
 
-def listen_main(disable = False, logging = DEFAULT_LOGGING, allow_newlines = DEFAULT_ALLOW_NEWLINES, allow_unicode = DEFAULT_ALLOW_UNICODE) -> None:
+def listen_main(disable = DEFAULT_DISABLE_SIMULATION, logging = DEFAULT_LOGGING, allow_newlines = DEFAULT_ALLOW_NEWLINES, allow_unicode = DEFAULT_ALLOW_UNICODE) -> None:
     keystrokes = []
     logger = KeyLogger()
     keystrokes = listen_for_keystrokes(logger)
@@ -81,7 +79,7 @@ def listen_main(disable = False, logging = DEFAULT_LOGGING, allow_newlines = DEF
 
     print("Starting simulation in 5 seconds...")
     sleep(5)
-    simulate_keystrokes(keystrokes)
+    simulate_keystrokes(keystrokes, disable, allow_newlines, allow_unicode)
 
 def simulate_from_string(input_string: str, disable = DEFAULT_DISABLE_SIMULATION, logging = DEFAULT_LOGGING, 
                          allow_newlines = DEFAULT_ALLOW_NEWLINES, allow_unicode = DEFAULT_ALLOW_UNICODE) -> None:
@@ -122,15 +120,16 @@ def clipboard_main(disable = DEFAULT_DISABLE_SIMULATION, logging = DEFAULT_LOGGI
 # Create a keyboard shortcut to run shell script `python -m scripts.simulate.py -c`
 def main():
     parser = argparse.ArgumentParser()
-    # Add logging flag
+    # Add flag
     parser.add_argument("--disable", "-d", default=DEFAULT_DISABLE_SIMULATION, action='store_true', help="Disable simulation")
     parser.add_argument("--no-log", "-n", default=not(DEFAULT_LOGGING), action='store_true', help="Disable logging")
     parser.add_argument("--no-newlines", "-nn", default=not(DEFAULT_ALLOW_NEWLINES), action='store_true', help="Disable simulating newlines")
     parser.add_argument("--no-unicode", "-nu", default=not(DEFAULT_ALLOW_UNICODE), action='store_true', help="Disable simulating unicode")
-    parser.add_argument("--string", "-s", default=DEFAULT_STRING, help="The string to simulate")
 
+    # Choose script to run
     parser.add_argument("--clipboard", "-c", action='store_true', help="Use clipboard as input")
     parser.add_argument("--listen", "-l", action='store_true', help="Listen for input")
+    parser.add_argument("--string", "-s", default=DEFAULT_STRING, help="The string to simulate")
     
 
     args = parser.parse_args()
@@ -152,7 +151,7 @@ def main():
     if not allow_unicode:
         print("Simulating unicode OFF.")
     if input_string != DEFAULT_STRING:
-        print(f"Input string: {input_string[:5]}[?...]")
+        print(f"Input string: {input_string[:5]} [+]")
     if args.clipboard:
         clipboard_main(disable, logging, allow_newlines, allow_unicode)
     elif args.listen:

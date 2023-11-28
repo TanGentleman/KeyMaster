@@ -17,7 +17,7 @@ class Script:
         self.input_string = input_string
 
     def listen_script(self) -> None:
-        listen_main(self.disable, self.logging)
+        listen_main(self.disable, self.logging, self.allow_newlines, self.allow_unicode)
 
     def string_script(self) -> None:
         simulate_from_string(self.input_string, self.disable, self.logging, self.allow_newlines, self.allow_unicode)
@@ -29,12 +29,13 @@ class Script:
 # Create a keyboard shortcut to run shell script `python -m scripts.simulate.py -c`
 def main():
     parser = argparse.ArgumentParser()
-    # Add logging flag
+    # Add flags
     parser.add_argument("--disable", "-d", default=DEFAULT_DISABLE_SIMULATION, action='store_true', help="Disable simulation")
     parser.add_argument("--no-log", "-n", default=not(DEFAULT_LOGGING), action='store_true', help="Disable logging")
     parser.add_argument("--no-newlines", "-nn", default=not(DEFAULT_ALLOW_NEWLINES), action='store_true', help="Disable simulating newlines")
     parser.add_argument("--no-unicode", "-nu", default=not(DEFAULT_ALLOW_UNICODE), action='store_true', help="Disable simulating unicode")
 
+    # Choose script to run
     parser.add_argument("--clipboard", "-c", action='store_true', help="Use clipboard as input")
     parser.add_argument("--listen", "-l", action='store_true', help="Listen for input")
     parser.add_argument("--string", "-s", default=DEFAULT_STRING, help="The string to simulate")
@@ -46,6 +47,7 @@ def main():
     allow_newlines = not(args.no_newlines)
     allow_unicode = not(args.no_unicode)
     input_string = args.string
+    
     if disable:
         print("Simulation OFF.")
     if logging:
@@ -58,7 +60,7 @@ def main():
         print("Simulating unicode OFF.")
     if input_string != DEFAULT_STRING:
         print(f"Input string: {input_string[:5]}[?...]")
-        
+
     simulate = Script(disable, logging, allow_newlines, allow_unicode, input_string)
     
     if args.clipboard:
