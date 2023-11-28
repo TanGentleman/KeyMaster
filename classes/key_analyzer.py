@@ -2,9 +2,13 @@
 from json import load as json_load
 from json import dump as json_dump
 import statistics
-import matplotlib.pyplot as plt
 from typing import List, Dict
 
+# Third party imports
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt = None
 # KeyMaster imports
 from utils.config import STOP_KEY
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeEncoder
@@ -374,6 +378,9 @@ class KeyParser:
             `keystrokes`: (`KeystrokeList`, optional): A list of Keystroke items.
             `exclude_outliers` (bool, optional): A flag indicating whether to exclude outliers.
         """
+        if plt is None:
+            print("Matplotlib not installed. Cannot visualize.")
+            return
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:

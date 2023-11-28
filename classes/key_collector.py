@@ -11,6 +11,7 @@ from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
 from utils.config import APOSTROPHE, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
 from utils.config import MAX_WORDS, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY
+from utils.config import COLLECT_ONLY_TYPEABLE
 from utils.helpers import get_filepath, is_key_valid
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 
@@ -20,7 +21,8 @@ class KeyLogger:
 	This class is responsible for capturing and storing keystrokes values and timings.
 	It also keeps track of the total number of words typed and the entire string of characters typed.
 	"""
-	def __init__(self, filename: str | None = "REG") -> None:
+	def __init__(self, filename: str | None = "REG", only_typeable: bool = COLLECT_ONLY_TYPEABLE,
+			  round_digits: int = ROUND_DIGITS, listen_duration: int | float = DEFAULT_LISTENER_DURATION) -> None:
 		"""
 		Initialize the KeyLogger. If filename is None, the logger will not save to a file.
 		Defaults to keystrokes.json in the logs directory.
@@ -29,12 +31,15 @@ class KeyLogger:
 			`filename` (`str` or `None`): The filename to save the log to. Use 'REG' or 'SIM' for main logfiles.
 		"""
 		self.filename = filename
-		self.keystrokes: KeystrokeList = KeystrokeList([])
+		self.keystrokes = KeystrokeList([])
 		self.word_count = 0
 		self.typed_string = ""
 		self.prev_time = time()
 		self.timer: Timer | None = None
-		self.duration = float(DEFAULT_LISTENER_DURATION)
+		
+		self.only_typeable = only_typeable
+		self.round_digits = round_digits
+		self.duration = float(listen_duration)
 
 	def reset(self) -> None:
 		"""
@@ -101,13 +106,15 @@ class KeyLogger:
 		self.prev_time = current_time
 		if delay > MAX_LOGGABLE_DELAY:
 			delay = MAX_LOGGABLE_DELAY + (delay / 1000)
-		delay = round(delay, ROUND_DIGITS)
+		delay = round(delay, self.round_digits)
 
 		if isinstance(keypress, KeyCode):
 			# This is a non-special character
 			if keypress.char is None:
 				return
 			key = keypress.char
+			if self.only_typeable and not key.isprintable():
+				return
 			self.typed_string += key
 			encoded_key = self.encode_keycode_char(key)
 		else:
@@ -127,7 +134,7 @@ class KeyLogger:
 						self.word_count -= 1
 					self.typed_string = self.typed_string[:-1]
 			else:
-				return None
+				return
 		if not encoded_key:
 			raise ValueError("log_valid_keypress: Unable to encode keypress. This should not happen.")
 		# Create a Keystroke object and append it to the list
@@ -137,7 +144,7 @@ class KeyLogger:
 		else:
 			keystroke = Keystroke(encoded_key, delay)
 		self.keystrokes.append(keystroke)	
-		return None
+		return
 	
 	# on_press still needs to be tidied up a bit
 	def on_press(self, keypress: Key | KeyCode | None) -> None:
@@ -151,7 +158,7 @@ class KeyLogger:
 			return None
 		# do a cool function
 		self.log_valid_keypress(keypress)
-		return None
+		return
 		
 	def stop_listener_condition(self, keypress: Key | KeyCode) -> bool:
 		"""
@@ -177,7 +184,7 @@ class KeyLogger:
 				raise ValueError("Timer is None. Start it before listener.join")
 			self.timer.cancel()
 			raise KeyboardInterrupt
-		return None
+		return
 
 	def start_listener(self) -> None:
 		"""
@@ -202,14 +209,11 @@ class KeyLogger:
 			if listener is not None:
 				listener.stop()
 				print("Listener stopped!")
-				
 			# Ensure the timer is stopped
 			if self.timer is not None:
 				self.timer.cancel()
-		
-		return None
+		return
 			
-
 	def is_loggable(self, keystrokes: KeystrokeList | None = None, input_string: str | None = None) -> bool:
 		"""
 		Checks the validity of a list of keystrokes and a string. If valid, it can be logged in a Log object.
@@ -243,7 +247,7 @@ class KeyLogger:
 					return False
 		success = keystrokes.validate(input_string)
 		print(f"{len(keystrokes)} Keystrokes validated: {success}")
-		# I want to solve banned key problem, but for now, just return success
+		# I want to solve banned key problem (spam prints), but for now, just return success
 		# Eventually, one should be able to store banned keys in simulated string, 
 		# so string should be adjusted before using as an argument here
 		return success

@@ -8,7 +8,7 @@ from threading import Timer
 from pynput.keyboard import Controller
 
 # KeyMaster imports
-from utils.config import  KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
+from utils.config import  BANNED_KEYS, KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
 from utils.config import STOP_KEY, STOP_CODE, SPECIAL_KEYS, SIM_DISABLE, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
 from utils.config import ROUND_DIGITS, ALLOW_SIMULATING_NEWLINES, ALLOW_SIMULATING_UNICODE
 from utils.validation import Keystroke, Key, KeystrokeList, unwrap_key
@@ -35,7 +35,8 @@ class KeyGenerator:
     """
 
     def __init__(self, disable = SIM_DISABLE, max_duration = SIM_MAX_DURATION, max_words: int = SIM_MAX_WORDS,
-                 speed_multiplier = SIM_SPEED_MULTIPLE, allow_newlines = ALLOW_SIMULATING_NEWLINES, allow_unicode = ALLOW_SIMULATING_UNICODE) -> None:
+                 speed_multiplier = SIM_SPEED_MULTIPLE, allow_newlines = ALLOW_SIMULATING_NEWLINES, allow_unicode = ALLOW_SIMULATING_UNICODE,
+                 round_digits = ROUND_DIGITS, banned_keys = BANNED_KEYS) -> None:
         """
         Initialize the KeyGenerator with the given parameters.
         """
@@ -57,10 +58,12 @@ class KeyGenerator:
         }
         if not self.allow_newlines:
             self.whitespace_dict.pop('\n')
-        
+
+        self.round_digits = round_digits
+        self.banned_keys = banned_keys
     
     def calculate_delay(self, speed_multiple: float | int | None) -> float:
-        """
+        """Not client facing.
         Get a normally distributed delay between keystrokes.
 
         Args:
@@ -85,7 +88,7 @@ class KeyGenerator:
         return delay
     
     def generate_keystrokes_from_string(self, input_string: str) -> KeystrokeList:
-        """
+        """Client facing.
         Generate valid Keystrokes from a string. Output object can be simulated.
 
         Returns:
@@ -138,22 +141,17 @@ class KeyGenerator:
                 break
 
         return keystrokes
-    
+
+    def wrap_character(self, char: str) -> str:
+        """Wrap a character in single quotes. Not client facing."""
+        return APOSTROPHE + char + APOSTROPHE
+
     def generate_keystroke(self, char: str) -> Keystroke | None:
-        """
-        Generate a single keystroke from a character.
-        :param char: The character to generate a keystroke for.             
-        :return: A Keystroke object or  None if the character is invalid.
-        """
+        """Generate a `Keystroke` from a character (`str`). Client facing."""
         if len(char) != 1:
             logging.error(f"generate_keystroke: Character length is not 1: {char}")
             return None
-
-        delay1 = self.calculate_delay(1)
-        delay2 = self.calculate_delay(1.5)
-        key_string = ''
-        
-        
+        key_string = char
         if char in self.whitespace_dict:
             key_string = (self.whitespace_dict[char])
         elif char.isprintable():
@@ -168,11 +166,14 @@ class KeyGenerator:
         else:
             logging.error(f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
             return None
-        delay = round(delay1 + delay2, ROUND_DIGITS)
+
+        delay1 = self.calculate_delay(1)
+        delay2 = self.calculate_delay(1.5)
+        delay = round(delay1 + delay2, self.round_digits)
         return Keystroke(key_string, delay)
     
     def stop_simulation(self) -> None:
-        """
+        """Not client facing.
         Stop the simulation.
         """
         if self.stop:
@@ -182,7 +183,7 @@ class KeyGenerator:
             self.simulation_timer.cancel()
             
     def simulate_keystrokes(self, keystrokes: KeystrokeList) -> None:
-        """
+        """Client facing
         Function to simulate the given keystrokes.
 
         Args:
@@ -206,7 +207,7 @@ class KeyGenerator:
                 logging.info(f'Duration {self.max_duration}s elapsed. Stopping simulation.')
                 break
             if not keystroke.valid:
-                logging.error(f"Invalid key: {keystroke.key}")
+                logging.error(f"simulate_keystrokes: Invalid key: {keystroke.key}")
                 continue
 
             key = keystroke.key
@@ -250,7 +251,7 @@ class KeyGenerator:
         self.stop_simulation()
     
     def simulate_string(self, string: str) -> None:
-        """
+        """Client facing.
         Simulate the given string.
 
         Args:
