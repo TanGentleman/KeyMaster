@@ -3,6 +3,7 @@
 # Standard library imports
 from json import JSONDecoder, JSONEncoder
 from typing import List, Iterator, Tuple, TypedDict, Any
+from cycler import K
 
 # Third party imports
 from pynput.keyboard import Key
@@ -94,11 +95,7 @@ class Keystroke:
         
         is_special = False
         legal_key = ''
-        if self.key == STOP_CODE:
-            is_special = True
-            legal_key = STOP_KEY
-        elif self.key in SPECIAL_KEYS:
-            # What should a legal key look like for a special key?
+        if self.key == STOP_CODE or self.key in SPECIAL_KEYS:
             print("Special key!")
             is_special = True
             legal_key = APOSTROPHE + self.key + APOSTROPHE
@@ -113,138 +110,155 @@ class Keystroke:
             legal_key = key
         return LegalKey(legal_key, is_special)
         
-class Log(TypedDict):
-    """
-    A class used to represent a log. The logfile is a list of logs.
-    """
-    id: str
-    string: str
-    keystrokes: List[Keystroke]
-    # These look like [ {
-    # "id": "6c03f172-abe8-4087-af47-bc84498b0f48", 
-    # "string": "*", 
-    # "keystrokes": [["Key.shift", null], ["'*'", 0.167]]
-    # } ]
+class KeystrokeList:
+    def __init__(self, keystrokes: List[Keystroke] = []):
+        if not isinstance(keystrokes, list):
+            raise TypeError('keystrokes must be a list')
+        if not all(isinstance(keystroke, Keystroke) for keystroke in keystrokes):
+            raise TypeError('keystrokes must be a list of Keystroke objects')
+        self.keystrokes = keystrokes
+        self.length = len(keystrokes)
+    def append(self, keystroke: Keystroke) -> None:
+        if not isinstance(keystroke, Keystroke):
+            raise TypeError('keystroke must be a Keystroke object')
+        self.keystrokes.append(keystroke)
+        self.length += 1
+    def __iter__(self) -> Iterator[Keystroke]:
+        return iter(self.keystrokes)
+    def __getitem__(self, index: int) -> Keystroke:
+        return self.keystrokes[index]
+    def __len__(self) -> int:
+        return self.length
+    def __repr__(self) -> str:
+        return "Keys:" + "".join('\n' + unwrap_key(keystroke.key) for keystroke in self.keystrokes if keystroke.unicode_char)
+    def __eq__(self, other) -> bool:
+        if isinstance(other, KeystrokeList):
+            return self.keystrokes == other.keystrokes
+        return False
+    def extend(self, keystrokes):
+        if not isinstance(keystrokes, KeystrokeList):
+            raise TypeError('keystrokes must be of type KeystrokeList')
+        
+        self.keystrokes.extend(keystrokes.keystrokes)
+        self.length = len(self.keystrokes)
 
+    def to_string(self) -> str:
+        """
+        Returns the string representation of the keystrokes.
+        """
+        output_string = ""
+        word_count = 0
+        keystrokes = self.keystrokes
+        if not keystrokes:
+            print('Warning: keystrokes_to_string: No keystrokes found.')
+            return output_string
+        for keystroke in keystrokes:
+            if not keystroke.valid:
+                print(f"Invalid keystroke: {keystroke.key}")
+                continue
+            # This means keystroke.valid is true, so it is a valid keypress
+            key = keystroke.key
+            # Handle special keys
+            if key == STOP_CODE:
+                key = STOP_KEY
+                output_string += key
+            elif key in SPECIAL_KEYS:
+                special_key = SPECIAL_KEYS[key]
+                if special_key == Key.backspace:
+                    if output_string != '':
+                        output_string = output_string[:-1]  # Remove the last character
+                elif special_key == Key.space:
+                    output_string += ' '
+                    word_count += 1
+                elif special_key == Key.enter:
+                    output_string += '\n'
+                elif special_key == Key.tab:
+                    output_string += '\t'
+                else:
+                    continue # Ignore keys like CapsLock and Shift
+            else:
+                key = unwrap_key(key)
+                if key in BANNED_KEYS:
+                    continue
+                # Append the character to the output string
+                # It is 1 character because it passed is_key_valid() and is not in SPECIAL_KEYS
+                output_string += key
+        return output_string
+
+    def validate(self, input_string: str) -> bool:
+        """
+        Validate a list of Keystroke objects against a string.
+
+        Args:
+            keystrokes (KeystrokeList): A list of Keystroke objects.
+            input_string (str): The string to validate against.
+
+        Returns:
+            bool: True if the decomposed keystrokes match the input string.
+        """
+        # Validate the keystrokes with the parser
+        validation_string = self.to_string()
+        if input_string == validation_string:
+            return True
+        if len(input_string) != len(validation_string):
+            print(f"Warning: validate_keystrokes: Lengths not equal.")
+        # Find the first character that differs
+        max_length = max(len(input_string), len(validation_string))
+        for i in range(max_length):
+            # safety check
+            if i >= len(input_string):
+                print(f"Validation string found extra char at index {i}:{(validation_string[i])}<-")
+                break
+
+            elif i >= len(validation_string):
+                print(f"Input string found extra char at index {i}: {(input_string[i])} <-")
+                break
+            typed_char = input_string[i]
+            validation_char = validation_string[i]
+            if typed_char != validation_char:
+                print(f"String does not align with keystroke list!")
+                print(f"Input:{typed_char}<-")
+                print(f"Validation string:{validation_char}<-")
+                break
+        return False
 class KeystrokeDecoder(JSONDecoder):
     """
     A JSONDecoder that decodes Keystrokes [Logfile->List of Keystrokes]
     """
-    def object_hook(self, dct: dict[str, Any]) -> dict[str, Any]:
+    def object_hook(self, dct: dict[str, Any]) -> dict[str, KeystrokeList]:
         if 'keystrokes' in dct:
-            dct['keystrokes'] = [Keystroke(*k) for k in dct['keystrokes']]
+            keystrokes = dct['keystrokes']
+            dct['keystrokes'] = KeystrokeList([Keystroke(*k) for k in keystrokes])
         return dct
 
 class KeystrokeEncoder(JSONEncoder):
     """
     A JSONEncoder that encodes Keystrokes [Keystrokes->(key, time) and Log->Logfile)]
     """
-    def default(self, obj):
-        if isinstance(obj, Keystroke):
-            return [obj.key, obj.time]
-        elif isinstance(obj, dict) and 'id' in obj and 'string' in obj and 'keystrokes' in obj:
-            return {
-                'id': obj['id'], 
-                'string': obj['string'], 
-                'keystrokes': [self.default(keystroke) for keystroke in obj['keystrokes']]
-            }
-        return super().default(obj)
-
-class KeystrokeList:
-    def __init__(self, keystrokes: List[Keystroke]):
-        if not isinstance(keystrokes, list):
-            raise TypeError('keystrokes must be a list')
-        self.keystrokes = keystrokes
-        self.length = len(keystrokes)
-    def __getitem__(self, index: int) -> Keystroke:
-        return self.keystrokes[index]
-    def __len__(self) -> int:
-        return self.length
-    def __repr__(self) -> str:
-        return "Keys:" + "".join('\n' + keystroke.key for keystroke in self.keystrokes)
-    def __eq__(self, other) -> bool:
-        if isinstance(other, KeystrokeList):
-            return self.keystrokes == other.keystrokes
-        return False
-
-def keystrokes_to_string(keystrokes: List[Keystroke]) -> str:
+    def default(self, obj):                                                  
+        if isinstance(obj, Keystroke):                                       
+            return [obj.key, obj.time]                                       
+        elif isinstance(obj, KeystrokeList):                                 
+            # Directly return the list comprehension without calling         
+            self.default                                                                 
+            return [[keystroke.key, keystroke.time] for keystroke in obj]    
+        elif isinstance(obj, dict) and 'id' in obj and 'string' in obj and 'keystrokes' in obj:                                                         
+            # Directly encode the KeystrokeList within the dictionary        
+            return {                                                         
+                'id': obj['id'],                                             
+                'string': obj['string'],                                     
+                'keystrokes': [[keystroke.key, keystroke.time] for keystroke in obj['keystrokes']]                                                        
+            }                                                                
+        return super().default(obj) 
+class Log(TypedDict):
     """
-    Converts a list of Keystroke objects into a string, taking into account special keys.
-
-    Args:
-        keystrokes (List[Keystroke]): A list of Keystroke objects.
-
-    Returns:
-        str: The string representation of the keystrokes.
+    A class used to represent a log. The logfile is a list of logs.
     """
-    output_string = ""
-    word_count = 0
-    for keystroke in keystrokes:
-        if not keystroke.valid:
-            print(f"Invalid keystroke: {keystroke.key}")
-            continue
-        # This means keystroke.valid is true, so it is a valid keypress
-        key = keystroke.key
-        # Handle special keys
-        if key == STOP_CODE:
-            key = STOP_KEY
-            output_string += key
-        elif key in SPECIAL_KEYS:
-            special_key = SPECIAL_KEYS[key]
-            if special_key == Key.backspace:
-                if output_string != '':
-                    output_string = output_string[:-1]  # Remove the last character
-            elif special_key == Key.space:
-                output_string += ' '
-                word_count += 1
-            elif special_key == Key.enter:
-                output_string += '\n'
-            elif special_key == Key.tab:
-                output_string += '\t'
-            else:
-                continue # Ignore keys like CapsLock and Shift
-        else:
-            key = unwrap_key(key)
-            if key in BANNED_KEYS:
-                continue
-            # Append the character to the output string
-            # It is 1 character because it passed is_key_valid() and is not in SPECIAL_KEYS
-            output_string += key
-    return output_string
-
-def validate_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
-    """
-    Validate a list of Keystroke objects against a string.
-
-    Args:
-        keystrokes (List[Keystroke]): A list of Keystroke objects.
-        input_string (str): The string to validate against.
-
-    Returns:
-        bool: True if the decomposed keystrokes match the input string.
-    """
-    # Validate the keystrokes with the parser
-    validation_string = keystrokes_to_string(keystrokes)
-    if input_string == validation_string:
-        return True
-    if len(input_string) != len(validation_string):
-        print(f"Warning: validate_keystrokes: Lengths not equal.")
-    # Find the first character that differs
-    max_length = max(len(input_string), len(validation_string))
-    for i in range(max_length):
-        # safety check
-        if i >= len(input_string):
-            print(f"Validation string found extra char at index {i}: {(validation_string[i])} <-")
-            break
-
-        elif i >= len(validation_string):
-            print(f"Input string found extra char at index {i}: {(input_string[i])} <-")
-            break
-        typed_char = input_string[i]
-        validation_char = validation_string[i]
-        if typed_char != validation_char:
-            print(f"String does not align with keystroke list!")
-            print(f"Input string: {typed_char} <-")
-            print(f"Validation string: {validation_char} <-")
-            break
-    return False
+    id: str
+    string: str
+    keystrokes: KeystrokeList
+    # These look like [ {
+    # "id": "6c03f172-abe8-4087-af47-bc84498b0f48", 
+    # "string": "*", 
+    # "keystrokes": [["Key.shift", null], ["'*'", 0.167]]
+    # } ]

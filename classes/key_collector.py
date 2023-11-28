@@ -9,9 +9,10 @@ from threading import Timer
 # Third party imports
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
-from utils.config import APOSTROPHE, MAX_WORDS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS, LISTEN_TIMEOUT_DURATION, MAX_LOGGABLE_DELAY
+from utils.config import APOSTROPHE, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
+from utils.config import MAX_WORDS, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY
 from utils.helpers import get_filepath, is_key_valid
-from utils.validation import Keystroke, Log, KeystrokeDecoder, KeystrokeEncoder, validate_keystrokes
+from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 
 class KeyLogger:
 	"""
@@ -28,18 +29,18 @@ class KeyLogger:
 			`filename` (`str` or `None`): The filename to save the log to. Use 'REG' or 'SIM' for main logfiles.
 		"""
 		self.filename = filename
-		self.keystrokes: List[Keystroke] = []
+		self.keystrokes: KeystrokeList = KeystrokeList([])
 		self.word_count = 0
 		self.typed_string = ""
 		self.prev_time = time()
 		self.timer: Timer | None = None
-		self.duration = float(LISTEN_TIMEOUT_DURATION)
+		self.duration = float(DEFAULT_LISTENER_DURATION)
 
 	def reset(self) -> None:
 		"""
 		Clear the current state of the logger.
 		"""
-		self.keystrokes = []
+		self.keystrokes = KeystrokeList([])
 		self.word_count = 0
 		self.input_string = ""
 		self.prev_time = time()
@@ -53,7 +54,7 @@ class KeyLogger:
 		"""
 		self.filename = filename
 
-	def encode_keycode_char(self, key: str) -> str | None:
+	def encode_keycode_char(self, key: str) -> str:
 		"""
 		Encodes a character by wrapping it in single quotes.
 		The STOP_KEY is encoded as STOP_CODE. For example, '*' may now be 'STOP'.
@@ -209,13 +210,13 @@ class KeyLogger:
 		return None
 			
 
-	def is_loggable(self, keystrokes: List[Keystroke] | None = None, input_string: str | None = None) -> bool:
+	def is_loggable(self, keystrokes: KeystrokeList | None = None, input_string: str | None = None) -> bool:
 		"""
 		Checks the validity of a list of keystrokes and a string. If valid, it can be logged in a Log object.
 		By default, this function checks the internal keystrokes and input_string attributes.
 		
 		Args:
-			`keystrokes` (`List[Keystroke]`): The list of keystrokes to validate.
+			`keystrokes` (`KeystrokeList`): The list of keystrokes to validate.
 			`input_string` (`str`): The input string to validate.
 
 		Returns:
@@ -240,19 +241,19 @@ class KeyLogger:
 				if none_count > 1:
 					print('None value marks first character ONLY! Log not legit.')
 					return False
-		success = validate_keystrokes(keystrokes, input_string)
+		success = keystrokes.validate(input_string)
 		print(f"{len(keystrokes)} Keystrokes validated: {success}")
 		# I want to solve banned key problem, but for now, just return success
 		# Eventually, one should be able to store banned keys in simulated string, 
 		# so string should be adjusted before using as an argument here
 		return success
 
-	def set_internal_log(self, keystrokes: List[Keystroke], input_string: str) -> bool:
+	def set_internal_log(self, keystrokes: KeystrokeList, input_string: str) -> bool:
 		"""
 		Replace the internal log with the provided keystrokes and input string.
 
 		Args:
-			`keystrokes` (`List[Keystroke]`): The list of keystrokes to replace self.keystrokes with.
+			`keystrokes` (`KeystrokeList`): The list of keystrokes to replace self.keystrokes with.
 			`input_string` (`str`): The input string to replace self.typed_string with.
 
 		Returns:

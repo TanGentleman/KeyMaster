@@ -7,7 +7,7 @@ from typing import List, Dict
 
 # KeyMaster imports
 from utils.config import STOP_KEY
-from utils.validation import Keystroke, Log, KeystrokeEncoder
+from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeEncoder
 from utils.helpers import get_filepath
 
 NUKABLE = True
@@ -216,7 +216,7 @@ class KeyParser:
         Returns:
             `List[float]`: A list of float values.
         """
-        keystrokes = []
+        keystrokes = KeystrokeList()
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
@@ -364,7 +364,7 @@ class KeyParser:
             return 0
         return round(statistics.stdev(times), 4)
     
-    def visualize_keystroke_times(self, identifier: str | None = None, keystrokes: List[Keystroke] | None = None, 
+    def visualize_keystroke_times(self, identifier: str | None = None, keystrokes: KeystrokeList | None = None, 
                                   exclude_outliers: bool | None = None) -> None:
         """
         Plots the average keystroke time for each character.
@@ -403,7 +403,7 @@ class KeyParser:
         plt.title('Average Keystroke Time for Each Character' + line_2)
         plt.show()
 
-    def get_keystrokes(self, identifier: str | None = None) -> List[Keystroke]:
+    def get_keystrokes(self, identifier: str | None = None) -> KeystrokeList:
         """
        Get a list of all keystrokes in the logs.
 
@@ -413,11 +413,11 @@ class KeyParser:
         Returns:
             list: A list of Keystroke items.
         """
-        keystrokes: List[Keystroke] = []
+        keystrokes = KeystrokeList()
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
-                return []
+                return keystrokes
         for log in self.logs:
             if identifier is not None and is_id_in_log(identifier, log):
                 keystrokes.extend(log['keystrokes'])
@@ -427,7 +427,7 @@ class KeyParser:
             
         return keystrokes
 
-    def map_chars_to_times(self, keystrokes: List[Keystroke] | None = None, exclude_outliers: bool | None = None) -> Dict[str, float]:
+    def map_chars_to_times(self, keystrokes: KeystrokeList | None = None, exclude_outliers: bool | None = None) -> Dict[str, float]:
         """
         Calculates the average keystroke time for each character based on the provided keystrokes.
 
@@ -449,6 +449,8 @@ class KeyParser:
             exclude_outliers = self.exclude_outliers
 
         for keystroke in keystrokes:
+            if not keystroke.valid:
+                continue
             key = keystroke.key
             time = keystroke.time
             if time is None:
@@ -469,35 +471,12 @@ class KeyParser:
             return {}
         return character_times
 
-    def visualize_keystroke_differences(self, keystrokes1: List[Keystroke], keystrokes2: List[Keystroke]) -> None:
-        # Extract the keys and times from the keystrokes
-        # assert all keys are valid
-        assert(keystroke.valid for keystroke in keystrokes1)
-        assert(keystroke.valid for keystroke in keystrokes2)
-        # Get the intersection of the two lists
-        assert(key1 == key2 for key1, key2 in zip(keystrokes1, keystrokes2))
-        # This optional statement asserts that the keystrokes are the same length
-        # assert (len(keystrokes1) == len(keystrokes2))
-        keys1 = [keystroke.key for keystroke in keystrokes1]
-        times1 = [keystroke.time if keystroke.time else 0.0 for keystroke in keystrokes1]
-        length1 = len(keys1)
-
-        keys2 = [keystroke.key for keystroke in keystrokes2]
-        times2 = [keystroke.time if keystroke.time else 0.0 for keystroke in keystrokes2]
-        length2 = len(keys2)
-
-        # Create a bar chart for each key
-        # Iterate through a list of all the unique keystroke.key values
-        length = len(keys1)
-        for i in range(length):
-            # Get the times for each person
-            # Plot the bar chart
-            plt.figure()
-            plt.bar(['Person 1', 'Person 2'], [times1[i], times2[i]])
-            plt.title(f'Keystroke: {keys1[i]}')
-            plt.xlabel('Person')
-            plt.ylabel('Count')
-            plt.show()
+    def visualize_keystroke_differences(self, list_of_keystroke_lists: List[KeystrokeList]) -> None:
+        """
+        Plots the average keystroke time for each character.
+        """
+        ### TODO: Utilize map_chars_to_times
+        return None
 
     def nuke_duplicates(self) -> None:
         """

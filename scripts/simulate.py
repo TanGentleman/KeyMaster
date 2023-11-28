@@ -7,7 +7,7 @@ from typing import List
 # KeyMaster imports
 from classes.key_collector import KeyLogger
 from classes.key_generator import KeyGenerator
-from utils.validation import Keystroke, keystrokes_to_string
+from utils.validation import Keystroke, KeystrokeList
 from utils.helpers import clean_string
 
 PRINT_KEYS = False
@@ -18,7 +18,7 @@ DEFAULT_ALLOW_NEWLINES = True
 DEFAULT_ALLOW_UNICODE = True
 DEFAULT_STRING = "hey look ma, it's a simulation!"
 
-def listen_for_keystrokes(logger: KeyLogger) -> List[Keystroke] | None:
+def listen_for_keystrokes(logger: KeyLogger) -> KeystrokeList | None:
     """
     Test the KeyLogger class by listening for keystrokes.
     """
@@ -32,7 +32,7 @@ def listen_for_keystrokes(logger: KeyLogger) -> List[Keystroke] | None:
     else:
         return None
 
-def simulate_keystrokes(keystrokes: List[Keystroke], disable = DEFAULT_DISABLE_SIMULATION, allow_newlines = DEFAULT_ALLOW_NEWLINES, allow_unicode = DEFAULT_ALLOW_UNICODE) -> None:
+def simulate_keystrokes(keystrokes: KeystrokeList, disable = DEFAULT_DISABLE_SIMULATION, allow_newlines = DEFAULT_ALLOW_NEWLINES, allow_unicode = DEFAULT_ALLOW_UNICODE) -> None:
     """
     Test the KeyGenerator class by simulating keystrokes from a string.
     """
@@ -40,25 +40,26 @@ def simulate_keystrokes(keystrokes: List[Keystroke], disable = DEFAULT_DISABLE_S
     simulator.simulate_keystrokes(keystrokes)
 
 def generate_keystrokes_from_string(input_string: str, allow_newlines = DEFAULT_ALLOW_NEWLINES, 
-                                    allow_unicode = DEFAULT_ALLOW_UNICODE) -> List[Keystroke]:
+                                    allow_unicode = DEFAULT_ALLOW_UNICODE) -> KeystrokeList:
+    keystrokes = KeystrokeList()
     if not input_string:
         print("No input string provided.")
-        return []
+        return keystrokes
     simulator = KeyGenerator(disable=True, allow_newlines=allow_newlines, allow_unicode=allow_unicode)
     keystrokes = simulator.generate_keystrokes_from_string(input_string)
     if not keystrokes:
         print("No keystrokes found.")
-        return []
+        return keystrokes
     return keystrokes
 
-def validate_and_save_keystrokes(keystrokes: List[Keystroke], input_string: str) -> bool:
+def validate_and_save_keystrokes(keystrokes: KeystrokeList, input_string: str) -> bool:
     logger = KeyLogger('SIM')
     legit = logger.is_loggable(keystrokes, input_string)
     if legit:
         log_string = input_string
     else:
         print("Using keystrokes instead of input string.")
-        log_string = keystrokes_to_string(keystrokes)
+        log_string = keystrokes.to_string()
     logger.set_internal_log(keystrokes, log_string)
     return logger.save_log()
 

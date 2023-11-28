@@ -11,7 +11,7 @@ from pynput.keyboard import Controller
 from utils.config import  KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
 from utils.config import STOP_KEY, STOP_CODE, SPECIAL_KEYS, SIM_DISABLE, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
 from utils.config import ROUND_DIGITS, ALLOW_SIMULATING_NEWLINES, ALLOW_SIMULATING_UNICODE
-from utils.validation import Keystroke, Key, unwrap_key
+from utils.validation import Keystroke, Key, KeystrokeList, unwrap_key
 
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
@@ -84,18 +84,18 @@ class KeyGenerator:
             delay = MIN_DELAY + delay/10
         return delay
     
-    def generate_keystrokes_from_string(self, input_string: str) -> List[Keystroke]:
+    def generate_keystrokes_from_string(self, input_string: str) -> KeystrokeList:
         """
         Generate valid Keystrokes from a string. Output object can be simulated.
 
         Returns:
-            List[Keystroke]: A list of keystrokes.
+            KeystrokeList: A list of keystrokes.
         """
         # The rest of the code from the simulate_keystrokes function goes here.
+        keystrokes = KeystrokeList()
         if not input_string:
             print("No input string provided.")
-            return []
-        keystrokes: List[Keystroke] = []
+            return keystrokes
         word_count = 0
 
         string_length = len(input_string)
@@ -181,18 +181,18 @@ class KeyGenerator:
         if self.simulation_timer:
             self.simulation_timer.cancel()
             
-    def simulate_keystrokes(self, keystrokes: List[Keystroke]) -> None:
+    def simulate_keystrokes(self, keystrokes: KeystrokeList) -> None:
         """
         Function to simulate the given keystrokes.
 
         Args:
-            keystrokes (List[Keystroke], optional): The list of keystrokes to simulate. 
+            keystrokes (KeystrokeList, optional): The list of keystrokes to simulate. 
         """
-        if not keystrokes:
-            logging.error("No keystrokes found.")
-            return
         if self.disable:
             logging.error("Simulation disabled.")
+            return
+        if not keystrokes:
+            logging.error("No keystrokes found.")
             return
         
         none_count = 0
