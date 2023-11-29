@@ -2,11 +2,12 @@ from os import path
 
 from pynput.keyboard import Key, KeyCode
 
-from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH
+from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH, STOP_KEY
 from utils.config import APOSTROPHE, STOP_CODE, SPECIAL_KEYS, BANNED_KEYS, KEYBOARD_CHARS
-
 # *** KEY VALIDATION ***
-def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
+
+
+def is_key_valid(key: Key | KeyCode | str, strict=False) -> bool:
     """
     Function to check if the key is valid.
     """
@@ -20,7 +21,8 @@ def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
             return False
         return True
     # We know isinstance(key, str)
-    # We are likely being handed an encoded string (e.g. "'a'" or 'STOP' or 'Key.shift')
+    # We are likely being handed an encoded string (e.g. "'a'" or 'STOP' or
+    # 'Key.shift')
     key_string = key
     if key_string == STOP_CODE:
         return True
@@ -28,11 +30,12 @@ def is_key_valid(key: Key | KeyCode | str, strict = False) -> bool:
         return True
     # Decode the character
     key_string = unwrap_key(key_string)
-        
+
     # Check the length of the key ensure a single character
     if len(key_string) != 1:
         # Banned key enters this clause as well, still wrapped.
-        # Technically this is unsafe for values of length 0, but that should never happen.
+        # Technically this is unsafe for values of length 0, but that should
+        # never happen.
         if key_string[1] in BANNED_KEYS:
             return False
         print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
@@ -52,7 +55,9 @@ def is_valid_wrapped_char(key: str) -> bool:
     Check if a character is wrapped in single quotes.
     Characters that fail is_key_valid() return False.
     """
-    return len(key) == 3 and key[0] == APOSTROPHE and is_key_valid(key[1]) and key[2] == APOSTROPHE
+    return len(key) == 3 and key[0] == APOSTROPHE and is_key_valid(
+        key[1]) and key[2] == APOSTROPHE
+
 
 def is_valid_wrapped_special_key(key: str) -> bool:
     """
@@ -62,6 +67,7 @@ def is_valid_wrapped_special_key(key: str) -> bool:
         key = key[1:-1]
         return key == STOP_CODE or key in SPECIAL_KEYS
     return False
+
 
 def unwrap_key(key_string: str) -> str:
     """
@@ -79,12 +85,14 @@ def unwrap_key(key_string: str) -> str:
         char = key_string[1]
     return char
 
+
 REPLACE_WONKY_UNICODE = False
 REPLACEMENTS = {
-        '\u2028': '\n',  # replace line separator with newline
-        '\u2029': '\n',  # replace paragraph separator with newline
-        # add more replacements here if needed
-    }
+    '\u2028': '\n',  # replace line separator with newline
+    '\u2029': '\n',  # replace paragraph separator with newline
+    # add more replacements here if needed
+}
+
 
 def replace_unicode_chars(input_string: str) -> str:
     """
@@ -96,6 +104,7 @@ def replace_unicode_chars(input_string: str) -> str:
         input_string = input_string.replace(old, new)
     return input_string
 
+
 def filter_non_typable_chars(input_string: str) -> str:
     """
     Filter out non-typable characters from a string.
@@ -103,11 +112,14 @@ def filter_non_typable_chars(input_string: str) -> str:
     """
     return ''.join(c for c in input_string if c in KEYBOARD_CHARS)
 
+
 def print_non_keyboard_chars(input_string: str) -> None:
     """
     Print non-typable characters from a string.
     """
-    print(f"Non-keyboard character: {c} -> {ord(c)}" for c in input_string if c not in KEYBOARD_CHARS)
+    print(
+        f"Non-keyboard character: {c} -> {ord(c)}" for c in input_string if c not in KEYBOARD_CHARS)
+
 
 def clean_string(input_string: str) -> str:
     """
@@ -117,6 +129,7 @@ def clean_string(input_string: str) -> str:
         if c not in KEYBOARD_CHARS:
             print(f"Invalid character: {c} -> {ord(c)}")
     return filter_non_typable_chars((input_string))
+
 
 def clean_filename(filename: str) -> str:
     """
@@ -130,17 +143,18 @@ def clean_filename(filename: str) -> str:
     # maximum length
     return filename[:255]
 
+
 def get_filepath(filename: str | None) -> str | None:
     """
     Return the absolute filepath for a filename. 'REG' and 'SIM' return default logfiles.
     """
     if filename is None:
         return None
-    
+
     if not filename:
         print("No filename provided.")
         return None
-    
+
     if path.isabs(filename):
         filepath = filename
     elif filename.upper() == 'REG':
@@ -151,6 +165,7 @@ def get_filepath(filename: str | None) -> str | None:
         filepath = path.join(LOG_DIR, clean_filename(filename))
     return filepath
 
+
 def is_filepath_valid(filename: str | None) -> bool:
     """
     Check if the filename leads to an existing file using get_filepath.
@@ -158,7 +173,7 @@ def is_filepath_valid(filename: str | None) -> bool:
     if not filename:
         print("No filename provided.")
         return False
-    
+
     filepath = get_filepath(filename)
     if not filepath:
         return False

@@ -1,7 +1,5 @@
 # Function Documentation
 
-This file contains documentation for all functions in the project.
-
 ## Function: `init`
 Initialize the KeyParser and load logs. None value for filename will initialize an empty KeyParser.
 ## Function: `load_logs`

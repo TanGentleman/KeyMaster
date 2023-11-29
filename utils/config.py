@@ -6,10 +6,11 @@ import string
 from pynput.keyboard import Key
 
 # Set paths to json logs.
-ROOT = path.dirname(path.dirname(path.abspath(__file__))) # abs path of the repo root directory
+# abs path of the repo root directory
+ROOT = path.dirname(path.dirname(path.abspath(__file__)))
 
-LOG_DIR = path.join(ROOT, "logs") # Define the path for the logfiles directory
-DOCS_DIR = path.join(ROOT, "docs") # Define the path for the docs directory
+LOG_DIR = path.join(ROOT, "logs")  # Define the path for the logfiles directory
+DOCS_DIR = path.join(ROOT, "docs")  # Define the path for the docs directory
 ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
 
@@ -32,19 +33,27 @@ SIM_SPEED_MULTIPLE = 5
 DEFAULT_LISTENER_DURATION = 30
 MAX_LOGGABLE_DELAY = 3
 MAX_WORDS = 50
+COLLECT_ONLY_TYPEABLE = False
 
 # Misc
-STOP_KEY = "*" # This key is used to stop the listener when pressed
+STOP_KEY = "*"  # This key is used to stop the listener when pressed
 STOP_CODE = 'STOP'
 BANNED_KEYS = ['√']
-SHIFT_SPEED = 0.2222 # This is the speed of all logical insertions of Key.shift when generating keystrokes
-ROUND_DIGITS = 4 # This is for logfile timestamps
+# This is the speed of all logical insertions of Key.shift when generating
+# keystrokes
+SHIFT_SPEED = 0.2222
+ROUND_DIGITS = 4  # This is for logfile timestamps
+
+# This is the maximum length of a key in the logs (just to prevent
+# overflowing invalid keystrokes)
+MAX_KEY_LENGTH = 20
 
 # DO NOT CHANGE
 EMPTY_WRAPPED_CHAR = "''"
 APOSTROPHE = "'"
 SHIFTED_CHARS = r'~!@#$%^&*()_+{}|:"<>?'
-KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
+KEYBOARD_CHARS = string.ascii_letters + \
+    string.digits + string.punctuation + ' \n\t'
 
 SPECIAL_KEYS = {
     'Key.space': Key.space,
@@ -53,9 +62,9 @@ SPECIAL_KEYS = {
     'Key.caps_lock': Key.caps_lock,
     'Key.tab': Key.tab,
     'Key.enter': Key.enter,
-    }
-    
-### JSON format for keystrokes.json
+}
+
+# JSON format for keystrokes.json
 # [
 #   {
 #     "id": "string",

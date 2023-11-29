@@ -7,42 +7,15 @@ from typing import List, Dict
 # Third party imports
 try:
     import matplotlib.pyplot as plt
-except:
+except ImportError:
     plt = None
+
 # KeyMaster imports
-from utils.config import STOP_KEY
-from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeEncoder
+from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeEncoder, is_id_in_log
 from utils.helpers import get_filepath
 
 NUKABLE = True
 OUTLIER_CUTOFF = 0.8
-
-# Function to see if an identifier is present in a log
-def is_id_in_log(identifier: str, log: Log) -> bool:
-    """
-    Check if a log with the identifier exists in the loaded logs.
-
-    Args:
-        `identifier` (`str`): The UUID or exact string formatted as STOP_KEY + string
-        `log` (`Log`): The log to check.
-
-    Returns:
-        `bool`: True if a log with the given UUID or exact string exists, False otherwise.
-    """
-    if not identifier:
-        print("No identifier provided.")
-        return False
-    if not log:
-        print("No log provided.")
-        return False
-    if log['id'] == identifier:
-        return True
-    if identifier[-1] == STOP_KEY:
-        if log['string'] == identifier[1:]:
-            return True
-        else:
-            print('Exact string not found.')
-    return False
 
 
 class KeyParser:
@@ -51,7 +24,9 @@ class KeyParser:
     The logs can be loaded from a file or passed in as a list of Log objects.
     A None value for filename will initialize an empty KeyParser.
     """
-    def __init__(self, filename: str | None = 'REG', exclude_outliers: bool = True) -> None:
+
+    def __init__(self, filename: str | None = 'REG',
+                 exclude_outliers: bool = True) -> None:
         """
         Initialize the KeyParser and load logs. None value for filename will initialize an empty KeyParser.
         """
@@ -64,7 +39,7 @@ class KeyParser:
         Load logs from the file.
         """
         self.logs = self.extract_logs()
-        
+
     def extract_logs(self) -> List[Log]:
         """
         Reads logfile and extracts logs.
@@ -82,7 +57,7 @@ class KeyParser:
         try:
             with open(filepath, 'r') as f:
                 log_contents = json_load(f)
-            logs:List[Log] = []
+            logs: List[Log] = []
             for log in log_contents:
                 # Instantiate Keystrokes and replace them in each log
                 keystrokes = [Keystroke(k[0], k[1]) for k in log['keystrokes']]
@@ -113,10 +88,10 @@ class KeyParser:
             if is_id_in_log(identifier, log):
                 return True
         return False
-    
+
     def id_by_index(self, index: int) -> str | None:
         """
-        Get the ID of the log at a given index. 
+        Get the ID of the log at a given index.
         Index begins at 1, as labeled in method `print_strings`.
 
         Args:
@@ -137,7 +112,7 @@ class KeyParser:
         if index > len(self.logs):
             print("Index too high. Returning the last id.")
             return self.logs[-1]['id']
-        return self.logs[index-1]['id']
+        return self.logs[index - 1]['id']
 
     def id_from_substring(self, keyword: str) -> str | None:
         """
@@ -156,15 +131,15 @@ class KeyParser:
 
     def get_strings(self, identifier: str | None = None) -> List[str]:
         """
-        Get a list of all strings in the logs. If an identifier is provided, 
+        Get a list of all strings in the logs. If an identifier is provided,
         only the associated string is included.
 
         Args:
             `identifier` (`str`, optional): The UUID or exact string to check for.
 
         Returns:
-            `list`: A list of all strings in the logs. If an identifier is provided, 
-            the list contains the string associated with that identifier. 
+            `list`: A list of all strings in the logs. If an identifier is provided,
+            the list contains the string associated with that identifier.
             If the identifier is not found, an empty list is returned.
         """
         if not self.logs:
@@ -178,8 +153,9 @@ class KeyParser:
                 if is_id_in_log(identifier, log):
                     return [log['string']]
         return [log['string'] for log in self.logs]
-    
-    def print_strings(self, max: int = 5, truncate: int = 25, identifier: str | None = None) -> None:
+
+    def print_strings(self, max: int = 5, truncate: int = 25,
+                      identifier: str | None = None) -> None:
         """
         Prints strings from logs. If `identifier` is provided, prints associated string.
         Strings longer than `truncate` value are appended with "...[truncated]".
@@ -210,7 +186,8 @@ class KeyParser:
             # curr_string = curr_string.replace("\n", "\\n")
             print(f'{count}|{curr_string}')
 
-    def get_only_times(self, identifier: str | None = None, exclude_outliers: bool | None = None) -> List[float]:
+    def get_only_times(self, identifier: str | None = None,
+                       exclude_outliers: bool | None = None) -> List[float]:
         """
         Get a list of all keystroke delay times.
 
@@ -232,7 +209,7 @@ class KeyParser:
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         outlier_count = 0
-        times:List[float] = []
+        times: List[float] = []
         if not keystrokes:
             print("No keystrokes found.")
             return []
@@ -248,7 +225,7 @@ class KeyParser:
         if outlier_count > 0:
             print(f"Removed {outlier_count} outliers.")
         return times
-    
+
     def wpm(self, identifier: str | None = None) -> float | None:
         """
         Calculate the average words per minute.
@@ -272,12 +249,13 @@ class KeyParser:
             for log in self.logs:
                 if log['id'] == identifier or log['string'] == identifier:
                     num_chars = len(log['string'])
-                    total_seconds = sum(self.get_only_times(identifier)) # type: ignore
+                    total_seconds = sum(
+                        self.get_only_times(identifier))  # type: ignore
                     break
         # If identifier is not provided, calculate WPM for all logs
         else:
             num_chars = sum(len(log['string']) for log in self.logs)
-            total_seconds = sum(self.get_only_times()) # type: ignore
+            total_seconds = sum(self.get_only_times())  # type: ignore
 
         # If no characters found
         if num_chars == 0:
@@ -291,8 +269,9 @@ class KeyParser:
         # Calculate the CPM
         cpm = (num_chars / total_seconds) * 60
         return round(cpm / 5, 1)
-    
-    def get_highest_keystroke_times(self, identifier: str | None = None) -> List[float]:
+
+    def get_highest_keystroke_times(
+            self, identifier: str | None = None) -> List[float]:
         """
         Get the highest keystroke time for each log.
 
@@ -322,7 +301,7 @@ class KeyParser:
             if times:
                 highest_times.append(max(times))
         return highest_times
-    
+
     def get_average_delay(self, identifier: str | None = None) -> float | None:
         """
         Get the average time between keystrokes.
@@ -342,7 +321,7 @@ class KeyParser:
         else:
             times = self.get_only_times()
         if len(times) == 0:
-            print ("No keystrokes found.")
+            print("No keystrokes found.")
             return 0
         return round(sum(times) / len(times), 4)
 
@@ -364,12 +343,15 @@ class KeyParser:
         else:
             times = self.get_only_times()
         if len(times) < 2:
-            print ("Not enough keystrokes to calculate standard deviation.")
+            print("Not enough keystrokes to calculate standard deviation.")
             return 0
         return round(statistics.stdev(times), 4)
-    
-    def visualize_keystroke_times(self, identifier: str | None = None, keystrokes: KeystrokeList | None = None, 
-                                  exclude_outliers: bool | None = None) -> None:
+
+    def visualize_keystroke_times(
+            self,
+            identifier: str | None = None,
+            keystrokes: KeystrokeList | None = None,
+            exclude_outliers: bool | None = None) -> None:
         """
         Plots the average keystroke time for each character.
 
@@ -389,15 +371,15 @@ class KeyParser:
             keystrokes = self.get_keystrokes(identifier)
         elif keystrokes is None:
             keystrokes = self.get_keystrokes()
-        
+
         if keystrokes == []:
             print("No keystrokes found.")
             return
-        
+
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         character_times = self.map_chars_to_times(keystrokes, exclude_outliers)
-        if not character_times: # If no characters found
+        if not character_times:  # If no characters found
             print("No characters to visualize.")
             return
         characters = list(character_times.keys())
@@ -431,10 +413,13 @@ class KeyParser:
                 break
             else:
                 keystrokes.extend(log['keystrokes'])
-            
+
         return keystrokes
 
-    def map_chars_to_times(self, keystrokes: KeystrokeList | None = None, exclude_outliers: bool | None = None) -> Dict[str, float]:
+    def map_chars_to_times(self,
+                           keystrokes: KeystrokeList | None = None,
+                           exclude_outliers: bool | None = None) -> Dict[str,
+                                                                         float]:
         """
         Calculates the average keystroke time for each character based on the provided keystrokes.
 
@@ -478,11 +463,12 @@ class KeyParser:
             return {}
         return character_times
 
-    def visualize_keystroke_differences(self, list_of_keystroke_lists: List[KeystrokeList]) -> None:
+    def visualize_keystroke_differences(
+            self, list_of_keystroke_lists: List[KeystrokeList]) -> None:
         """
         Plots the average keystroke time for each character.
         """
-        ### TODO: Utilize map_chars_to_times
+        # TODO: Utilize map_chars_to_times
         return None
 
     def nuke_duplicates(self) -> None:
@@ -506,7 +492,7 @@ class KeyParser:
         print(f"Removed {len(self.logs) - len(unique_logs)} duplicates.")
         print(f"Use KeyParser.confirm_nuke() to save changes.")
         self.logs = unique_logs
-    
+
     def confirm_nuke(self) -> None:
         """
         This is a fun alias for dump_modified_logs.
@@ -526,7 +512,7 @@ class KeyParser:
         if self.filename is None:
             print("No logfile set.")
             return
-        
+
         filepath = get_filepath(self.filename)
         if filepath is None:
             print("No filepath found.")
@@ -538,6 +524,7 @@ class KeyParser:
         except Exception as e:
             print(f"An error occurred: {e}")
             return
+
 
 if __name__ == "__main__":
     parser = KeyParser()

@@ -8,7 +8,7 @@ from threading import Timer
 from pynput.keyboard import Controller
 
 # KeyMaster imports
-from utils.config import  BANNED_KEYS, KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
+from utils.config import BANNED_KEYS, KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
 from utils.config import STOP_KEY, STOP_CODE, SPECIAL_KEYS, SIM_DISABLE, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
 from utils.config import ROUND_DIGITS, ALLOW_SIMULATING_NEWLINES, ALLOW_SIMULATING_UNICODE
 from utils.validation import Keystroke, Key, KeystrokeList, unwrap_key
@@ -17,6 +17,7 @@ import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
 APOSTROPHE = "'"
+
 
 class KeyGenerator:
     """
@@ -34,9 +35,16 @@ class KeyGenerator:
         max_duration (float): The maximum duration of the simulation.
     """
 
-    def __init__(self, disable = SIM_DISABLE, max_duration = SIM_MAX_DURATION, max_words: int = SIM_MAX_WORDS,
-                 speed_multiplier = SIM_SPEED_MULTIPLE, allow_newlines = ALLOW_SIMULATING_NEWLINES, allow_unicode = ALLOW_SIMULATING_UNICODE,
-                 round_digits = ROUND_DIGITS, banned_keys = BANNED_KEYS) -> None:
+    def __init__(
+            self,
+            disable=SIM_DISABLE,
+            max_duration=SIM_MAX_DURATION,
+            max_words: int = SIM_MAX_WORDS,
+            speed_multiplier=SIM_SPEED_MULTIPLE,
+            allow_newlines=ALLOW_SIMULATING_NEWLINES,
+            allow_unicode=ALLOW_SIMULATING_UNICODE,
+            round_digits=ROUND_DIGITS,
+            banned_keys=BANNED_KEYS) -> None:
         """
         Initialize the KeyGenerator with the given parameters.
         """
@@ -61,7 +69,7 @@ class KeyGenerator:
 
         self.round_digits = round_digits
         self.banned_keys = banned_keys
-    
+
     def calculate_delay(self, speed_multiple: float | int | None) -> float:
         """Not client facing.
         Get a normally distributed delay between keystrokes.
@@ -75,19 +83,23 @@ class KeyGenerator:
         # Ensure speed_by_multiple > 0
         if speed_multiple is None:
             speed_multiple = self.speed_multiplier
-            
+
         speed_multiple = float(speed_multiple)
         if speed_multiple <= 0:
             # ERROR
-            logging.error(f"Invalid speed multiplier: {speed_multiple}. Setting to 1")
+            logging.error(
+                f"Invalid speed multiplier: {speed_multiple}. Setting to 1")
             speed_multiple = 1
-        delay = random.normal(SIM_DELAY_MEAN/(speed_multiple), SIM_DELAY_STD_DEV/speed_multiple)
+        delay = random.normal(
+            SIM_DELAY_MEAN / (speed_multiple),
+            SIM_DELAY_STD_DEV / speed_multiple)
         if delay < MIN_DELAY:
             # print(f"Delay too low: {delay}")
-            delay = MIN_DELAY + delay/10
+            delay = MIN_DELAY + delay / 10
         return delay
-    
-    def generate_keystrokes_from_string(self, input_string: str) -> KeystrokeList:
+
+    def generate_keystrokes_from_string(
+            self, input_string: str) -> KeystrokeList:
         """Client facing.
         Generate valid Keystrokes from a string. Output object can be simulated.
 
@@ -117,11 +129,16 @@ class KeyGenerator:
                 last_key = None
             else:
                 last_key = keystrokes[-1].key
-            # Lambda function to check if a key is eligible to have shift before it
-            shift_eligible = lambda k: (k is None or k == ' ') or (k not in SHIFTED_CHARS and not k.isupper())
+            # Lambda function to check if a key is eligible to have shift
+            # before it
+
+            def shift_eligible(k): return (
+                k is None or k == ' ') or (
+                k not in SHIFTED_CHARS and not k.isupper())
 
             # Check if a shift key needs to be added
-            if shift_eligible(last_key): # isn't last key wrapped in apostrophes?
+            if shift_eligible(
+                    last_key):  # isn't last key wrapped in apostrophes?
                 if char.isupper() or (char in SHIFTED_CHARS):
                     if SHOW_SHIFT_INSERTIONS:
                         logging.info(f"Inserting shift before key {i}: {char}")
@@ -137,7 +154,8 @@ class KeyGenerator:
             keystrokes.append(keystroke)
             # Should I stop generation at stop key too?
             if char == STOP_KEY:
-                logging.warning('STOP key found. Halting keystroke generation.')
+                logging.warning(
+                    'STOP key found. Halting keystroke generation.')
                 break
 
         return keystrokes
@@ -149,7 +167,8 @@ class KeyGenerator:
     def generate_keystroke(self, char: str) -> Keystroke | None:
         """Generate a `Keystroke` from a character (`str`). Client facing."""
         if len(char) != 1:
-            logging.error(f"generate_keystroke: Character length is not 1: {char}")
+            logging.error(
+                f"generate_keystroke: Character length is not 1: {char}")
             return None
         key_string = char
         if char in self.whitespace_dict:
@@ -164,14 +183,15 @@ class KeyGenerator:
                     return None
                 key_string = APOSTROPHE + char + APOSTROPHE
         else:
-            logging.error(f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
+            logging.error(
+                f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
             return None
 
         delay1 = self.calculate_delay(1)
         delay2 = self.calculate_delay(1.5)
         delay = round(delay1 + delay2, self.round_digits)
         return Keystroke(key_string, delay)
-    
+
     def stop_simulation(self) -> None:
         """Not client facing.
         Stop the simulation.
@@ -181,13 +201,13 @@ class KeyGenerator:
         self.stop = True
         if self.simulation_timer:
             self.simulation_timer.cancel()
-            
+
     def simulate_keystrokes(self, keystrokes: KeystrokeList) -> None:
         """Client facing.
         Function to simulate the given keystrokes.
 
         Args:
-            keystrokes (KeystrokeList, optional): The list of keystrokes to simulate. 
+            keystrokes (KeystrokeList, optional): The list of keystrokes to simulate.
         """
         if self.disable:
             logging.error("Simulation disabled.")
@@ -195,19 +215,23 @@ class KeyGenerator:
         if not keystrokes:
             logging.error("No keystrokes found.")
             return
-        
+
         none_count = 0
         self.stop = False
         # Initialize the keyboard controller
         keyboard = Controller()
-        self.simulation_timer = Timer(self.max_duration, lambda: self.stop_simulation())
+        self.simulation_timer = Timer(
+            self.max_duration,
+            lambda: self.stop_simulation())
         self.simulation_timer.start()
         for keystroke in keystrokes:
             if self.stop:
-                logging.info(f'Duration {self.max_duration}s elapsed. Stopping simulation.')
+                logging.info(
+                    f'Duration {self.max_duration}s elapsed. Stopping simulation.')
                 break
             if not keystroke.valid:
-                logging.error(f"simulate_keystrokes: Invalid key: {keystroke.key}")
+                logging.error(
+                    f"simulate_keystrokes: Invalid key: {keystroke.key}")
                 continue
 
             key = keystroke.key
@@ -217,20 +241,23 @@ class KeyGenerator:
             if time is None:
                 none_count += 1
                 if none_count > 1:
-                    logging.error('Critical error: None value marks first character. Only use once')
+                    logging.error(
+                        'Critical error: None value marks first character. Only use once')
                     break
                 # What should this time diff be?
                 delay = 0.0
             else:
                 delay = time
-                # If time difference is greater than 3 seconds, set diff to 3.x seconds with decimal coming from delay
+                # If time difference is greater than 3 seconds, set diff to 3.x
+                # seconds with decimal coming from delay
                 if self.speed_multiplier > 0:
                     delay = delay / self.speed_multiplier
                 if delay > 3:
                     delay = 3 + (delay / 1000)
             try:
                 if delay > 0:
-                    sleep(delay)  # Wait for the time difference between keystrokes
+                    # Wait for the time difference between keystrokes
+                    sleep(delay)
                 if key in SPECIAL_KEYS:
                     keyboard.tap(SPECIAL_KEYS[key])
                 else:
@@ -239,7 +266,8 @@ class KeyGenerator:
                     try:
                         keyboard.tap(key)
                     except Exception as e:
-                        logging.error(f"ERROR! Decoded key was not a character: {key}")
+                        logging.error(
+                            f"ERROR! Decoded key was not a character: {key}")
                         continue
 
                 if key == STOP_KEY:
@@ -249,7 +277,7 @@ class KeyGenerator:
                 logging.critical(f"An error occurred: {e}")
                 break
         self.stop_simulation()
-    
+
     def simulate_string(self, string: str) -> KeystrokeList | None:
         """Client facing.
         Simulate the given string.

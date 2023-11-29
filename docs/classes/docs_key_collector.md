@@ -1,7 +1,5 @@
 # Function Documentation
 
-This file contains documentation for all functions in the project.
-
 ## Function: `init`
 Initialize the KeyLogger. If filename is None, the logger will not save to a file.
 Defaults to keystrokes.json in the logs directory.
@@ -42,6 +40,7 @@ Client facing.
 Function to start the key listener.
 The listener will only stop when stop_listener_condition returns True.
 ## Function: `is_loggable`
+Not client facing (This function might need revisiting)
 Checks the validity of a list of keystrokes and a string. If valid, it can be logged in a Log object.
 By default, this function checks the internal keystrokes and input_string attributes.
 ### Parameters:
@@ -50,6 +49,7 @@ By default, this function checks the internal keystrokes and input_string attrib
 ### Returns
 `bool`: True if the decomposed keystrokes match the input string. False otherwise.
 ## Function: `set_internal_log`
+Client facing.
 Replace the internal log with the provided keystrokes and input string.
 ### Parameters:
 - `keystrokes` (`KeystrokeList`): The list of keystrokes to replace self.keystrokes with.
@@ -57,6 +57,7 @@ Replace the internal log with the provided keystrokes and input string.
 ### Returns
 bool: True if state successfully replaced. False if arguments invalid.
 ## Function: `save_log`
+Client facing.
 Function to save the log to a file.
 ### Parameters:
 - `reset` (`bool`): Whether to reset the logger after saving the log. Defaults to False.

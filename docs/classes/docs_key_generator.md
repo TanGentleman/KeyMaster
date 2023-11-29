@@ -1,7 +1,5 @@
 # Function Documentation
 
-This file contains documentation for all functions in the project.
-
 ## Function: `init`
 Initialize the KeyGenerator with the given parameters.
 ## Function: `calculate_delay`
