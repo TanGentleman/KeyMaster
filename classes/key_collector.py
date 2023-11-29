@@ -39,10 +39,10 @@ class KeyLogger:
 		
 		self.only_typeable = only_typeable
 		self.round_digits = round_digits
-		self.duration = float(listen_duration)
+		self.duration = listen_duration
 
 	def reset(self) -> None:
-		"""
+		"""Client facing.
 		Clear the current state of the logger.
 		"""
 		self.keystrokes = KeystrokeList([])
@@ -51,7 +51,7 @@ class KeyLogger:
 		self.prev_time = time()
 
 	def set_filename(self, filename: str) -> None:
-		"""
+		"""Client facing.
 		Set the filename to save logs to.
 
 		Args:
@@ -60,7 +60,7 @@ class KeyLogger:
 		self.filename = filename
 
 	def encode_keycode_char(self, key: str) -> str:
-		"""
+		"""Not client facing.
 		Encodes a character by wrapping it in single quotes.
 		The STOP_KEY is encoded as STOP_CODE. For example, '*' may now be 'STOP'.
 		"""
@@ -75,7 +75,7 @@ class KeyLogger:
 		return encoded_key
 	
 	def encode_special_char(self, key: Key) -> str:
-		"""
+		"""Not client facing.
 		Encodes a special key as a string.
 		"""
 		encoded_key = None
@@ -88,7 +88,7 @@ class KeyLogger:
 		return encoded_key
 
 	def log_valid_keypress(self, keypress: Key | KeyCode) -> None:
-		"""
+		"""Not client facing.
 		Logs a valid keypress to the internal keystrokes list.
 		Valid keypresses are alphanumeric characters, space, tab, enter, and backspace.
 
@@ -148,7 +148,7 @@ class KeyLogger:
 	
 	# on_press still needs to be tidied up a bit
 	def on_press(self, keypress: Key | KeyCode | None) -> None:
-		"""
+		"""Not client facing.
 		Handles the event when a key is pressed.
 		"""
 		if keypress is None:
@@ -161,7 +161,7 @@ class KeyLogger:
 		return
 		
 	def stop_listener_condition(self, keypress: Key | KeyCode) -> bool:
-		"""
+		"""Not client facing.
 		Checks if the keypress triggers a stop condition.
 		"""
 		if keypress == Key.esc:
@@ -173,7 +173,7 @@ class KeyLogger:
 		return False
 	
 	def on_release(self, keypress: Key | KeyCode | None) -> None:
-		"""
+		"""Not client facing.
 		Handles key release events. Stop the listener when stop condition is met.
 		"""
 		if keypress is None:
@@ -186,12 +186,13 @@ class KeyLogger:
 			raise KeyboardInterrupt
 		return
 
-	def start_listener(self) -> None:
-		"""
+	def start_listener(self, duration: int | float | None = None) -> None:
+		"""Client facing.
 		Function to start the key listener.
 		The listener will only stop when stop_listener_condition returns True.
 		"""
-		duration = self.duration
+		if duration is None:
+			duration = self.duration
 		listener = None
 		try:
 			with Listener(on_press=self.on_press, on_release=self.on_release) as listener:

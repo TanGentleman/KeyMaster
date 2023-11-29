@@ -8,9 +8,20 @@ from typing import List, Iterator, Tuple, TypedDict, Any
 from pynput.keyboard import Key
 
 # KeyMaster imports
-from utils.config import APOSTROPHE, SPECIAL_KEYS, BANNED_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
+from utils.config import APOSTROPHE, MAX_KEY_LENGTH, SPECIAL_KEYS, BANNED_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
 from utils.helpers import is_valid_wrapped_char, is_valid_wrapped_special_key, unwrap_key, is_key_valid
 
+class UnicodeKey:
+    """
+    A class used to represent a unicode key. Chars have no quote wrapping.
+    >>> UnicodeKey('a', False)
+    key=a
+    >>> UnicodeKey("'√'", 0.2222)
+    """
+    pass
+
+class SpecialKey:
+    pass
 class LegalKey:
     """
     A class used to represent a legal key. Chars have no quote wrapping.
@@ -57,15 +68,20 @@ class Keystroke:
             raise TypeError('time must be a float or None')
         if len(key) == 0 or key == EMPTY_WRAPPED_CHAR:
             raise ValueError('encoded key must not be empty')
+        if len(key) > MAX_KEY_LENGTH:
+            raise ValueError(f'encoded key must be less than {MAX_KEY_LENGTH} characters')
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
+
+
         self.unicode_char = None
         self.unicode_only = False
         if is_valid_wrapped_char(self.key):
             self.unicode_char = unwrap_key(self.key)
             if self.unicode_char not in KEYBOARD_CHARS:
                 self.unicode_only = True
+
         self.legal_key: LegalKey | None = None
         if self.valid and not self.unicode_only:
            self.legal_key = self.legalize()
@@ -106,13 +122,17 @@ class Keystroke:
         return LegalKey(legal_key, is_special)
         
 class KeystrokeList:
-    def __init__(self, keystrokes: List[Keystroke] = []):
+    def __init__(self, keystrokes: List[Keystroke] | None = None):
+        if keystrokes is None:
+            keystrokes = []
         if not isinstance(keystrokes, list):
             raise TypeError('keystrokes must be a list')
         if not all(isinstance(keystroke, Keystroke) for keystroke in keystrokes):
             raise TypeError('keystrokes must be a list of Keystroke objects')
-        self.keystrokes = keystrokes
+        
         self.length = len(keystrokes)
+        self.keystrokes = keystrokes
+        
     def append(self, keystroke: Keystroke) -> None:
         if not isinstance(keystroke, Keystroke):
             raise TypeError('keystroke must be a Keystroke object')

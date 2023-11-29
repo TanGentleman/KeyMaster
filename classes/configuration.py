@@ -23,7 +23,8 @@ class Config:
         self.round_digits = round_digits
 
         self.max_simulation_time = max_simulation_time
-
+        print(self)
+    
     # Below scripts may be pulled from Script class in the future.
     def listen_script(self) -> None:
         listen_main(disable=self.disable, logging=self.logging, 
@@ -39,7 +40,7 @@ class Config:
 
     def set(self, disable: bool | None = None, logging: bool | None = None,
             allow_newlines: bool | None = None, allow_unicode: bool | None = None,
-            log_filename: str | None = None, banned_keys: List[str] | None = None,
+            logfile_name: str | None = None, banned_keys: List[str] | None = None,
             round_digits: int | None = None) -> None:
         """
         Set any of the client-facing configuration attributes.
@@ -52,8 +53,8 @@ class Config:
             self.allow_newlines = allow_newlines
         if allow_unicode != None:
             self.allow_unicode = allow_unicode
-        if log_filename != None:
-            self.log_filename = log_filename
+        if logfile_name != None:
+            self.logfile_name = logfile_name
         if banned_keys != None:
             self.banned_keys = banned_keys
         if round_digits != None:
@@ -68,14 +69,14 @@ class Config:
         if self.logging == False:
             filename = None
         else:
-            filename = self.log_filename
+            filename = self.logfile_name
         return KeyLogger(filename = filename, only_typeable = not(self.allow_unicode), round_digits = self.round_digits)
 
     def KeyParser(self) -> KeyParser:
         if self.logging == False:
             filename = None
         else:
-            filename = self.log_filename
+            filename = self.logfile_name
         return KeyParser(filename = filename)
 
     def KeyGenerator(self) -> KeyGenerator:
@@ -85,9 +86,9 @@ class Config:
                             banned_keys=self.banned_keys)
         
     def __repr__(self) -> str:
-        pretty_string = f"Configuration:\ndisable={self.disable}, \nlogging={self.logging}, \nallow_newlines={self.allow_newlines}, 
-                            \nallow_unicode={self.allow_unicode}, \nlog_filename={self.log_filename}, \nbanned_keys={self.banned_keys}, 
-                            \nround_digits={self.round_digits}"
+        pretty_string = (f"# Configuration:\ndisable={self.disable},\nlogging={self.logging},\nallow_newlines={self.allow_newlines},\n" + 
+                            f"allow_unicode={self.allow_unicode},\nlogfile_name={self.logfile_name},\nbanned_keys={self.banned_keys},\n" +
+                            f"round_digits={self.round_digits}\n#")
         return pretty_string
 
     def __str__(self) -> str:

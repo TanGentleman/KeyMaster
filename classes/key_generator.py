@@ -183,7 +183,7 @@ class KeyGenerator:
             self.simulation_timer.cancel()
             
     def simulate_keystrokes(self, keystrokes: KeystrokeList) -> None:
-        """Client facing
+        """Client facing.
         Function to simulate the given keystrokes.
 
         Args:
@@ -250,7 +250,7 @@ class KeyGenerator:
                 break
         self.stop_simulation()
     
-    def simulate_string(self, string: str) -> None:
+    def simulate_string(self, string: str) -> KeystrokeList | None:
         """Client facing.
         Simulate the given string.
 
@@ -262,16 +262,4 @@ class KeyGenerator:
             logging.error("Given input was not simulated.")
             return
         self.simulate_keystrokes(keystrokes)
-        
-def main(input_string: str = "Hello World"):
-    simulator = KeyGenerator()
-    simulator.simulate_string(input_string)
-
-if __name__ == "__main__":
-    import sys
-    length = len(sys.argv)
-    if length > 1:
-        # print(f'boop! {length}')
-        main(sys.argv[1])
-    else:
-        main()
+        return keystrokes
