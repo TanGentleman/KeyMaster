@@ -2,21 +2,15 @@
 import argparse
 
 from time import sleep
-from typing import List
 
 # KeyMaster imports
 from classes.key_collector import KeyLogger
 from classes.key_generator import KeyGenerator
-from utils.validation import Keystroke, KeystrokeList
+from utils.validation import KeystrokeList
 from utils.helpers import clean_string
+from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING
 
 PRINT_KEYS = False
-
-DEFAULT_DISABLE_SIMULATION = False
-DEFAULT_LOGGING = True
-DEFAULT_ALLOW_NEWLINES = True
-DEFAULT_ALLOW_UNICODE = True
-DEFAULT_STRING = "hey look ma, it's a simulation!"
 
 
 def listen_for_keystrokes(logger: KeyLogger) -> KeystrokeList | None:

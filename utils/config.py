@@ -5,6 +5,28 @@ import string
 # Third party imports
 from pynput.keyboard import Key
 
+
+
+
+# disable: bool = DEFAULT_DISABLE_SIMULATION,
+#             logging: bool = DEFAULT_LOGGING,
+#             allow_newlines: bool = DEFAULT_ALLOW_NEWLINES,
+#             allow_unicode: bool = DEFAULT_ALLOW_UNICODE,
+#             logfile_name: str | None = None,
+#             banned_keys=BANNED_KEYS,
+#             round_digits=ROUND_DIGITS,
+#             max_simulation_time=SIM_MAX_DURATION) -> None:
+
+DEFAULT_DISABLE_SIMULATION = False
+DEFAULT_LOGGING = True
+DEFAULT_ALLOW_NEWLINES = True
+DEFAULT_ALLOW_UNICODE = True
+DEFAULT_STRING = "hey look ma, it's a simulation!"
+BANNED_KEYS = ['√']
+ROUND_DIGITS = 4  # This is for logfile timestamps
+SIM_MAX_DURATION = 30
+SIM_SPEED_MULTIPLE = 10
+
 # Set paths to json logs.
 # abs path of the repo root directory
 ROOT = path.dirname(path.dirname(path.abspath(__file__)))
@@ -15,8 +37,6 @@ ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
 
 ### SIMULATION.PY CONFIG ###
-SIM_MAX_DURATION = 30
-SIM_DISABLE = False
 SHOW_SHIFT_INSERTIONS = True
 
 SIM_DELAY_MEAN = 0.06
@@ -24,10 +44,8 @@ SIM_DELAY_STD_DEV = 0.015
 SIM_MAX_WORDS = 300
 MIN_DELAY = 0.03
 
-ALLOW_SIMULATING_UNICODE = True
-ALLOW_SIMULATING_NEWLINES = True
 
-SIM_SPEED_MULTIPLE = 5
+
 
 ### KeyCollector CONFIG ###
 DEFAULT_LISTENER_DURATION = 30
@@ -38,11 +56,11 @@ COLLECT_ONLY_TYPEABLE = False
 # Misc
 STOP_KEY = "*"  # This key is used to stop the listener when pressed
 STOP_CODE = 'STOP'
-BANNED_KEYS = ['√']
+
 # This is the speed of all logical insertions of Key.shift when generating
 # keystrokes
 SHIFT_SPEED = 0.2222
-ROUND_DIGITS = 4  # This is for logfile timestamps
+
 
 # This is the maximum length of a key in the logs (just to prevent
 # overflowing invalid keystrokes)

@@ -1,5 +1,5 @@
-from scripts.simulate import simulate_from_string, listen_main, clipboard_main, DEFAULT_STRING
-from scripts.simulate import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE
+from scripts.simulate import simulate_from_string, listen_main, clipboard_main
+from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING
 import argparse
 
 

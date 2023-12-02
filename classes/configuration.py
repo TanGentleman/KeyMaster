@@ -2,12 +2,16 @@ from typing import List
 from classes.key_collector import KeyLogger
 from classes.key_analyzer import KeyParser
 from classes.key_generator import KeyGenerator
-from scripts.simulate import DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING
-from scripts.simulate import simulate_from_string, clipboard_main, listen_main
+from utils.config import DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_STRING, SIM_SPEED_MULTIPLE
 from utils.config import BANNED_KEYS, ROUND_DIGITS, SIM_MAX_DURATION
+from scripts.simulate import simulate_from_string, clipboard_main, listen_main
 
 
 class Config:
+    """
+    The Config class is a wrapper for all the configuration options.
+    It is used to pass the configuration options to the other classes.
+    """
     def __init__(
             self,
             disable: bool = DEFAULT_DISABLE_SIMULATION,
@@ -17,7 +21,9 @@ class Config:
             logfile_name: str | None = None,
             banned_keys=BANNED_KEYS,
             round_digits=ROUND_DIGITS,
-            max_simulation_time=SIM_MAX_DURATION) -> None:
+            max_simulation_time=SIM_MAX_DURATION,
+            simulation_speed_multiple=SIM_SPEED_MULTIPLE,
+            pre_load=False) -> None:
         """
         Initialize the Config class.
         """
@@ -30,7 +36,21 @@ class Config:
         self.round_digits = round_digits
 
         self.max_simulation_time = max_simulation_time
-        print(self)
+        self.simulation_speed_multiple = simulation_speed_multiple
+        # print(self)
+        # I can even initiate some of the objects here and keep them as attributes.
+        self.key_logger = None
+        self.key_parser = None
+        self.key_generator = None
+
+        self.pre_load = pre_load
+        if self.pre_load:
+            self.initialize()
+
+    def initialize(self) -> None:
+        self.key_logger = self.KeyLogger()
+        self.key_parser = self.KeyParser()
+        self.key_generator = self.KeyGenerator()
 
     # Below scripts may be pulled from Script class in the future.
     def listen_script(self) -> None:
