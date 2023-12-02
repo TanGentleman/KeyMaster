@@ -1,7 +1,6 @@
 # Standard library imports
 from time import sleep
 from numpy import random
-from typing import List, Dict
 from threading import Timer
 
 # Third party imports
@@ -9,15 +8,12 @@ from pynput.keyboard import Controller
 
 # KeyMaster imports
 from utils.config import BANNED_KEYS, KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
-from utils.config import STOP_KEY, STOP_CODE, SPECIAL_KEYS, SIM_DISABLE, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
-from utils.config import ROUND_DIGITS, ALLOW_SIMULATING_NEWLINES, ALLOW_SIMULATING_UNICODE
+from utils.config import STOP_KEY, STOP_CODE, APOSTROPHE, SPECIAL_KEYS, DEFAULT_DISABLE_SIMULATION, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
+from utils.config import ROUND_DIGITS, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE
 from utils.validation import Keystroke, Key, KeystrokeList, unwrap_key
 
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
-
-APOSTROPHE = "'"
-
 
 class KeyGenerator:
     """
@@ -37,26 +33,25 @@ class KeyGenerator:
 
     def __init__(
             self,
-            disable=SIM_DISABLE,
+            disable=DEFAULT_DISABLE_SIMULATION,
             max_duration=SIM_MAX_DURATION,
-            max_words: int = SIM_MAX_WORDS,
+            max_words=SIM_MAX_WORDS,
             speed_multiplier=SIM_SPEED_MULTIPLE,
-            allow_newlines=ALLOW_SIMULATING_NEWLINES,
-            allow_unicode=ALLOW_SIMULATING_UNICODE,
+            allow_newlines=DEFAULT_ALLOW_NEWLINES,
+            allow_unicode=DEFAULT_ALLOW_UNICODE,
             round_digits=ROUND_DIGITS,
             banned_keys=BANNED_KEYS) -> None:
         """
         Initialize the KeyGenerator with the given parameters.
         """
-        self.disable = disable
+        self.disable = disable # Client facing
+        self.max_duration = float(max_duration) # Client facing
+        self.round_digits = round_digits # Client facing
+        self.max_words = max_words # Client facing
+        self.speed_multiplier = float(speed_multiplier) # Client facing
+
         self.allow_newlines = allow_newlines
         self.allow_unicode = allow_unicode
-
-        self.max_duration = float(max_duration)
-        self.max_words = max_words
-
-        self.speed_multiplier = float(speed_multiplier)
-
         self.simulation_timer: Timer | None = None
         self.stop = False
         self.whitespace_dict = {
@@ -66,8 +61,6 @@ class KeyGenerator:
         }
         if not self.allow_newlines:
             self.whitespace_dict.pop('\n')
-
-        self.round_digits = round_digits
         self.banned_keys = banned_keys
 
     def calculate_delay(self, speed_multiple: float | int | None) -> float:

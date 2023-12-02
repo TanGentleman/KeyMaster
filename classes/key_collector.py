@@ -289,6 +289,28 @@ class KeyLogger:
         self.word_count = input_string.count(' ')
         return True
 
+    def create_log(self, filepath: str) -> Log | None:
+        """Not client facing.
+        Returns a Log object using the internal keystrokes and input string.
+        """
+        # ensure log is legit
+        legit = self.is_loggable()
+        if not legit:
+            print("Log not created.")
+            return None
+        
+        # Create a unique ID
+        unique_id = str(uuid4())
+
+        # Create the log object of class Log
+        log: Log = {
+            'id': unique_id,
+            'string': self.typed_string,
+            'keystrokes': self.keystrokes
+        }
+        return log
+       
+
     def save_log(self, reset: bool = False) -> bool:
         """Client facing.
         Function to save the log to a file.
@@ -308,21 +330,11 @@ class KeyLogger:
             if reset:
                 self.reset()
             return False
-        # ensure log is legit
-        legit = self.is_loggable()
-        if not legit:
-            print("Log is not legit. Did not update file.")
+
+        log = self.create_log(filepath)
+        if not log:
+            print("Log had trouble saving!")
             return False
-
-        # Create a unique ID
-        unique_id = str(uuid4())
-
-        # Create the log object of class Log
-        log: Log = {
-            'id': unique_id,
-            'string': self.typed_string,
-            'keystrokes': self.keystrokes
-        }
         # Create var logs to store the logs
         # Replace keystrokes in json using KeystrokeEncoder
         # Append the log object to the file
@@ -343,7 +355,6 @@ class KeyLogger:
         if reset:
             self.reset()
         return True
-
 
 if __name__ == "__main__":
     logger = KeyLogger()

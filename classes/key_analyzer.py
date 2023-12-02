@@ -30,18 +30,18 @@ class KeyParser:
         """
         Initialize the KeyParser and load logs. None value for filename will initialize an empty KeyParser.
         """
-        self.filename = filename
-        self.exclude_outliers = exclude_outliers
-        self.logs: List[Log] = self.extract_logs()
+        self.filename = filename # Client facing.
+        self.exclude_outliers = exclude_outliers # Client facing.
+        self.logs: List[Log] = self.extract_logs() # Not client facing.
 
     def load_logs(self) -> None:
-        """
+        """Client facing.
         Load logs from the file.
         """
         self.logs = self.extract_logs()
 
     def extract_logs(self) -> List[Log]:
-        """
+        """Not client facing.
         Reads logfile and extracts logs.
 
         Returns:
@@ -72,7 +72,7 @@ class KeyParser:
             return []
 
     def check_membership(self, identifier: str) -> bool:
-        """
+        """Client facing.
         Check if a log with the identifier exists in the loaded logs.
 
         Args:
@@ -90,7 +90,7 @@ class KeyParser:
         return False
 
     def id_by_index(self, index: int) -> str | None:
-        """
+        """Client facing.
         Get the ID of the log at a given index.
         Index begins at 1, as labeled in method `print_strings`.
 
@@ -115,7 +115,7 @@ class KeyParser:
         return self.logs[index - 1]['id']
 
     def id_from_substring(self, keyword: str) -> str | None:
-        """
+        """Client facing.
         Get the ID of the first log that contains a given substring.
 
         Args:
@@ -130,7 +130,7 @@ class KeyParser:
         return None
 
     def get_strings(self, identifier: str | None = None) -> List[str]:
-        """
+        """Client facing.
         Get a list of all strings in the logs. If an identifier is provided,
         only the associated string is included.
 
@@ -156,7 +156,7 @@ class KeyParser:
 
     def print_strings(self, max: int = 5, truncate: int = 25,
                       identifier: str | None = None) -> None:
-        """
+        """Client facing.
         Prints strings from logs. If `identifier` is provided, prints associated string.
         Strings longer than `truncate` value are appended with "...[truncated]".
 
@@ -188,7 +188,7 @@ class KeyParser:
 
     def get_only_times(self, identifier: str | None = None,
                        exclude_outliers: bool | None = None) -> List[float]:
-        """
+        """Not client facing.
         Get a list of all keystroke delay times.
 
         Args:
@@ -227,7 +227,7 @@ class KeyParser:
         return times
 
     def wpm(self, identifier: str | None = None) -> float | None:
-        """
+        """Client facing.
         Calculate the average words per minute.
         Formula is CPM/5, where CPM is characters per minute.
 
@@ -272,7 +272,7 @@ class KeyParser:
 
     def get_highest_keystroke_times(
             self, identifier: str | None = None) -> List[float]:
-        """
+        """Client facing.
         Get the highest keystroke time for each log.
 
         Args:
@@ -303,7 +303,7 @@ class KeyParser:
         return highest_times
 
     def get_average_delay(self, identifier: str | None = None) -> float | None:
-        """
+        """Client facing.
         Get the average time between keystrokes.
 
         Args:
@@ -326,7 +326,7 @@ class KeyParser:
         return round(sum(times) / len(times), 4)
 
     def get_std_deviation(self, identifier: str | None = None) -> float | None:
-        """
+        """Client facing.
         Get the standard deviation of the time between keystrokes.
 
         `Args`:
@@ -346,13 +346,43 @@ class KeyParser:
             print("Not enough keystrokes to calculate standard deviation.")
             return 0
         return round(statistics.stdev(times), 4)
+    
+    def plot_keystroke_times(self, character_times: Dict[str, float]):
+        """Not client facing.
+        Plots a bar chart of the average keystroke times for each character.
+
+        :param character_times: A dictionary mapping each character to its average keystroke time.
+        :type character_times: Dict[str, float]
+        """
+        if plt is None:
+            print("Matplotlib not installed. Cannot visualize.")
+            return
+        # Prepare data for plotting
+        characters = list(character_times.keys())
+        times = list(character_times.values())
+        
+        # Create the bar chart
+        plt.figure(figsize=(15, 5))
+        plt.bar(characters, times, color='skyblue')
+        
+        # Add labels and title
+        plt.xlabel('Characters')
+        plt.ylabel('Average Keystroke Time (s)')
+        plt.title('Average Keystroke Times by Character')
+        
+        # Rotate x-axis labels for better readability if there are many characters
+        plt.xticks(rotation=45, ha='right')
+        
+        # Show the plot
+        plt.tight_layout()
+        plt.show()
 
     def visualize_keystroke_times(
             self,
             identifier: str | None = None,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None) -> None:
-        """
+        """Client facing.
         Plots the average keystroke time for each character.
 
         Args:
@@ -360,9 +390,6 @@ class KeyParser:
             `keystrokes`: (`KeystrokeList`, optional): A list of Keystroke items.
             `exclude_outliers` (bool, optional): A flag indicating whether to exclude outliers.
         """
-        if plt is None:
-            print("Matplotlib not installed. Cannot visualize.")
-            return
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
@@ -372,7 +399,7 @@ class KeyParser:
         elif keystrokes is None:
             keystrokes = self.get_keystrokes()
 
-        if keystrokes == []:
+        if not keystrokes:
             print("No keystrokes found.")
             return
 
@@ -382,18 +409,19 @@ class KeyParser:
         if not character_times:  # If no characters found
             print("No characters to visualize.")
             return
-        characters = list(character_times.keys())
-        times = list(character_times.values())
+        self.plot_keystroke_times(character_times)
+        # characters = list(character_times.keys())
+        # times = list(character_times.values())
 
-        plt.bar(characters, times)
-        plt.xlabel('Characters')
-        plt.ylabel('Average Keystroke Time')
-        line_2 = "\nExcluding Outliers" if self.exclude_outliers else ""
-        plt.title('Average Keystroke Time for Each Character' + line_2)
-        plt.show()
+        # plt.bar(characters, times)
+        # plt.xlabel('Characters')
+        # plt.ylabel('Average Keystroke Time')
+        # line_2 = "\nExcluding Outliers" if self.exclude_outliers else ""
+        # plt.title('Average Keystroke Time for Each Character' + line_2)
+        # plt.show()
 
     def get_keystrokes(self, identifier: str | None = None) -> KeystrokeList:
-        """
+        """Client facing.
        Get a list of all keystrokes in the logs.
 
         Args:
@@ -402,25 +430,40 @@ class KeyParser:
         Returns:
             list: A list of Keystroke items.
         """
-        keystrokes = KeystrokeList()
+        keystrokes: List[Keystroke] = []
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
-                return keystrokes
+                return KeystrokeList()
         for log in self.logs:
             if identifier is not None and is_id_in_log(identifier, log):
                 keystrokes.extend(log['keystrokes'])
-                break
+                return KeystrokeList(keystrokes)
             else:
                 keystrokes.extend(log['keystrokes'])
 
-        return keystrokes
+        return KeystrokeList(keystrokes)
+    
+    def refactor_special_key(self, key: str) -> str:
+        """Not client facing.
+        Replace special key names with more readable versions for display.
+        """
+        display_names = {
+            "'STOP'": "Stop",
+            "'Key.space'": "Space",
+            "'Key.enter'": "Enter",
+            "'Key.backspace'": "Backspace",
+            "'Key.tab'": "Tab",
+            "'Key.caps_lock'": "Caps Lock",
+            "'Key.shift'": "Shift",
+        }
+        return display_names.get(key, key)
 
     def map_chars_to_times(self,
                            keystrokes: KeystrokeList | None = None,
                            exclude_outliers: bool | None = None) -> Dict[str,
                                                                          float]:
-        """
+        """Not client facing.
         Calculates the average keystroke time for each character based on the provided keystrokes.
 
         Args:
@@ -441,9 +484,16 @@ class KeyParser:
             exclude_outliers = self.exclude_outliers
 
         for keystroke in keystrokes:
-            if not keystroke.valid:
+            # I am removing the validity check because it is not necessary
+            # if not keystroke.valid:
+            #     continue
+            legal_key = keystroke.legal_key
+            if legal_key is None:
                 continue
-            key = keystroke.key
+            if legal_key.is_special:
+                key = self.refactor_special_key(legal_key.key)
+            else:
+                key = legal_key.key
             time = keystroke.time
             if time is None:
                 continue
@@ -463,16 +513,16 @@ class KeyParser:
             return {}
         return character_times
 
-    def visualize_keystroke_differences(
+    def compare_keystroke_lists(
             self, list_of_keystroke_lists: List[KeystrokeList]) -> None:
-        """
+        """Not client facing.
         Plots the average keystroke time for each character.
         """
         # TODO: Utilize map_chars_to_times
         return None
 
     def nuke_duplicates(self) -> None:
-        """
+        """Client facing.
         Remove duplicate logs from the logs list.
         """
         if not self.logs:
@@ -494,13 +544,13 @@ class KeyParser:
         self.logs = unique_logs
 
     def confirm_nuke(self) -> None:
-        """
+        """Client facing.
         This is a fun alias for dump_modified_logs.
         """
         self.dump_modified_logs()
 
     def dump_modified_logs(self) -> None:
-        """
+        """Client facing.
         Save the changes to the logfile (likely made by nuke_duplicates).
         """
         if not self.logs:
