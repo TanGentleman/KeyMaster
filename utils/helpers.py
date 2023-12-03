@@ -2,7 +2,7 @@ from os import path
 
 from pynput.keyboard import Key, KeyCode
 
-from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH, STOP_KEY
+from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH
 from utils.config import APOSTROPHE, STOP_CODE, SPECIAL_KEYS, BANNED_KEYS, KEYBOARD_CHARS
 # *** KEY VALIDATION ***
 
@@ -137,9 +137,8 @@ def clean_filename(filename: str) -> str:
     """
 
     # Us os module to get the extension
-    if len(filename) > 4:
-        if filename[-5:] != '.json':
-            filename = filename + '.json'
+    if filename[-5:] != '.json':
+        filename = filename + '.json'
     # maximum length
     return filename[:255]
 
@@ -164,6 +163,9 @@ def get_filepath(filename: str | None) -> str | None:
         filepath = ABSOLUTE_SIM_FILEPATH
     else:
         filepath = path.join(LOG_DIR, clean_filename(filename))
+    
+    if not path.exists(filepath):
+        print(f"Warning: This file does not exist. (Yet?)")
     return filepath
 
 
@@ -179,6 +181,20 @@ def is_filepath_valid(filename: str | None) -> bool:
     if not filepath:
         return False
     if not path.exists(filepath):
-        print("File does not exist. (Yet?)")
+        print("File does not exist.")
         return False
     return True
+
+def resolve_filename(filename: str | None) -> str | None:
+    """
+    Resolve the filename to a valid filepath.
+    """
+    if not filename:
+        print("No filename provided.")
+        return None
+
+    filepath = get_filepath(filename)
+    if not filepath:
+        return None
+    # Return the last part of the filepath
+    return path.basename(filepath)

@@ -5,6 +5,7 @@ from classes.key_generator import KeyGenerator
 from utils.config import DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, SIM_SPEED_MULTIPLE
 from utils.config import BANNED_KEYS, ROUND_DIGITS, SIM_MAX_DURATION
 from scripts.simulate import simulate_from_string, clipboard_main, listen_main
+from utils.helpers import resolve_filename
 
 
 class Config:
@@ -12,6 +13,7 @@ class Config:
     The Config class is a wrapper for all the configuration options.
     It is used to pass the configuration options to the other classes.
     """
+
     def __init__(
             self,
             disable: bool = DEFAULT_DISABLE_SIMULATION,
@@ -19,11 +21,11 @@ class Config:
             allow_newlines: bool = DEFAULT_ALLOW_NEWLINES,
             allow_unicode: bool = DEFAULT_ALLOW_UNICODE,
             logfile_name: str | None = "REG",
-            banned_keys=BANNED_KEYS,
-            round_digits=ROUND_DIGITS,
-            max_simulation_time=SIM_MAX_DURATION,
-            simulation_speed_multiple=SIM_SPEED_MULTIPLE,
-            pre_load=False) -> None:
+            banned_keys: list[str] = BANNED_KEYS, # THIS VALUE IS ALIASED. See warning.
+            # Warning: This means adjusting config.banned_keys will continue to affect already declared KeyGenerator instances.
+            round_digits: int = ROUND_DIGITS,
+            max_simulation_time: int | float = SIM_MAX_DURATION,
+            simulation_speed_multiple: int | float = SIM_SPEED_MULTIPLE) -> None:
         """
         Initialize the Config class.
         """
@@ -35,22 +37,9 @@ class Config:
         self.banned_keys = banned_keys  # ["√"]
         self.round_digits = round_digits
 
-        self.max_simulation_time = max_simulation_time
-        self.simulation_speed_multiple = simulation_speed_multiple
-        # print(self)
-        # I can even initiate some of the objects here and keep them as attributes.
-        self.key_logger = None
-        self.key_parser = None
-        self.key_generator = None
-
-        self.pre_load = pre_load
-        if self.pre_load:
-            self.initialize()
-
-    def initialize(self) -> None:
-        self.key_logger = self.KeyLogger()
-        self.key_parser = self.KeyParser()
-        self.key_generator = self.KeyGenerator()
+        self.max_simulation_time = float(max_simulation_time)
+        self.simulation_speed_multiple = float(simulation_speed_multiple)
+        print(self)
 
     # Below scripts may be pulled from Script class in the future.
     def listen_script(self) -> None:
@@ -114,8 +103,7 @@ class Config:
             filename = self.logfile_name
         return KeyLogger(
             filename=filename,
-            only_typeable=not (
-                self.allow_unicode),
+            only_typeable=not(self.allow_unicode),
             round_digits=self.round_digits)
 
     def KeyParser(self) -> KeyParser:
@@ -137,7 +125,7 @@ class Config:
     def __repr__(self) -> str:
         pretty_string = (
             f"# Configuration:\ndisable={self.disable},\nlogging={self.logging},\nallow_newlines={self.allow_newlines},\n" +
-            f"allow_unicode={self.allow_unicode},\nlogfile_name={self.logfile_name},\nbanned_keys={self.banned_keys},\n" +
+            f"allow_unicode={self.allow_unicode},\nlogfile_name={resolve_filename(self.logfile_name)},\nbanned_keys={self.banned_keys},\n" +
             f"round_digits={self.round_digits}\n#")
         return pretty_string
 

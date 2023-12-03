@@ -160,6 +160,16 @@ class KeystrokeList:
         self.keystrokes.append(keystroke)
         self.length += 1
 
+    def extend(self, keystrokes):
+        if not isinstance(keystrokes, KeystrokeList):
+            raise TypeError('keystrokes must be of type KeystrokeList')
+
+        self.keystrokes.extend(keystrokes.keystrokes)
+        self.length = len(self.keystrokes)
+
+    def is_empty(self) -> bool:
+        return self.length == 0
+
     def __iter__(self) -> Iterator[Keystroke]:
         return iter(self.keystrokes)
 
@@ -170,31 +180,22 @@ class KeystrokeList:
         return self.length
 
     def __repr__(self) -> str:
-        return "Keys:" + "".join('\n' + unwrap_key(keystroke.key)
-                                 for keystroke in self.keystrokes if keystroke.unicode_char)
+        return "As string: " + self.to_string()
 
     def __eq__(self, other) -> bool:
         if isinstance(other, KeystrokeList):
             return self.keystrokes == other.keystrokes
         return False
 
-    def extend(self, keystrokes):
-        if not isinstance(keystrokes, KeystrokeList):
-            raise TypeError('keystrokes must be of type KeystrokeList')
-
-        self.keystrokes.extend(keystrokes.keystrokes)
-        self.length = len(self.keystrokes)
-
     def to_string(self) -> str:
         """
         Returns the string representation of the keystrokes.
         """
+        if self.is_empty():
+            return ""
         output_string = ""
         word_count = 0
         keystrokes = self.keystrokes
-        if not keystrokes:
-            print('Warning: keystrokes_to_string: No keystrokes found.')
-            return output_string
         for keystroke in keystrokes:
             if not keystroke.valid:
                 print(f"Invalid keystroke: {keystroke.key}")
