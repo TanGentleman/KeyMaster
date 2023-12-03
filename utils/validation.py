@@ -88,9 +88,14 @@ class Keystroke:
         self.valid = is_key_valid(key)
 
         self.unicode_char = None
-        self.unicode_only = False
         if is_valid_wrapped_char(self.key):
             self.unicode_char = unwrap_key(self.key)
+        self.is_unwrapped = len(self.key) == 1
+        if self.is_unwrapped and self.valid:
+            self.unicode_char = self.key
+
+        self.unicode_only = False
+        if self.unicode_char is not None:
             if self.unicode_char not in KEYBOARD_CHARS:
                 self.unicode_only = True
 
@@ -124,7 +129,6 @@ class Keystroke:
         is_special = False
         legal_key = ''
         if self.key == STOP_CODE or self.key in SPECIAL_KEYS:
-            print("Special key!")
             is_special = True
             legal_key = APOSTROPHE + self.key + APOSTROPHE
         else:
