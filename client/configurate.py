@@ -22,7 +22,7 @@ class Config:
             allow_unicode: bool = DEFAULT_ALLOW_UNICODE,
             logfile_name: str | None = "REG",
             banned_keys: list[str] = BANNED_KEYS, # THIS VALUE IS ALIASED. See warning.
-            # Warning: This means adjusting config.banned_keys will continue to affect already declared KeyGenerator instances.
+            # Warning: This list aliased to BANNED_KEYS in config.py referenced by is_key_valid.
             round_digits: int = ROUND_DIGITS,
             max_simulation_time: int | float = SIM_MAX_DURATION,
             simulation_speed_multiple: int | float = SIM_SPEED_MULTIPLE) -> None:
@@ -34,7 +34,9 @@ class Config:
         self.allow_newlines = allow_newlines
         self.allow_unicode = allow_unicode
         self.logfile_name = logfile_name  # Files are .json and in the logs/ directory
-        self.banned_keys = banned_keys  # ["√"]
+        # Create a copy of the banned_keys list to prevent aliasing?
+        # self.banned_keys = list(banned_keys)
+        self.banned_keys = banned_keys # ["√"]
         self.round_digits = round_digits
 
         self.max_simulation_time = float(max_simulation_time)
@@ -96,6 +98,13 @@ class Config:
             raise ValueError("ban_key: Error. Char length must be 1.")
         self.banned_keys.append(key)
 
+    def unban_key(self, key: str) -> None:
+        if len(key) != 1:
+            raise ValueError("unban_key: Error. Char length must be 1.")
+        # remove key from banned_keys if it exists
+        if key in self.banned_keys:
+            self.banned_keys.remove(key)
+
     def KeyLogger(self) -> KeyLogger:
         if not self.logging:
             filename = None
@@ -120,7 +129,7 @@ class Config:
             allow_newlines=self.allow_newlines,
             allow_unicode=self.allow_unicode,
             round_digits=self.round_digits,
-            banned_keys=self.banned_keys)
+            banned_keys=list(self.banned_keys))
 
     def __repr__(self) -> str:
         pretty_string = (

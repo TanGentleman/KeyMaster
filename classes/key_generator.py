@@ -7,9 +7,8 @@ from threading import Timer
 from pynput.keyboard import Controller
 
 # KeyMaster imports
-from utils.config import BANNED_KEYS, KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_SPEED, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
-from utils.config import STOP_KEY, STOP_CODE, APOSTROPHE, SPECIAL_KEYS, DEFAULT_DISABLE_SIMULATION, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
-from utils.config import ROUND_DIGITS, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE
+from utils.config import DEFAULT_DISABLE_SIMULATION, BANNED_KEYS, SIM_SPEED_MULTIPLE, SIM_MAX_WORDS, SIM_MAX_DURATION, ROUND_DIGITS, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE
+from utils.config import STOP_KEY, STOP_CODE, APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS, SHIFT_SPEED, SIM_MAX_SPEED, MIN_DELAY, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV
 from utils.validation import Keystroke, Key, KeystrokeList, unwrap_key
 
 import logging
@@ -274,6 +273,9 @@ class KeyGenerator:
                 else:
                     # Decode the character
                     key = unwrap_key(key)
+                    # Don't simulate banned keys
+                    if key in self.banned_keys:
+                        continue
                     try:
                         keyboard.tap(key)
                     except Exception as e:
