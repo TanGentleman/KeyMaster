@@ -15,6 +15,7 @@ from utils.validation import Keystroke, Key, KeystrokeList, unwrap_key
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
+
 class KeyGenerator:
     """
     A class used to simulate keystrokes and log them.
@@ -44,11 +45,11 @@ class KeyGenerator:
         """
         Initialize the KeyGenerator with the given parameters.
         """
-        self.disable = disable # Client facing
-        self.max_duration = float(max_duration) # Client facing
-        self.round_digits = round_digits # Client facing
-        self.max_words = max_words # Client facing
-        self.speed_multiplier = float(speed_multiplier) # Client facing
+        self.disable = disable  # Client facing
+        self.max_duration = float(max_duration)  # Client facing
+        self.round_digits = round_digits  # Client facing
+        self.max_words = max_words  # Client facing
+        self.speed_multiplier = float(speed_multiplier)  # Client facing
 
         self.allow_newlines = allow_newlines
         self.allow_unicode = allow_unicode
@@ -63,18 +64,6 @@ class KeyGenerator:
             self.whitespace_dict.pop('\n')
         self.banned_keys = banned_keys
 
-    def disable_generator(self) -> None:
-        """Client facing.
-        Disable the simulation.
-        """
-        self.disable = True
-
-    def enable_generator(self) -> None:
-        """Client facing.
-        Enable the simulation.
-        """
-        self.disable = False
-    
     def calculate_delay(self, speed_multiple: float | int | None) -> float:
         """Not client facing.
         Get a normally distributed delay between keystrokes.
@@ -103,7 +92,8 @@ class KeyGenerator:
             delay = MIN_DELAY + delay / 10
         return delay
 
-    def generate_keystrokes_from_string(self, input_string: str) -> KeystrokeList:
+    def generate_keystrokes_from_string(
+            self, input_string: str) -> KeystrokeList:
         """Client facing.
         Generate valid Keystrokes from a string. Output object can be simulated.
 
@@ -147,13 +137,13 @@ class KeyGenerator:
                     if SHOW_SHIFT_INSERTIONS:
                         logging.info(f"Inserting shift before key {i}: {char}")
                     # Add a shift keypress
-                    if keystrokes == []:
+                    if keystrokes.is_empty():
                         time = None
                     else:
                         time = SHIFT_SPEED
                     key = str(Key.shift)
                     keystrokes.append(Keystroke(key, time))
-            if keystrokes == []:
+            if keystrokes.is_empty():
                 keystroke.time = None
             keystrokes.append(keystroke)
             # Should I stop generation at stop key too?
@@ -165,7 +155,7 @@ class KeyGenerator:
 
     def wrap_character(self, char: str) -> str:
         """Not client facing.
-        Wrap a character in single quotes. 
+        Wrap a character in single quotes.
         """
         return APOSTROPHE + char + APOSTROPHE
 
@@ -174,8 +164,7 @@ class KeyGenerator:
         Generate a `Keystroke` from a character (`str`).
         """
         if len(char) != 1:
-            logging.error(
-                f"generate_keystroke: Character length is not 1: {char}")
+            logging.error(f"generate_keystroke: Character length is not 1: {char}")
             return None
         key_string = char
         if char in self.whitespace_dict:
@@ -219,7 +208,7 @@ class KeyGenerator:
         if self.disable:
             logging.error("Simulation disabled.")
             return
-        if not keystrokes:
+        if keystrokes.is_empty():
             logging.error("No keystrokes found.")
             return
 
@@ -293,8 +282,8 @@ class KeyGenerator:
             string (str): The string to simulate.
         """
         keystrokes = self.generate_keystrokes_from_string(string)
-        if not keystrokes:
+        if keystrokes.is_empty():
             logging.error("Given input was not simulated.")
-            return
+            return None
         self.simulate_keystrokes(keystrokes)
         return keystrokes

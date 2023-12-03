@@ -71,7 +71,7 @@ class KeyLogger:
         The STOP_KEY is encoded as STOP_CODE. For example, '*' may now be 'STOP'.
         """
         if len(key) != 1:
-            raise ValueError("encode_keycode_char: Key length != 1")
+            raise ValueError(f"encode_keycode_char: Key length != 1: {key}")
 
         # Mark stop key or wrap the key in single quotes
         if key == STOP_KEY:
@@ -121,6 +121,9 @@ class KeyLogger:
             if keypress.char is None:
                 return
             key = keypress.char
+            if len(key) != 1:
+                print(f"WARNING: Ignoring input length != 1: {key}")
+                return
             if self.only_typeable and not key.isprintable():
                 return
             self.typed_string += key
@@ -143,9 +146,6 @@ class KeyLogger:
                     self.typed_string = self.typed_string[:-1]
             else:
                 return
-        if not encoded_key:
-            raise ValueError(
-                "log_valid_keypress: Unable to encode keypress. This should not happen.")
         # Create a Keystroke object and append it to the list
         # If the list is empty, the first keystroke will have delay = None
         if len(self.keystrokes) == 0:
@@ -249,7 +249,7 @@ class KeyLogger:
         if not input_string:
             print("No input string found. Log not legit")
             return False
-        if not keystrokes:
+        if keystrokes.is_empty():
             print("No keystrokes found. Log not legit")
             return False
         none_count = 0
@@ -298,7 +298,7 @@ class KeyLogger:
         if not legit:
             print("Log not created.")
             return None
-        
+
         # Create a unique ID
         unique_id = str(uuid4())
 
@@ -309,7 +309,6 @@ class KeyLogger:
             'keystrokes': self.keystrokes
         }
         return log
-       
 
     def save_log(self, reset: bool = False) -> bool:
         """Client facing.
@@ -355,6 +354,7 @@ class KeyLogger:
         if reset:
             self.reset()
         return True
+
 
 if __name__ == "__main__":
     logger = KeyLogger()

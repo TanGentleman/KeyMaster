@@ -13,7 +13,7 @@ from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_AL
 PRINT_KEYS = False
 
 
-def listen_for_keystrokes(logger: KeyLogger) -> KeystrokeList | None:
+def listen_for_keystrokes(logger: KeyLogger) -> KeystrokeList:
     """
     Test the KeyLogger class by listening for keystrokes.
     """
@@ -25,7 +25,7 @@ def listen_for_keystrokes(logger: KeyLogger) -> KeystrokeList | None:
         keystrokes = logger.keystrokes
         return keystrokes
     else:
-        return None
+        return KeystrokeList()
 
 
 def simulate_keystrokes(
@@ -56,7 +56,7 @@ def generate_keystrokes_from_string(
         allow_newlines=allow_newlines,
         allow_unicode=allow_unicode)
     keystrokes = simulator.generate_keystrokes_from_string(input_string)
-    if not keystrokes:
+    if keystrokes.is_empty():
         print("No keystrokes found.")
         return keystrokes
     return keystrokes
@@ -81,10 +81,9 @@ def listen_main(
         logging=DEFAULT_LOGGING,
         allow_newlines=DEFAULT_ALLOW_NEWLINES,
         allow_unicode=DEFAULT_ALLOW_UNICODE) -> None:
-    keystrokes = []
     logger = KeyLogger()
     keystrokes = listen_for_keystrokes(logger)
-    if not keystrokes:
+    if keystrokes.is_empty():
         print("No keystrokes found.")
         return
     if PRINT_KEYS:
@@ -118,7 +117,7 @@ def simulate_from_string(
     if disable:
         print("Simulation disabled.")
         return
-    if not keystrokes:
+    if keystrokes.is_empty():
         print("No keystrokes found.")
         return
     simulate_keystrokes(keystrokes, disable, allow_newlines, allow_unicode)
