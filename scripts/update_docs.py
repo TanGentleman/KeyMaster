@@ -13,6 +13,7 @@ DOCS_DIR = path.join(ROOT, "docs")
 CLASSES_DIR = path.join(ROOT, "classes")
 UTILS_DIR = path.join(ROOT, "utils")
 SCRIPTS_DIR = path.join(ROOT, "scripts")
+CLIENT_DIR = path.join(ROOT, "client")
 
 
 def create_dir(dir) -> None:
@@ -36,6 +37,7 @@ def get_files() -> dict[str, List[str]]:
     files['scripts'] = get_filenames(SCRIPTS_DIR)
     files['utils'] = get_filenames(UTILS_DIR)
     files['classes'] = get_filenames(CLASSES_DIR)
+    files['client'] = get_filenames(CLIENT_DIR)
     return files
 
 
@@ -45,6 +47,7 @@ def create_directories() -> None:
     create_dir(path.join(DOCS_DIR, "classes"))
     create_dir(path.join(DOCS_DIR, "utils"))
     create_dir(path.join(DOCS_DIR, "scripts"))
+    create_dir(path.join(DOCS_DIR, "client"))
 
 
 def extract_function_info(source):
@@ -150,6 +153,8 @@ def main():
             source_folder = CLASSES_DIR
         elif folder == 'scripts':
             source_folder = SCRIPTS_DIR
+        elif folder == 'client':
+            source_folder = CLIENT_DIR
         else:
             raise ValueError("Invalid folder name.")
         filenames = files[folder]

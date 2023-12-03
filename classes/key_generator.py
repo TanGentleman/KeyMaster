@@ -7,7 +7,7 @@ from threading import Timer
 from pynput.keyboard import Controller
 
 # KeyMaster imports
-from utils.config import BANNED_KEYS, KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
+from utils.config import BANNED_KEYS, KEYBOARD_CHARS, MIN_DELAY, SIM_SPEED_MULTIPLE, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, SIM_MAX_SPEED, SIM_MAX_WORDS, SHIFT_SPEED, SIM_MAX_DURATION
 from utils.config import STOP_KEY, STOP_CODE, APOSTROPHE, SPECIAL_KEYS, DEFAULT_DISABLE_SIMULATION, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS
 from utils.config import ROUND_DIGITS, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE
 from utils.validation import Keystroke, Key, KeystrokeList, unwrap_key
@@ -34,14 +34,14 @@ class KeyGenerator:
 
     def __init__(
             self,
-            disable=DEFAULT_DISABLE_SIMULATION,
-            max_duration=SIM_MAX_DURATION,
-            max_words=SIM_MAX_WORDS,
-            speed_multiplier=SIM_SPEED_MULTIPLE,
-            allow_newlines=DEFAULT_ALLOW_NEWLINES,
-            allow_unicode=DEFAULT_ALLOW_UNICODE,
-            round_digits=ROUND_DIGITS,
-            banned_keys=BANNED_KEYS) -> None:
+            disable: bool = DEFAULT_DISABLE_SIMULATION,
+            max_duration: int | float = SIM_MAX_DURATION,
+            max_words: int = SIM_MAX_WORDS,
+            speed_multiplier: int | float = SIM_SPEED_MULTIPLE,
+            allow_newlines: bool = DEFAULT_ALLOW_NEWLINES,
+            allow_unicode: bool = DEFAULT_ALLOW_UNICODE,
+            round_digits: int = ROUND_DIGITS,
+            banned_keys: list[str] = BANNED_KEYS) -> None:
         """
         Initialize the KeyGenerator with the given parameters.
         """
@@ -63,6 +63,21 @@ class KeyGenerator:
         if not self.allow_newlines:
             self.whitespace_dict.pop('\n')
         self.banned_keys = banned_keys
+
+    def set_speed(self, speed: float | int) -> None:
+        """Client facing.
+        Set the speed multiplier.
+
+        Args:
+            speed (float): The speed multiplier.
+        """
+        if speed < 0:
+            raise ValueError("Speed multiplier must be greater than 0.")
+        if speed > SIM_MAX_SPEED:
+            logging.error(
+                f"Invalid speed multiplier: {speed}. Setting to {SIM_MAX_SPEED}")
+            self.speed_multiplier = SIM_MAX_SPEED
+        self.speed_multiplier = float(speed)
 
     def calculate_delay(self, speed_multiple: float | int | None) -> float:
         """Not client facing.

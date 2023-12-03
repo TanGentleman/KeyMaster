@@ -13,6 +13,12 @@ class Generate:
         """
         self.generator = config.KeyGenerator()
 
+    def set_speed(self, speed: float) -> None:
+        """
+        Set the speed of the generator.
+        """
+        self.generator.speed_multiplier = float(speed)
+
     def disable(self) -> None:
         """
         Disable the generator.
