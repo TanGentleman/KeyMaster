@@ -1,10 +1,11 @@
 # Standard library imports
 from time import sleep
-from numpy import random
 from threading import Timer
+from random import normalvariate
 
 # Third party imports
 from pynput.keyboard import Controller
+
 
 # KeyMaster imports
 from utils.config import DEFAULT_DISABLE_SIMULATION, BANNED_KEYS, SIM_SPEED_MULTIPLE, SIM_MAX_WORDS, SIM_MAX_DURATION, ROUND_DIGITS, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE
@@ -98,7 +99,7 @@ class KeyGenerator:
             logging.error(
                 f"Invalid speed multiplier: {speed_multiple}. Setting to 1")
             speed_multiple = 1
-        delay = random.normal(
+        delay = normalvariate(
             SIM_DELAY_MEAN / (speed_multiple),
             SIM_DELAY_STD_DEV / speed_multiple)
         if delay < MIN_DELAY:
