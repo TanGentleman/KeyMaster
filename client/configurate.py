@@ -2,7 +2,7 @@ from typing import List
 from classes.key_collector import KeyLogger
 from classes.key_analyzer import KeyParser
 from classes.key_generator import KeyGenerator
-from utils.config import DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_STRING, SIM_SPEED_MULTIPLE
+from utils.config import DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, SIM_SPEED_MULTIPLE
 from utils.config import BANNED_KEYS, ROUND_DIGITS, SIM_MAX_DURATION
 from scripts.simulate import simulate_from_string, clipboard_main, listen_main
 
@@ -18,7 +18,7 @@ class Config:
             logging: bool = DEFAULT_LOGGING,
             allow_newlines: bool = DEFAULT_ALLOW_NEWLINES,
             allow_unicode: bool = DEFAULT_ALLOW_UNICODE,
-            logfile_name: str | None = None,
+            logfile_name: str | None = "REG",
             banned_keys=BANNED_KEYS,
             round_digits=ROUND_DIGITS,
             max_simulation_time=SIM_MAX_DURATION,
