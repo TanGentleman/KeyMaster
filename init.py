@@ -1,18 +1,7 @@
-from classes.configuration import Config
+from classes.key_collector import KeyLogger
+from classes.key_analyzer import KeyParser
+from classes.key_generator import KeyGenerator
 print("The logger, parser, and generator classes aliased kl, kp, and kg.")
-
-
-def KeyLogger():
-    return Config().KeyLogger()
-
-
-def KeyParser():
-    return Config().KeyParser()
-
-
-def KeyGenerator():
-    return Config().KeyGenerator()
-
 
 kl = KeyLogger
 kp = KeyParser
