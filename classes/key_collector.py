@@ -199,7 +199,7 @@ class KeyLogger:
     def start_listener(self, duration: int | float | None = None) -> None:
         """Client facing.
         Function to start the key listener.
-        The listener will only stop when stop_listener_condition returns True.
+        Listener will stop on conditions in stop_listener_condition or when duration reached.
         """
         if duration is None:
             duration = self.duration

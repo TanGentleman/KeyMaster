@@ -147,6 +147,7 @@ def clean_filename(filename: str) -> str:
 def get_filepath(filename: str | None) -> str | None:
     """
     Return the absolute filepath for a filename. 'REG' and 'SIM' return default logfiles.
+    The file will always be a .json file in the LOG_DIR directory.
     """
     if filename is None:
         return None

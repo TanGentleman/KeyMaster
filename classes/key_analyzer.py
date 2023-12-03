@@ -344,7 +344,7 @@ class KeyParser:
             times = self.get_only_times()
         if len(times) < 2:
             print("Not enough keystrokes to calculate standard deviation.")
-            return 0
+            return None
         return round(statistics.stdev(times), 4)
     
     def plot_keystroke_times(self, character_times: Dict[str, float]):
@@ -410,15 +410,6 @@ class KeyParser:
             print("No characters to visualize.")
             return
         self.plot_keystroke_times(character_times)
-        # characters = list(character_times.keys())
-        # times = list(character_times.values())
-
-        # plt.bar(characters, times)
-        # plt.xlabel('Characters')
-        # plt.ylabel('Average Keystroke Time')
-        # line_2 = "\nExcluding Outliers" if self.exclude_outliers else ""
-        # plt.title('Average Keystroke Time for Each Character' + line_2)
-        # plt.show()
 
     def get_keystrokes(self, identifier: str | None = None) -> KeystrokeList:
         """Client facing.

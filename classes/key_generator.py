@@ -63,6 +63,18 @@ class KeyGenerator:
             self.whitespace_dict.pop('\n')
         self.banned_keys = banned_keys
 
+    def disable_generator(self) -> None:
+        """Client facing.
+        Disable the simulation.
+        """
+        self.disable = True
+
+    def enable_generator(self) -> None:
+        """Client facing.
+        Enable the simulation.
+        """
+        self.disable = False
+    
     def calculate_delay(self, speed_multiple: float | int | None) -> float:
         """Not client facing.
         Get a normally distributed delay between keystrokes.
@@ -91,8 +103,7 @@ class KeyGenerator:
             delay = MIN_DELAY + delay / 10
         return delay
 
-    def generate_keystrokes_from_string(
-            self, input_string: str) -> KeystrokeList:
+    def generate_keystrokes_from_string(self, input_string: str) -> KeystrokeList:
         """Client facing.
         Generate valid Keystrokes from a string. Output object can be simulated.
 
@@ -150,15 +161,18 @@ class KeyGenerator:
                 logging.warning(
                     'STOP key found. Halting keystroke generation.')
                 break
-
         return keystrokes
 
     def wrap_character(self, char: str) -> str:
-        """Wrap a character in single quotes. Not client facing."""
+        """Not client facing.
+        Wrap a character in single quotes. 
+        """
         return APOSTROPHE + char + APOSTROPHE
 
     def generate_keystroke(self, char: str) -> Keystroke | None:
-        """Generate a `Keystroke` from a character (`str`). Client facing."""
+        """Client facing.
+        Generate a `Keystroke` from a character (`str`).
+        """
         if len(char) != 1:
             logging.error(
                 f"generate_keystroke: Character length is not 1: {char}")

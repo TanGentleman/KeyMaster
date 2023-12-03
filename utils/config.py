@@ -5,18 +5,6 @@ import string
 # Third party imports
 from pynput.keyboard import Key
 
-
-
-
-# disable: bool = DEFAULT_DISABLE_SIMULATION,
-#             logging: bool = DEFAULT_LOGGING,
-#             allow_newlines: bool = DEFAULT_ALLOW_NEWLINES,
-#             allow_unicode: bool = DEFAULT_ALLOW_UNICODE,
-#             logfile_name: str | None = None,
-#             banned_keys=BANNED_KEYS,
-#             round_digits=ROUND_DIGITS,
-#             max_simulation_time=SIM_MAX_DURATION) -> None:
-
 DEFAULT_DISABLE_SIMULATION = False
 DEFAULT_LOGGING = True
 DEFAULT_ALLOW_NEWLINES = True
@@ -43,9 +31,6 @@ SIM_DELAY_MEAN = 0.06
 SIM_DELAY_STD_DEV = 0.015
 SIM_MAX_WORDS = 300
 MIN_DELAY = 0.03
-
-
-
 
 ### KeyCollector CONFIG ###
 DEFAULT_LISTENER_DURATION = 30
