@@ -9,7 +9,7 @@ from threading import Timer
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
 from utils.config import APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
-from utils.config import MAX_WORDS, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY
+from utils.config import LISTENER_WORD_LIMIT, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY
 from utils.config import COLLECT_ONLY_TYPEABLE
 from utils.helpers import get_filepath, is_key_valid
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
@@ -174,7 +174,7 @@ class KeyLogger:
         """
         if keypress == Key.esc:
             return True
-        if self.word_count >= MAX_WORDS:
+        if self.word_count >= LISTENER_WORD_LIMIT:
             return True
         if isinstance(keypress, KeyCode) and keypress.char is not None:
             return keypress.char == STOP_KEY
@@ -206,7 +206,7 @@ class KeyLogger:
         try:
             with Listener(on_press=self.on_press, on_release=self.on_release) as listener:
                 print(
-                    f"Listening for {duration} seconds. The listener will stop on ESC, STOP_KEY, or after {MAX_WORDS} words.")
+                    f"Listening for {duration} seconds. The listener will stop on ESC, STOP_KEY, or after {LISTENER_WORD_LIMIT} words.")
                 # Start a timer of 10 seconds
                 self.timer = Timer(duration, listener.stop)
                 self.timer.start()
