@@ -55,10 +55,14 @@ class KeyParser:
             return []
         try:
             with open(filepath, 'r') as f:
-                logs: list[Log] = json_load(f, cls=KeystrokeDecoder)
-            if not logs:
+                log_contents = json_load(f)
+            for log in log_contents:
+                keystrokes = log['keystrokes']
+                log['keystrokes'] = KeystrokeList([Keystroke(*k) for k in keystrokes])
+            if not log_contents:
                 print("Log contents empty.")
                 return []
+            logs: list[Log] = log_contents
             return logs
         except FileNotFoundError:
             print("No log file found.")
@@ -193,7 +197,6 @@ class KeyParser:
         Returns:
             `list[float]`: A list of float values.
         """
-        keystrokes = KeystrokeList()
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
@@ -204,12 +207,10 @@ class KeyParser:
         if keystrokes.is_empty():
             print("No keystrokes found.")
             return []
-        
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         outlier_count = 0
         times: list[float] = []
-        
         for keystroke in keystrokes:
             time = keystroke.time
             if time is None:
@@ -415,19 +416,21 @@ class KeyParser:
         Returns:
             list: A list of Keystroke items.
         """
-        keystrokes: list[Keystroke] = []
+        keystrokes = KeystrokeList()
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
-                return KeystrokeList()
+                return keystrokes
         for log in self.logs:
+            if not isinstance(log['keystrokes'], KeystrokeList):
+                raise TypeError("Keystrokes must be of type KeystrokeList.")
             if identifier is not None and is_id_in_log(identifier, log):
                 keystrokes.extend(log['keystrokes'])
-                return KeystrokeList(keystrokes)
+                return keystrokes
             else:
                 keystrokes.extend(log['keystrokes'])
 
-        return KeystrokeList(keystrokes)
+        return keystrokes
 
     def refactor_special_key(self, key: str) -> str:
         """Not client facing.

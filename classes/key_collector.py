@@ -200,6 +200,7 @@ class KeyLogger:
         Function to start the key listener.
         Listener will stop on conditions in stop_listener_condition or when duration reached.
         """
+        self.reset() # reset the logger
         if duration is None:
             duration = self.duration
         listener = None

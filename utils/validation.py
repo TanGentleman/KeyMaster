@@ -2,7 +2,8 @@
 
 # Standard library imports
 from json import JSONDecoder, JSONEncoder
-from typing import List, Iterator, Tuple, TypedDict, Any
+import json
+from typing import Iterator, TypedDict, Any
 
 # Third party imports
 from pynput.keyboard import Key
@@ -103,7 +104,7 @@ class Keystroke:
         if self.valid and not self.unicode_only:
             self.legal_key = self.legalize()
 
-    def __iter__(self) -> Iterator[Tuple[str, float | None]]:
+    def __iter__(self) -> Iterator[tuple[str, float | None]]:
         yield self.key, self.time
 
     def __repr__(self) -> str:
@@ -142,7 +143,7 @@ class Keystroke:
 
 
 class KeystrokeList:
-    def __init__(self, keystrokes: List[Keystroke] | None = None):
+    def __init__(self, keystrokes: list[Keystroke] | None = None):
         if keystrokes is None:
             keystrokes = []
         if not isinstance(keystrokes, list):
@@ -160,10 +161,9 @@ class KeystrokeList:
         self.keystrokes.append(keystroke)
         self.length += 1
 
-    def extend(self, keystrokes):
+    def extend(self, keystrokes) -> None:
         if not isinstance(keystrokes, KeystrokeList):
-            raise TypeError('keystrokes must be of type KeystrokeList')
-
+            raise TypeError('Must use KeystrokeList.extend with a KeystrokeList')
         self.keystrokes.extend(keystrokes.keystrokes)
         self.length = len(self.keystrokes)
 
@@ -273,14 +273,17 @@ class KeystrokeList:
 
 class KeystrokeDecoder(JSONDecoder):
     """
-    A JSONDecoder that decodes Keystrokes [Logfile->List of Keystrokes]
+    A JSONDecoder that decodes a list of dictionaries and replaces the "keystrokes" field
+    with KeystrokeList objects.
     """
 
-    def object_hook(self, dct: dict[str, Any]) -> dict[str, KeystrokeList]:
+    def object_hook(self, dct: dict) -> dict:
+        """
+        Convert each keystroke into a Keystroke object and instantiate a KeystrokeList.
+        """
         if 'keystrokes' in dct:
             keystrokes = dct['keystrokes']
-            dct['keystrokes'] = KeystrokeList(
-                [Keystroke(*k) for k in keystrokes])
+            dct['keystrokes'] = KeystrokeList([Keystroke(*k) for k in keystrokes])
         return dct
 
 
@@ -293,8 +296,6 @@ class KeystrokeEncoder(JSONEncoder):
         if isinstance(obj, Keystroke):
             return [obj.key, obj.time]
         elif isinstance(obj, KeystrokeList):
-            # Directly return the list comprehension without calling
-            # self.default
             return [[keystroke.key, keystroke.time] for keystroke in obj]
         elif isinstance(obj, dict) and 'id' in obj and 'string' in obj and 'keystrokes' in obj:
             # Directly encode the KeystrokeList within the dictionary
