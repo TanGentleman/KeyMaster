@@ -64,7 +64,7 @@ class KeyGenerator:
             self.whitespace_dict.pop('\n')
         self.banned_keys = banned_keys
 
-    def set_speed(self, speed: float | int) -> None:
+    def set_speed(self, speed: int | float) -> None:
         """Client facing.
         Set the speed multiplier.
 
@@ -76,10 +76,10 @@ class KeyGenerator:
         if speed > SIM_MAX_SPEED:
             logging.error(
                 f"Invalid speed multiplier: {speed}. Setting to {SIM_MAX_SPEED}")
-            self.speed_multiplier = SIM_MAX_SPEED
+            speed = SIM_MAX_SPEED
         self.speed_multiplier = float(speed)
 
-    def calculate_delay(self, speed_multiple: float | int | None) -> float:
+    def calculate_delay(self, speed_multiple: int | float | None) -> float:
         """Not client facing.
         Get a normally distributed delay between keystrokes.
 

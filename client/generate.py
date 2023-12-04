@@ -7,17 +7,19 @@ class Generate:
     The Generate class is a wrapper for all the generation options.
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config | None = None) -> None:
         """
         Initialize the Generate class.
         """
+        if config is None:
+            config = Config()
         self.generator = config.KeyGenerator()
 
-    def set_speed(self, speed: float) -> None:
+    def set_speed(self, speed: int | float) -> None:
         """
         Set the speed of the generator.
         """
-        self.generator.speed_multiplier = float(speed)
+        self.generator.set_speed(speed)
 
     def disable(self) -> None:
         """
@@ -35,10 +37,7 @@ class Generate:
         """
         Generate keystrokes from a string.
         """
-        keystrokes = self.generator.generate_keystrokes_from_string(string)
-        if keystrokes.is_empty():
-            raise ValueError("String could not be generated.")
-        return keystrokes
+        return self.generator.generate_keystrokes_from_string(string)
 
     def generate_keystroke(self, char: str) -> Keystroke:
         """
@@ -56,3 +55,12 @@ class Generate:
         Simulate the keystroke list
         """
         self.generator.simulate_keystrokes(keystrokes)
+
+    def simulate_string(self, string: str) -> KeystrokeList:
+        """
+        Simulate a string and return the KeystrokeList.
+        """
+        keystrokes = self.generate_keystrokes_from_string(string)
+        if not keystrokes.is_empty():
+            self.simulate_keystrokes(keystrokes)
+        return keystrokes

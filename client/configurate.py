@@ -1,8 +1,7 @@
-from typing import List
 from classes.key_collector import KeyLogger
 from classes.key_analyzer import KeyParser
 from classes.key_generator import KeyGenerator
-from utils.config import DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, SIM_SPEED_MULTIPLE
+from utils.config import DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, SIM_SPEED_MULTIPLE, DEFAULT_EXCLUDE_OUTLIERS
 from utils.config import BANNED_KEYS, ROUND_DIGITS, SIM_MAX_DURATION
 from scripts.simulate import simulate_from_string, clipboard_main, listen_main
 from utils.helpers import resolve_filename
@@ -16,24 +15,25 @@ class Config:
 
     def __init__(
             self,
-            disable: bool = DEFAULT_DISABLE_SIMULATION,
-            logging: bool = DEFAULT_LOGGING,
-            allow_newlines: bool = DEFAULT_ALLOW_NEWLINES,
-            allow_unicode: bool = DEFAULT_ALLOW_UNICODE,
-            logfile_name: str | None = "REG",
+            disable_simulation: bool = DEFAULT_DISABLE_SIMULATION, # KeyGenerator and scripts
+            logging: bool = DEFAULT_LOGGING, # KeyLogger, KeyParser, and scripts
+            allow_newlines: bool = DEFAULT_ALLOW_NEWLINES, # KeyGenerator and scripts
+            allow_unicode: bool = DEFAULT_ALLOW_UNICODE, # KeyGenerator and scripts
+            logfile: str | None = "REG", # KeyLogger and KeyParser
             banned_keys: list[str] = BANNED_KEYS, # THIS VALUE IS ALIASED. See warning.
             # Warning: This list aliased to BANNED_KEYS in config.py referenced by is_key_valid.
             round_digits: int = ROUND_DIGITS,
             max_simulation_time: int | float = SIM_MAX_DURATION,
-            simulation_speed_multiple: int | float = SIM_SPEED_MULTIPLE) -> None:
+            simulation_speed_multiple: int | float = SIM_SPEED_MULTIPLE,
+            exclude_outliers_in_analysis: bool = DEFAULT_EXCLUDE_OUTLIERS) -> None:
         """
         Initialize the Config class.
         """
-        self.disable = disable
+        self.disable = disable_simulation
         self.logging = logging
         self.allow_newlines = allow_newlines
         self.allow_unicode = allow_unicode
-        self.logfile_name = logfile_name  # Files are .json and in the logs/ directory
+        self.logfile = logfile  # Files are .json and in the logs/ directory
         # Create a copy of the banned_keys list to prevent aliasing?
         # self.banned_keys = list(banned_keys)
         self.banned_keys = banned_keys # ["√"]
@@ -41,6 +41,7 @@ class Config:
 
         self.max_simulation_time = float(max_simulation_time)
         self.simulation_speed_multiple = float(simulation_speed_multiple)
+        self.exclude_outliers = exclude_outliers_in_analysis
         print(self)
 
     # Below scripts may be pulled from Script class in the future.
@@ -72,9 +73,12 @@ class Config:
             logging: bool | None = None,
             allow_newlines: bool | None = None,
             allow_unicode: bool | None = None,
-            logfile_name: str | None = None,
-            banned_keys: List[str] | None = None,
-            round_digits: int | None = None) -> None:
+            logfile: str | None = None,
+            banned_keys: list[str] | None = None,
+            round_digits: int | None = None,
+            max_simulation_time: int | float | None = None,
+            simulation_speed_multiple: int | float | None = None,
+            exclude_outliers_in_analysis: bool | None = None) -> None:
         """
         Set any of the client-facing configuration attributes.
         """
@@ -86,12 +90,18 @@ class Config:
             self.allow_newlines = allow_newlines
         if allow_unicode is not None:
             self.allow_unicode = allow_unicode
-        if logfile_name is not None:
-            self.logfile_name = logfile_name
+        if logfile is not None:
+            self.logfile = logfile
         if banned_keys is not None:
             self.banned_keys = banned_keys
         if round_digits is not None:
             self.round_digits = round_digits
+        if max_simulation_time is not None:
+            self.max_simulation_time = max_simulation_time
+        if simulation_speed_multiple is not None:
+            self.simulation_speed_multiple = simulation_speed_multiple
+        if exclude_outliers_in_analysis is not None:
+            self.exclude_outliers = exclude_outliers_in_analysis
 
     def ban_key(self, key: str) -> None:
         if len(key) != 1:
@@ -109,7 +119,7 @@ class Config:
         if not self.logging:
             filename = None
         else:
-            filename = self.logfile_name
+            filename = self.logfile
         return KeyLogger(
             filename=filename,
             only_typeable=not(self.allow_unicode),
@@ -119,8 +129,8 @@ class Config:
         if not self.logging:
             filename = None
         else:
-            filename = self.logfile_name
-        return KeyParser(filename=filename)
+            filename = self.logfile
+        return KeyParser(filename=filename, exclude_outliers=self.exclude_outliers)
 
     def KeyGenerator(self) -> KeyGenerator:
         return KeyGenerator(
@@ -134,7 +144,7 @@ class Config:
     def __repr__(self) -> str:
         pretty_string = (
             f"# Configuration:\ndisable={self.disable},\nlogging={self.logging},\nallow_newlines={self.allow_newlines},\n" +
-            f"allow_unicode={self.allow_unicode},\nlogfile_name={resolve_filename(self.logfile_name)},\nbanned_keys={self.banned_keys},\n" +
+            f"allow_unicode={self.allow_unicode},\nlogfile={resolve_filename(self.logfile)},\nbanned_keys={self.banned_keys},\n" +
             f"round_digits={self.round_digits}\n#")
         return pretty_string
 

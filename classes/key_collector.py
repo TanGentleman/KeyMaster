@@ -3,13 +3,12 @@ from json import dump as json_dump
 from json import load as json_load
 from time import time, perf_counter
 from uuid import uuid4
-from typing import List
 from threading import Timer
 
 # Third party imports
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
-from utils.config import APOSTROPHE, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
+from utils.config import APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
 from utils.config import MAX_WORDS, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY
 from utils.config import COLLECT_ONLY_TYPEABLE
 from utils.helpers import get_filepath, is_key_valid
@@ -124,7 +123,7 @@ class KeyLogger:
             if len(key) != 1:
                 print(f"WARNING: Ignoring input length != 1: {key}")
                 return
-            if self.only_typeable and not key.isprintable():
+            if self.only_typeable and key not in KEYBOARD_CHARS:
                 return
             self.typed_string += key
             encoded_key = self.encode_keycode_char(key)
@@ -337,10 +336,9 @@ class KeyLogger:
         # Create var logs to store the logs
         # Replace keystrokes in json using KeystrokeEncoder
         # Append the log object to the file
-        logs: List[Log] = []
         try:
             with open(filepath, 'r+') as f:
-                logs = json_load(f, cls=KeystrokeDecoder)
+                logs: list[Log] = json_load(f, cls=KeystrokeDecoder)
                 logs.append(log)
                 f.seek(0)
                 json_dump(logs, f, cls=KeystrokeEncoder)

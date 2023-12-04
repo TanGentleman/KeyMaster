@@ -2,7 +2,6 @@
 from json import load as json_load
 from json import dump as json_dump
 import statistics
-from typing import List, Dict
 
 # Third party imports
 try:
@@ -11,7 +10,7 @@ except ImportError:
     plt = None # type: ignore
 
 # KeyMaster imports
-from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeEncoder, is_id_in_log
+from utils.validation import Keystroke, KeystrokeDecoder, KeystrokeList, Log, KeystrokeEncoder, is_id_in_log
 from utils.helpers import get_filepath, resolve_filename
 
 NUKABLE = True
@@ -32,7 +31,7 @@ class KeyParser:
         """
         self.filename = filename  # Client facing.
         self.exclude_outliers = exclude_outliers  # Client facing.
-        self.logs: List[Log] = self.extract_logs()  # Not client facing.
+        self.logs: list[Log] = self.extract_logs()  # Not client facing.
 
     def load_logs(self) -> None:
         """Client facing.
@@ -40,7 +39,7 @@ class KeyParser:
         """
         self.logs = self.extract_logs()
 
-    def extract_logs(self) -> List[Log]:
+    def extract_logs(self) -> list[Log]:
         """Not client facing.
         Reads logfile and extracts logs.
 
@@ -56,13 +55,10 @@ class KeyParser:
             return []
         try:
             with open(filepath, 'r') as f:
-                log_contents = json_load(f)
-            logs: List[Log] = []
-            for log in log_contents:
-                # Instantiate Keystrokes and replace them in each log
-                keystrokes = [Keystroke(k[0], k[1]) for k in log['keystrokes']]
-                log['keystrokes'] = keystrokes
-                logs.append(log)
+                logs: list[Log] = json_load(f, cls=KeystrokeDecoder)
+            if not logs:
+                print("Log contents empty.")
+                return []
             return logs
         except FileNotFoundError:
             print("No log file found.")
@@ -129,7 +125,7 @@ class KeyParser:
                 return log['id']
         return None
 
-    def get_strings(self, identifier: str | None = None) -> List[str]:
+    def get_strings(self, identifier: str | None = None) -> list[str]:
         """Client facing.
         Get a list of all strings in the logs. If an identifier is provided,
         only the associated string is included.
@@ -187,7 +183,7 @@ class KeyParser:
             print(f'{count}|{curr_string}')
 
     def get_only_times(self, identifier: str | None = None,
-                       exclude_outliers: bool | None = None) -> List[float]:
+                       exclude_outliers: bool | None = None) -> list[float]:
         """Not client facing.
         Get a list of all keystroke delay times.
 
@@ -195,7 +191,7 @@ class KeyParser:
             `identifier` (str, optional): The UUID or exact string to check for.
 
         Returns:
-            `List[float]`: A list of float values.
+            `list[float]`: A list of float values.
         """
         keystrokes = KeystrokeList()
         if identifier is not None:
@@ -212,7 +208,7 @@ class KeyParser:
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         outlier_count = 0
-        times: List[float] = []
+        times: list[float] = []
         
         for keystroke in keystrokes:
             time = keystroke.time
@@ -268,7 +264,7 @@ class KeyParser:
         return round(cpm / 5, 1)
 
     def get_highest_keystroke_times(
-            self, identifier: str | None = None) -> List[float]:
+            self, identifier: str | None = None) -> list[float]:
         """Client facing.
         Get the highest keystroke time for each log.
 
@@ -344,12 +340,12 @@ class KeyParser:
             return None
         return round(statistics.stdev(times), 4)
 
-    def plot_keystroke_times(self, character_times: Dict[str, float]):
+    def plot_keystroke_times(self, character_times: dict[str, float]):
         """Not client facing.
         Plots a bar chart of the average keystroke times for each character.
 
         :param character_times: A dictionary mapping each character to its average keystroke time.
-        :type character_times: Dict[str, float]
+        :type character_times: dict[str, float]
         """
         if plt is None:
             print("Matplotlib not installed. Cannot visualize.")
@@ -419,7 +415,7 @@ class KeyParser:
         Returns:
             list: A list of Keystroke items.
         """
-        keystrokes: List[Keystroke] = []
+        keystrokes: list[Keystroke] = []
         if identifier is not None:
             isPresent = self.check_membership(identifier)
             if isPresent is False:
@@ -450,7 +446,7 @@ class KeyParser:
 
     def map_chars_to_times(self,
                            keystrokes: KeystrokeList | None = None,
-                           exclude_outliers: bool | None = None) -> Dict[str,
+                           exclude_outliers: bool | None = None) -> dict[str,
                                                                          float]:
         """Not client facing.
         Calculates the average keystroke time for each character based on the provided keystrokes.
@@ -461,8 +457,8 @@ class KeyParser:
         Returns:
             `dict`: A dictionary mapping each character to its average keystroke time.
         """
-        character_times: Dict[str, float] = {}
-        character_counts: Dict[str, int] = {}
+        character_times: dict[str, float] = {}
+        character_counts: dict[str, int] = {}
         if keystrokes is None:
             keystrokes = self.get_keystrokes()
         if keystrokes.is_empty():
@@ -507,7 +503,7 @@ class KeyParser:
         return character_times
 
     def compare_keystroke_lists(
-            self, list_of_keystroke_lists: List[KeystrokeList]) -> None:
+            self, list_of_keystroke_lists: list[KeystrokeList]) -> None:
         """Not client facing.
         Compare the keystroke times of multiple lists of keystrokes.
         """
