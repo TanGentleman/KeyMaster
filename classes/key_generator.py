@@ -10,7 +10,7 @@ from pynput.keyboard import Controller
 # KeyMaster imports
 from utils.config import DEFAULT_DISABLE_SIMULATION, BANNED_KEYS, SIM_SPEED_MULTIPLE, SIM_MAX_WORDS, SIM_MAX_DURATION, ROUND_DIGITS, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE
 from utils.config import STOP_KEY, STOP_CODE, APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS, SHIFT_SPEED, SIM_MAX_SPEED, MIN_DELAY, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV
-from utils.validation import Keystroke, Key, KeystrokeList, unwrap_key
+from utils.validation import Keystroke, Key, KeystrokeList
 
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
@@ -60,7 +60,7 @@ class KeyGenerator:
             '\t': str(Key.tab),
             '\n': str(Key.enter)
         }
-        if not self.allow_newlines:
+        if self.allow_newlines is False:
             self.whitespace_dict.pop('\n')
         self.banned_keys = banned_keys
 
@@ -179,7 +179,8 @@ class KeyGenerator:
         Generate a `Keystroke` from a character (`str`).
         """
         if len(char) != 1:
-            logging.error(f"generate_keystroke: Character length is not 1: {char}")
+            logging.error(
+                f"generate_keystroke: Character length is not 1: {char}")
             return None
         key_string = char
         if char in self.whitespace_dict:
@@ -189,8 +190,7 @@ class KeyGenerator:
             if char == STOP_KEY:
                 key_string = STOP_CODE
             else:
-                if not self.allow_unicode and char not in KEYBOARD_CHARS:
-                    # logging.error(f"generate_keystroke: Unicode character not allowed: {char} -> {ord(char)}")
+                if self.allow_unicode is False and char not in KEYBOARD_CHARS:
                     return None
                 key_string = APOSTROPHE + char + APOSTROPHE
         else:
@@ -240,7 +240,7 @@ class KeyGenerator:
                 logging.info(
                     f'Duration {self.max_duration}s elapsed. Stopping simulation.')
                 break
-            if not keystroke.valid:
+            if keystroke.valid is False:
                 logging.error(
                     f"simulate_keystrokes: Invalid key: {keystroke.key}")
                 continue
@@ -273,9 +273,12 @@ class KeyGenerator:
                     keyboard.tap(SPECIAL_KEYS[key])
                 else:
                     # Decode the character
-                    key = unwrap_key(key)
+                    char = keystroke.unicode_char
+                    if char is None:
+                        raise ValueError(
+                            "Unicode char is None, should this clause be skipped?")
                     # Don't simulate banned keys
-                    if key in self.banned_keys:
+                    if char in self.banned_keys:
                         continue
                     try:
                         keyboard.tap(key)

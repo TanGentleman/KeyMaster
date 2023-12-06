@@ -9,7 +9,7 @@ from typing import Iterator, TypedDict, Any
 from pynput.keyboard import Key
 
 # KeyMaster imports
-from utils.config import APOSTROPHE, MAX_KEY_LENGTH, SPECIAL_KEYS, BANNED_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
+from utils.config import APOSTROPHE, MAX_KEY_LENGTH, SPECIAL_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
 from utils.helpers import is_valid_wrapped_char, is_valid_wrapped_special_key, unwrap_key, is_key_valid
 
 
@@ -29,8 +29,8 @@ class SpecialKey:
 
 class LegalKey:
     """
-    A class used to represent a legal key. Chars have no quote wrapping.
-    STOP_CODE
+    A class used to represent a legal key (a char or a special key on keyboard).
+    Chars have no quote wrapping. Special keys are wrapped in single quotes.
     >>> LegalKey('a', False)
     key=a
     >>> LegalKey('Key.shift', True)
@@ -87,22 +87,25 @@ class Keystroke:
         self.key = key
         self.time = time
         self.valid = is_key_valid(key)
-
-        self.unicode_char = None
-        if is_valid_wrapped_char(self.key):
-            self.unicode_char = unwrap_key(self.key)
-        self.is_unwrapped = len(self.key) == 1
-        if self.is_unwrapped and self.valid:
-            self.unicode_char = self.key
-
-        self.unicode_only = False
-        if self.unicode_char is not None:
-            if self.unicode_char not in KEYBOARD_CHARS:
-                self.unicode_only = True
-
+        self.unicode_char: str | None = None
+        self.is_typeable_char = False
         self.legal_key: LegalKey | None = None
-        if self.valid and not self.unicode_only:
-            self.legal_key = self.legalize()
+
+        if self.valid:
+            is_unwrapped = len(self.key) == 1
+
+            if is_valid_wrapped_char(self.key):
+                self.unicode_char = unwrap_key(self.key)
+
+            elif is_unwrapped and self.valid:
+                self.unicode_char = self.key
+
+            if self.unicode_char is not None and self.unicode_char in KEYBOARD_CHARS:
+                self.is_typeable_char = True
+
+            self.legal_key: LegalKey | None = None
+            if self.is_typeable_char:
+                self.legal_key = self.legalize()
 
     def __iter__(self) -> Iterator[tuple[str, float | None]]:
         yield self.key, self.time
@@ -121,11 +124,13 @@ class Keystroke:
         """
         Returns a LegalKey object or None if the key is not valid.
         """
-        if not self.valid:
+        # Ensure the key is valid
+        if self.valid is False:
             raise ValueError('Invalid char not legalized')
-
-        if self.unicode_only:
-            raise ValueError('Unicode char not legalized')
+        # Exclude non-typeable chars
+        if self.unicode_char is not None:
+            if self.is_typeable_char is False:
+                raise ValueError('Unicode char not legalized')
 
         is_special = False
         legal_key = ''
@@ -137,7 +142,7 @@ class Keystroke:
             if len(key) != 1 or key not in KEYBOARD_CHARS:
                 print(f"Invalid key!->{self.key}")
                 raise ValueError(
-                    'Legal keys are 1 character and must be typeable')
+                    'Legal chars are 1 character and must be typeable')
             legal_key = key
         return LegalKey(legal_key, is_special)
 
@@ -163,7 +168,8 @@ class KeystrokeList:
 
     def extend(self, keystrokes) -> None:
         if not isinstance(keystrokes, KeystrokeList):
-            raise TypeError('Must use KeystrokeList.extend with a KeystrokeList')
+            raise TypeError(
+                'Must use KeystrokeList.extend with a KeystrokeList')
         self.keystrokes.extend(keystrokes.keystrokes)
         self.length = len(self.keystrokes)
 
@@ -187,7 +193,7 @@ class KeystrokeList:
             return self.keystrokes == other.keystrokes
         return False
 
-    def to_string(self) -> str:
+    def to_string(self, allow_unsafe: bool = False) -> str:
         """
         Returns the string representation of the keystrokes.
         """
@@ -200,35 +206,31 @@ class KeystrokeList:
             if not keystroke.valid:
                 print(f"Invalid keystroke: {keystroke.key}")
                 continue
-            # This means keystroke.valid is true, so it is a valid keypress
-            key = keystroke.key
-            # Handle special keys
-            if key == STOP_CODE:
-                key = STOP_KEY
-                output_string += key
-            elif key in SPECIAL_KEYS:
-                special_key = SPECIAL_KEYS[key]
-                if special_key == Key.backspace:
-                    if output_string != '':
-                        # Remove the last character
-                        output_string = output_string[:-1]
-                elif special_key == Key.space:
-                    output_string += ' '
-                    word_count += 1
-                elif special_key == Key.enter:
-                    output_string += '\n'
-                elif special_key == Key.tab:
-                    output_string += '\t'
-                else:
-                    continue  # Ignore keys like CapsLock and Shift
+            char = keystroke.unicode_char
+            if char is not None:
+                output_string += char
             else:
-                key = unwrap_key(key)
-                if key in BANNED_KEYS:
-                    continue
-                # Append the character to the output string
-                # It is 1 character because it passed is_key_valid() and is not
-                # in SPECIAL_KEYS
-                output_string += key
+                # This means it is a special key
+                key = keystroke.key
+                # Handle special keys
+                if key == STOP_CODE:
+                    decoded_key = STOP_KEY
+                    output_string += decoded_key
+                elif key in SPECIAL_KEYS:
+                    decoded_key = SPECIAL_KEYS[key]
+                    if decoded_key == Key.backspace:
+                        if output_string != '':
+                            # Remove the last character
+                            output_string = output_string[:-1]
+                    elif decoded_key == Key.space:
+                        output_string += ' '
+                        word_count += 1
+                    elif decoded_key == Key.enter:
+                        output_string += '\n'
+                    elif decoded_key == Key.tab:
+                        output_string += '\t'
+                    else:
+                        continue  # Ignore keys like Shift
         return output_string
 
     def validate(self, input_string: str) -> bool:
@@ -283,7 +285,8 @@ class KeystrokeDecoder(JSONDecoder):
         """
         if 'keystrokes' in dct:
             keystrokes = dct['keystrokes']
-            dct['keystrokes'] = KeystrokeList([Keystroke(*k) for k in keystrokes])
+            dct['keystrokes'] = KeystrokeList(
+                [Keystroke(*k) for k in keystrokes])
         return dct
 
 

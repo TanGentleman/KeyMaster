@@ -31,7 +31,7 @@ SIM_DELAY_MEAN = 0.06
 SIM_DELAY_STD_DEV = 0.015
 SIM_MAX_WORDS = 300
 MIN_DELAY = 0.03
-SIM_MAX_SPEED = 10 # This is the maximum speed multiple for the simulation
+SIM_MAX_SPEED = 10  # This is the maximum speed multiple for the simulation
 
 ### KeyLogger CONSTANTS ###
 DEFAULT_LISTENER_DURATION = 30
@@ -42,14 +42,16 @@ COLLECT_ONLY_TYPEABLE = False
 # Misc
 STOP_KEY = "*"  # This key is used to stop the listener when pressed
 STOP_CODE = 'STOP'
-SHIFT_SPEED = 0.2222 # keystroke.time value of formulaically generated shift keystrokes
-MAX_KEY_LENGTH = 20 # max length of Keystroke.key (to prevent invalid overflow)
+SHIFT_SPEED = 0.2222  # keystroke.time value of formulaically generated shift keystrokes
+# max length of Keystroke.key (to prevent invalid overflow)
+MAX_KEY_LENGTH = 20
 
 # DO NOT CHANGE
 EMPTY_WRAPPED_CHAR = "''"
 APOSTROPHE = "'"
 SHIFTED_CHARS = r'~!@#$%^&*()_+{}|:"<>?'
-KEYBOARD_CHARS = string.ascii_letters + string.digits + string.punctuation + ' \n\t'
+KEYBOARD_CHARS = string.ascii_letters + \
+    string.digits + string.punctuation + ' \n\t'
 
 SPECIAL_KEYS = {
     'Key.space': Key.space,

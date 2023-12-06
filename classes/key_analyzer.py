@@ -7,7 +7,7 @@ import statistics
 try:
     import matplotlib.pyplot as plt
 except ImportError:
-    plt = None # type: ignore
+    plt = None  # type: ignore
 
 # KeyMaster imports
 from utils.validation import Keystroke, KeystrokeDecoder, KeystrokeList, Log, KeystrokeEncoder, is_id_in_log
@@ -58,7 +58,8 @@ class KeyParser:
                 log_contents = json_load(f)
             for log in log_contents:
                 keystrokes = log['keystrokes']
-                log['keystrokes'] = KeystrokeList([Keystroke(*k) for k in keystrokes])
+                log['keystrokes'] = KeystrokeList(
+                    [Keystroke(*k) for k in keystrokes])
             if not log_contents:
                 print("Log contents empty.")
                 return []
@@ -147,7 +148,7 @@ class KeyParser:
             return []
         if identifier is not None:
             isPresent = self.check_membership(identifier)
-            if not isPresent:
+            if isPresent is False:
                 return []
             for log in self.logs:
                 if is_id_in_log(identifier, log):
@@ -221,7 +222,8 @@ class KeyParser:
             else:
                 times.append(time)
         if outlier_count > 0:
-            print(f"Removed {outlier_count} outliers in getting keystroke times.")
+            print(
+                f"Removed {outlier_count} outliers in getting keystroke times.")
         return times
 
     def wpm(self, identifier: str | None = None) -> float | None:
@@ -248,13 +250,13 @@ class KeyParser:
                 if log['id'] == identifier or log['string'] == identifier:
                     times = self.get_only_times(identifier)
                     num_chars = len(times)
-                    total_seconds = sum(times) # type: ignore
+                    total_seconds = sum(times)  # type: ignore
                     break
         # If identifier is not provided, calculate WPM for all logs
         else:
             times = self.get_only_times()
             num_chars = len(times)
-            total_seconds = sum(times) # type: ignore
+            total_seconds = sum(times)  # type: ignore
 
         if num_chars == 0 or total_seconds == 0:
             print("Num_chars or total_seconds is 0. Unable to get WPM.")
@@ -473,9 +475,7 @@ class KeyParser:
 
         outlier_count = 0
         for keystroke in keystrokes:
-            # I am removing the validity check because it is not necessary
-            # if not keystroke.valid:
-            #     continue
+
             legal_key = keystroke.legal_key
             if legal_key is None:
                 continue
@@ -502,7 +502,8 @@ class KeyParser:
             print("No characters to map.")
             return {}
         if outlier_count > 0:
-            print(f"Removed {outlier_count} outliers in mapping characters to average times.")
+            print(
+                f"Removed {outlier_count} outliers in mapping characters to average times.")
         return character_times
 
     def compare_keystroke_lists(
@@ -566,7 +567,7 @@ class KeyParser:
         except Exception as e:
             print(f"An error occurred: {e}")
             return
-        
+
     def __repr__(self) -> str:
         pretty_string = (
             f"# Configuration:\nfile={resolve_filename(self.filename)},\nexclude_outliers={self.exclude_outliers},\n" +
@@ -575,7 +576,7 @@ class KeyParser:
 
     def __str__(self) -> str:
         return self.__repr__()
-    
+
     def __len__(self) -> int:
         return len(self.logs)
 

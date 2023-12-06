@@ -15,13 +15,13 @@ class Config:
 
     def __init__(
             self,
-            disable_simulation: bool = DEFAULT_DISABLE_SIMULATION, # KeyGenerator and scripts
-            logging: bool = DEFAULT_LOGGING, # KeyLogger, KeyParser, and scripts
-            allow_newlines: bool = DEFAULT_ALLOW_NEWLINES, # KeyGenerator and scripts
-            allow_unicode: bool = DEFAULT_ALLOW_UNICODE, # KeyGenerator and scripts
-            logfile: str | None = "REG", # KeyLogger and KeyParser
-            banned_keys: list[str] = BANNED_KEYS, # THIS VALUE IS ALIASED. See warning.
-            # Warning: This list aliased to BANNED_KEYS in config.py referenced by is_key_valid.
+            disable_simulation: bool = DEFAULT_DISABLE_SIMULATION,  # KeyGenerator and scripts
+            logging: bool = DEFAULT_LOGGING,  # KeyLogger, KeyParser, and scripts
+            allow_newlines: bool = DEFAULT_ALLOW_NEWLINES,  # KeyGenerator and scripts
+            allow_unicode: bool = DEFAULT_ALLOW_UNICODE,  # KeyGenerator and scripts
+            logfile: str | None = "REG",  # KeyLogger and KeyParser
+            banned_keys: list[str] = BANNED_KEYS,
+            # Warning: aliased to list referenced by is_key_valid.
             round_digits: int = ROUND_DIGITS,
             max_simulation_time: int | float = SIM_MAX_DURATION,
             simulation_speed_multiple: int | float = SIM_SPEED_MULTIPLE,
@@ -36,7 +36,7 @@ class Config:
         self.logfile = logfile  # Files are .json and in the logs/ directory
         # Create a copy of the banned_keys list to prevent aliasing?
         # self.banned_keys = list(banned_keys)
-        self.banned_keys = banned_keys # ["√"]
+        self.banned_keys = banned_keys  # ["√"]
         self.round_digits = round_digits
 
         self.max_simulation_time = float(max_simulation_time)
@@ -116,21 +116,23 @@ class Config:
             self.banned_keys.remove(key)
 
     def KeyLogger(self) -> KeyLogger:
-        if not self.logging:
+        if self.logging is False:
             filename = None
         else:
             filename = self.logfile
         return KeyLogger(
             filename=filename,
-            only_typeable=not(self.allow_unicode),
+            only_typeable=not (self.allow_unicode),
             round_digits=self.round_digits)
 
     def KeyParser(self) -> KeyParser:
-        if not self.logging:
+        if self.logging is False:
             filename = None
         else:
             filename = self.logfile
-        return KeyParser(filename=filename, exclude_outliers=self.exclude_outliers)
+        return KeyParser(
+            filename=filename,
+            exclude_outliers=self.exclude_outliers)
 
     def KeyGenerator(self) -> KeyGenerator:
         return KeyGenerator(

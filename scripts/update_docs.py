@@ -3,7 +3,6 @@
 
 # Standard library imports
 import ast
-from typing import List, Tuple
 from os import path, listdir, mkdir
 
 # KeyMaster imports
@@ -22,7 +21,7 @@ def create_dir(dir) -> None:
         mkdir(dir)
 
 
-def get_filenames(dir) -> List[str]:
+def get_filenames(dir) -> list[str]:
     """Returns a list of all python files in a directory."""
     filenames = []
     for filename in listdir(dir):
@@ -31,7 +30,7 @@ def get_filenames(dir) -> List[str]:
     return filenames
 
 
-def get_files() -> dict[str, List[str]]:
+def get_files() -> dict[str, list[str]]:
     """Returns a dictionary of folder:list of filenames."""
     files = {}
     files['scripts'] = get_filenames(SCRIPTS_DIR)
@@ -67,7 +66,7 @@ def extract_function_info(source):
     return function_info
 
 
-def write_to_markdown(function_info, filepath) -> Tuple[List[str], int]:
+def write_to_markdown(function_info, filepath) -> tuple[list[str], int]:
     """Writes function information to a markdown file."""
     with open(filepath, 'w') as file:
         file.write('# Function Documentation\n\n')

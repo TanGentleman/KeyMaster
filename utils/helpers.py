@@ -4,17 +4,25 @@ from pynput.keyboard import Key, KeyCode
 
 from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH
 from utils.config import APOSTROPHE, STOP_CODE, SPECIAL_KEYS, BANNED_KEYS, KEYBOARD_CHARS
+
+REPLACE_WONKY_UNICODE = False
+REPLACEMENTS = {
+    '\u2028': '\n',  # replace line separator with newline
+    '\u2029': '\n',  # replace paragraph separator with newline
+    # add more replacements here if needed
+}
 # *** KEY VALIDATION ***
 
 
-def is_key_valid(key: Key | KeyCode | str, strict=False) -> bool:
+def is_key_valid(key: Key | KeyCode | str,
+                 only_typeable: bool = False) -> bool:
     """
     Function to check if the key is valid.
     """
     if isinstance(key, Key):
         return key in SPECIAL_KEYS.values()
     elif isinstance(key, KeyCode):
-        if key.char is None:
+        if key.char is None or len(key.char) != 1:
             return False
         key = key.char
         if key in BANNED_KEYS:
@@ -30,7 +38,6 @@ def is_key_valid(key: Key | KeyCode | str, strict=False) -> bool:
         return True
     # Decode the character
     key_string = unwrap_key(key_string)
-
     # Check the length of the key ensure a single character
     if len(key_string) != 1:
         # Banned key enters this clause as well, still wrapped.
@@ -45,7 +52,7 @@ def is_key_valid(key: Key | KeyCode | str, strict=False) -> bool:
     if key in BANNED_KEYS:
         return False
     # This means that both wrapped and unwrapped chars are valid
-    if strict:
+    if only_typeable:
         return key in KEYBOARD_CHARS
     return key.isprintable()
 
@@ -80,18 +87,13 @@ def unwrap_key(key_string: str) -> str:
     >>> unwrap_key("'√'") [This is the banned key]
     "'√'"
     """
-    char = key_string
+    if len(key_string) == 1:
+        return key_string
     if is_valid_wrapped_char(key_string):
         char = key_string[1]
-    return char
-
-
-REPLACE_WONKY_UNICODE = False
-REPLACEMENTS = {
-    '\u2028': '\n',  # replace line separator with newline
-    '\u2029': '\n',  # replace paragraph separator with newline
-    # add more replacements here if needed
-}
+        return char
+    else:
+        raise ValueError("unwrap_key: Error. Invalid key.")
 
 
 def replace_unicode_chars(input_string: str) -> str:
@@ -105,17 +107,17 @@ def replace_unicode_chars(input_string: str) -> str:
     return input_string
 
 
-def filter_non_typable_chars(input_string: str) -> str:
+def filter_non_typeable_chars(input_string: str) -> str:
     """
-    Filter out non-typable characters from a string.
-    Returns a string with only typable characters.
+    Filter out non-typeable characters from a string.
+    Returns a string with only typeable characters.
     """
     return ''.join(c for c in input_string if c in KEYBOARD_CHARS)
 
 
 def print_non_keyboard_chars(input_string: str) -> None:
     """
-    Print non-typable characters from a string.
+    Print non-typeable characters from a string.
     """
     print(
         f"Non-keyboard character: {c} -> {ord(c)}" for c in input_string if c not in KEYBOARD_CHARS)
@@ -123,12 +125,12 @@ def print_non_keyboard_chars(input_string: str) -> None:
 
 def clean_string(input_string: str) -> str:
     """
-    Returns a string with only typable characters.
+    Returns a string with only typeable characters.
     """
     for c in input_string:
         if c not in KEYBOARD_CHARS:
             print(f"Invalid character: {c} -> {ord(c)}")
-    return filter_non_typable_chars((input_string))
+    return filter_non_typeable_chars((input_string))
 
 
 def clean_filename(filename: str) -> str:
@@ -163,7 +165,7 @@ def get_filepath(filename: str | None) -> str | None:
         filepath = ABSOLUTE_SIM_FILEPATH
     else:
         filepath = path.join(LOG_DIR, clean_filename(filename))
-    
+
     if not path.exists(filepath):
         print(f"Warning: This file does not exist. (Yet?)")
     return filepath
@@ -184,6 +186,7 @@ def is_filepath_valid(filename: str | None) -> bool:
         print("File does not exist.")
         return False
     return True
+
 
 def resolve_filename(filename: str | None) -> str | None:
     """

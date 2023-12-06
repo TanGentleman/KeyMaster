@@ -36,7 +36,7 @@ class KeyLogger:
                 `filename` (`str` or `None`): The filename to save the log to. Use 'REG' or 'SIM' for main logfiles.
         """
         self.filename = filename
-        self.keystrokes = KeystrokeList([])
+        self.keystrokes = KeystrokeList()
         self.word_count = 0
         self.typed_string = ""
         self.prev_time = time()
@@ -50,7 +50,7 @@ class KeyLogger:
         """Client facing.
         Clear the current state of the logger.
         """
-        self.keystrokes = KeystrokeList([])
+        self.keystrokes = KeystrokeList()
         self.word_count = 0
         self.typed_string = ""
         self.prev_time = time()
@@ -101,7 +101,7 @@ class KeyLogger:
         Args:
                 `keypress` (`Key` or `KeyCode`): The key press event to log.
         """
-        if not is_key_valid(keypress):
+        if is_key_valid(keypress) is False:
             print('CRITICAL: Only keys that pass is_key_valid .')
             raise ValueError(
                 "log_valid_keypress: Invalid keypress. This should not happen.")
@@ -162,7 +162,7 @@ class KeyLogger:
         if keypress is None:
             return None
         # Validate keypress
-        if not is_key_valid(keypress):
+        if is_key_valid(keypress) is False:
             return None
         # do a cool function
         self.log_valid_keypress(keypress)
@@ -200,7 +200,7 @@ class KeyLogger:
         Function to start the key listener.
         Listener will stop on conditions in stop_listener_condition or when duration reached.
         """
-        self.reset() # reset the logger
+        self.reset()  # reset the logger
         if duration is None:
             duration = self.duration
         listener = None
@@ -246,9 +246,6 @@ class KeyLogger:
         if input_string is None:
             input_string = self.typed_string
 
-        if not input_string:
-            print("No input string found. Log not legit")
-            return False
         if keystrokes.is_empty():
             print("No keystrokes found. Log not legit")
             return False
@@ -281,7 +278,7 @@ class KeyLogger:
         Returns:
                 bool: True if state successfully replaced. False if arguments invalid.
         """
-        if not self.is_loggable(keystrokes, input_string):
+        if self.is_loggable(keystrokes, input_string) is False:
             print("Invalid log. Internal log not set")
             return False
         self.keystrokes = keystrokes
@@ -295,7 +292,7 @@ class KeyLogger:
         """
         # ensure log is legit
         legit = self.is_loggable()
-        if not legit:
+        if legit is False:
             print("Log not created.")
             return None
 
@@ -324,7 +321,7 @@ class KeyLogger:
         if filepath is None:
             print("Filename null. Log not saved.")
             return False
-        if not self.typed_string:
+        if self.keystrokes.is_empty():
             print("No keystrokes to save.")
             if reset:
                 self.reset()
@@ -340,6 +337,9 @@ class KeyLogger:
         try:
             with open(filepath, 'r+') as f:
                 logs: list[Log] = json_load(f, cls=KeystrokeDecoder)
+                print(f"Type of logs: {type(logs)}")
+                print(f"Type of log: {type(logs[0])}")
+                print(f"Type of log: {type(logs[0]['keystrokes'])}")
                 logs.append(log)
                 f.seek(0)
                 json_dump(logs, f, cls=KeystrokeEncoder)

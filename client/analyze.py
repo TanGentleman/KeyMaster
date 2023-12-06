@@ -15,21 +15,12 @@ class Analyze:
             config = Config()
         self.parser = config.KeyParser()
 
-    def change_logfile(self, logfile: str) -> None:
+    def load_logfile(self, logfile: str) -> None:
         """
         Change logfile and update the logs.
         """
         self.parser.filename = logfile
         self.parser.load_logs()
-
-    def load_logs(self) -> None:
-        """
-        Load the logs from the log file.
-        """
-        logs = self.parser.extract_logs()
-        if not logs:
-            raise ValueError("Logs not present.")
-        self.parser.logs = logs
 
     def check_membership(self, identifier: str) -> bool:
         """
