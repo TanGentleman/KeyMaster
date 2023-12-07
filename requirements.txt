@@ -1,0 +1,2 @@
+pynput==1.7.6
+matplotlib==3.8.2
