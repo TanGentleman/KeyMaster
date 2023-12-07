@@ -24,6 +24,10 @@ class Collect:
     def set_filename(self, filename: str) -> None:
         """
         Set the filename of the collector.
+
+        Parameters
+        ----------
+        filename (`str`): The filename to use for logging.
         """
         self.collector.set_filename(filename)
 
@@ -37,11 +41,31 @@ class Collect:
                          string: str) -> None:
         """
         Replace the internal log with the provided keystrokes and input string.
+
+        Parameters
+        ----------
+        keystrokes (`KeystrokeList`): The keystrokes to use.
+        string (`str`): The string to use.
         """
         self.collector.set_internal_log(keystrokes, string)
 
-    def save_log(self, reset: bool = False) -> None:
+    def get_string(self) -> str:
+        """
+        Get the string from the collector.
+        """
+        return self.collector.typed_string
+
+    def get_keystrokes(self) -> KeystrokeList:
+        """
+        Get the keystrokes from the collector.
+        """
+        return self.collector.keystrokes
+
+    def save_log(self) -> None:
         """
         Save the log to the log file.
         """
-        self.collector.save_log(reset)
+        self.collector.save_log()
+
+    def __repr__(self) -> str:
+        return self.collector.__repr__()

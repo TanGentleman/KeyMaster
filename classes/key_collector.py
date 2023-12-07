@@ -11,7 +11,7 @@ from pynput.keyboard import Key, KeyCode, Listener
 from utils.config import APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
 from utils.config import LISTENER_WORD_LIMIT, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY
 from utils.config import COLLECT_ONLY_TYPEABLE
-from utils.helpers import get_filepath, is_key_valid
+from utils.helpers import get_filepath, is_key_valid, resolve_filename
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 
 
@@ -286,7 +286,7 @@ class KeyLogger:
         self.word_count = input_string.count(' ')
         return True
 
-    def create_log(self, filepath: str) -> Log | None:
+    def create_log(self) -> Log | None:
         """Not client facing.
         Returns a Log object using the internal keystrokes and input string.
         """
@@ -327,7 +327,7 @@ class KeyLogger:
                 self.reset()
             return False
 
-        log = self.create_log(filepath)
+        log = self.create_log()
         if not log:
             print("Log had trouble saving!")
             return False
@@ -336,10 +336,7 @@ class KeyLogger:
         # Append the log object to the file
         try:
             with open(filepath, 'r+') as f:
-                logs: list[Log] = json_load(f, cls=KeystrokeDecoder)
-                print(f"Type of logs: {type(logs)}")
-                print(f"Type of log: {type(logs[0])}")
-                print(f"Type of log: {type(logs[0]['keystrokes'])}")
+                logs: list[Log] = json_load(f)
                 logs.append(log)
                 f.seek(0)
                 json_dump(logs, f, cls=KeystrokeEncoder)
@@ -353,6 +350,13 @@ class KeyLogger:
         if reset:
             self.reset()
         return True
+
+    def __repr__(self) -> str:
+        pretty_string = (
+            f"# Configuration:\nfile={resolve_filename(self.filename)}" +
+            (f"\nTypeable-only mode enabled." if self.only_typeable else "")
+        )
+        return pretty_string
 
 
 if __name__ == "__main__":

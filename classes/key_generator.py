@@ -34,27 +34,26 @@ class KeyGenerator:
 
     def __init__(
             self,
-            disable: bool = DEFAULT_DISABLE_SIMULATION,
-            max_duration: int | float = SIM_MAX_DURATION,
-            max_words: int = SIM_MAX_WORDS,
             speed_multiplier: int | float = SIM_SPEED_MULTIPLE,
+            disable: bool = DEFAULT_DISABLE_SIMULATION,
             allow_newlines: bool = DEFAULT_ALLOW_NEWLINES,
             allow_unicode: bool = DEFAULT_ALLOW_UNICODE,
+            max_duration: int | float = SIM_MAX_DURATION,
+            max_words: int = SIM_MAX_WORDS,
             round_digits: int = ROUND_DIGITS,
             banned_keys: list[str] = BANNED_KEYS) -> None:
         """
         Initialize the KeyGenerator with the given parameters.
         """
-        self.disable = disable  # Client facing
-        self.max_duration = float(max_duration)  # Client facing
-        self.round_digits = round_digits  # Client facing
-        self.max_words = max_words  # Client facing
-        self.speed_multiplier = float(speed_multiplier)  # Client facing
-
+        self.speed_multiplier = float(speed_multiplier)
+        self.disable = disable
         self.allow_newlines = allow_newlines
         self.allow_unicode = allow_unicode
+        self.max_duration = float(max_duration)
+        self.max_words = max_words
+        self.round_digits = round_digits
+        self.banned_keys = banned_keys
         self.simulation_timer: Timer | None = None
-        self.stop = False
         self.whitespace_dict = {
             ' ': str(Key.space),
             '\t': str(Key.tab),
@@ -62,7 +61,7 @@ class KeyGenerator:
         }
         if self.allow_newlines is False:
             self.whitespace_dict.pop('\n')
-        self.banned_keys = banned_keys
+        self.stop = False
 
     def set_speed(self, speed: int | float) -> None:
         """Client facing.
@@ -207,11 +206,11 @@ class KeyGenerator:
         """Not client facing.
         Stop the simulation.
         """
+        if self.simulation_timer:
+            self.simulation_timer.cancel()
         if self.stop:
             return
         self.stop = True
-        if self.simulation_timer:
-            self.simulation_timer.cancel()
 
     def simulate_keystrokes(self, keystrokes: KeystrokeList) -> None:
         """Client facing.
@@ -231,9 +230,7 @@ class KeyGenerator:
         self.stop = False
         # Initialize the keyboard controller
         keyboard = Controller()
-        self.simulation_timer = Timer(
-            self.max_duration,
-            lambda: self.stop_simulation())
+        self.simulation_timer = Timer(self.max_duration, self.stop_simulation)
         self.simulation_timer.start()
         for keystroke in keystrokes:
             if self.stop:
@@ -270,21 +267,27 @@ class KeyGenerator:
                     # Wait for the time difference between keystrokes
                     sleep(delay)
                 if key in SPECIAL_KEYS:
+                    # Ignore shift and caps lock
+                    if key == 'Key.shift' or key == 'Key.caps_lock':
+                        continue
                     keyboard.tap(SPECIAL_KEYS[key])
                 else:
                     # Decode the character
                     char = keystroke.unicode_char
                     if char is None:
-                        raise ValueError(
-                            "Unicode char is None, should this clause be skipped?")
+                        if key != STOP_KEY:
+                            print(f"Unicode value is None, key: {key}")
+                            print(f"Pre-emptively stopping simulation.")
+                            break
+                        char = STOP_KEY
                     # Don't simulate banned keys
                     if char in self.banned_keys:
                         continue
                     try:
-                        keyboard.tap(key)
+                        keyboard.tap(char)
                     except Exception as e:
                         logging.error(
-                            f"ERROR! Decoded key was not a character: {key}")
+                            f"ERROR! Decoded key was not a character: {char}")
                         continue
 
                 if key == STOP_KEY:
@@ -306,5 +309,9 @@ class KeyGenerator:
         if keystrokes.is_empty():
             logging.error("Given input was not simulated.")
             return None
-        self.simulate_keystrokes(keystrokes)
+        try:
+            self.simulate_keystrokes(keystrokes)
+        except KeyboardInterrupt:
+            self.stop_simulation()
+            print("Simulation stopped.")
         return keystrokes

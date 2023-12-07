@@ -2,8 +2,7 @@
 
 # Standard library imports
 from json import JSONDecoder, JSONEncoder
-import json
-from typing import Iterator, TypedDict, Any
+from typing import Iterator, TypedDict, Any, Union
 
 # Third party imports
 from pynput.keyboard import Key
@@ -11,20 +10,6 @@ from pynput.keyboard import Key
 # KeyMaster imports
 from utils.config import APOSTROPHE, MAX_KEY_LENGTH, SPECIAL_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
 from utils.helpers import is_valid_wrapped_char, is_valid_wrapped_special_key, unwrap_key, is_key_valid
-
-
-class UnicodeKey:
-    """
-    A class used to represent a unicode key. Chars have no quote wrapping.
-    >>> UnicodeKey('a', False)
-    key=a
-    >>> UnicodeKey("'√'", 0.2222)
-    """
-    pass
-
-
-class SpecialKey:
-    pass
 
 
 class LegalKey:
@@ -186,7 +171,7 @@ class KeystrokeList:
         return self.length
 
     def __repr__(self) -> str:
-        return "As string: " + self.to_string()
+        return f"(KeystrokeList={self.to_string()})"
 
     def __eq__(self, other) -> bool:
         if isinstance(other, KeystrokeList):
@@ -273,40 +258,6 @@ class KeystrokeList:
         return False
 
 
-class KeystrokeDecoder(JSONDecoder):
-    """
-    A JSONDecoder that decodes a list of dictionaries and replaces the "keystrokes" field
-    with KeystrokeList objects.
-    """
-
-    def object_hook(self, dct: dict) -> dict:
-        """
-        Convert each keystroke into a Keystroke object and instantiate a KeystrokeList.
-        """
-        if 'keystrokes' in dct:
-            keystrokes = dct['keystrokes']
-            dct['keystrokes'] = KeystrokeList(
-                [Keystroke(*k) for k in keystrokes])
-        return dct
-
-
-class KeystrokeEncoder(JSONEncoder):
-    """
-    A JSONEncoder that encodes Keystrokes [Keystrokes->(key, time) and Log->Logfile)]
-    """
-
-    def default(self, obj):
-        if isinstance(obj, Keystroke):
-            return [obj.key, obj.time]
-        elif isinstance(obj, KeystrokeList):
-            return [[keystroke.key, keystroke.time] for keystroke in obj]
-        elif isinstance(obj, dict) and 'id' in obj and 'string' in obj and 'keystrokes' in obj:
-            # Directly encode the KeystrokeList within the dictionary
-            return {'id': obj['id'], 'string': obj['string'], 'keystrokes': [
-                [keystroke.key, keystroke.time] for keystroke in obj['keystrokes']]}
-        return super().default(obj)
-
-
 class Log(TypedDict):
     """
     A class used to represent a log. The logfile is a list of logs.
@@ -321,28 +272,54 @@ class Log(TypedDict):
     # } ]
 
 
-def is_id_in_log(identifier: str, log: Log) -> bool:
-    """Client facing.
-    Check if a log with the identifier exists in the loaded logs.
+class KeystrokeDecoder(JSONDecoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(object_hook=self.object_hook, *args, **kwargs)
 
-    Args:
-        `identifier` (`str`): The UUID or exact string formatted as STOP_KEY + string
-        `log` (`Log`): The log to check.
+    def object_hook(self, obj: dict) -> Union[dict, Any]:
+        # Check if the object is a log entry
+        if 'id' in obj and 'string' in obj and 'keystrokes' in obj:
+            # Validate the log entry
+            if not isinstance(obj['id'], str):
+                raise ValueError("Invalid ID type; expected a string.")
+            if not isinstance(obj['keystrokes'], list):
+                raise ValueError("Invalid keystrokes type; expected a list.")
+            # Decode the keystrokes
+            obj['keystrokes'] = KeystrokeList(
+                [self.decode_keystroke(ks) for ks in obj['keystrokes']])
+        return obj
 
-    Returns:
-        `bool`: True if a log with the given UUID or exact string exists, False otherwise.
-    """
-    if not identifier:
-        print("No identifier provided.")
-        return False
-    if not log:
-        print("No log provided.")
-        return False
-    if log['id'] == identifier:
-        return True
-    if identifier[-1] == STOP_KEY:
-        if log['string'] == identifier[1:]:
-            return True
-        else:
-            print('Exact string not found.')
-    return False
+    def decode_keystroke(self, obj: list) -> Keystroke:
+        if isinstance(
+            obj,
+            list) and len(obj) == 2 and isinstance(
+            obj[0],
+            str) and (
+            obj[1] is None or isinstance(
+                obj[1],
+                float)):
+            return Keystroke(obj[0], obj[1])
+        raise ValueError("Invalid Keystroke format.")
+
+
+class KeystrokeEncoder(JSONEncoder):
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, Keystroke):
+            return [obj.key, obj.time]
+        elif isinstance(obj, KeystrokeList):
+            return [[keystroke.key, keystroke.time]
+                    for keystroke in obj.keystrokes]
+        # Check for Log
+        elif isinstance(obj, dict) and 'id' in obj and 'string' in obj and 'keystrokes' in obj:
+            # Directly encode the KeystrokeList within the dictionary
+            return {
+                'id': obj['id'],
+                'string': obj['string'],
+                # Reuse the KeystrokeList encoding
+                'keystrokes': self.default(obj['keystrokes'])
+            }
+        # Check for list[Log]
+        elif isinstance(obj, list):
+            return [self.default(log) for log in obj]
+        raise TypeError(
+            f"Object of type {type(obj)} is not JSON serializable.")

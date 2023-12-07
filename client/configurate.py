@@ -1,16 +1,29 @@
 from classes.key_collector import KeyLogger
 from classes.key_analyzer import KeyParser
 from classes.key_generator import KeyGenerator
-from utils.config import DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, SIM_SPEED_MULTIPLE, DEFAULT_EXCLUDE_OUTLIERS
+from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_EXCLUDE_OUTLIERS, SIM_SPEED_MULTIPLE
 from utils.config import BANNED_KEYS, ROUND_DIGITS, SIM_MAX_DURATION
-from scripts.simulate import simulate_from_string, clipboard_main, listen_main
 from utils.helpers import resolve_filename
 
 
 class Config:
     """
-    The Config class is a wrapper for all the configuration options.
-    It is used to pass the configuration options to the other classes.
+    The Config class is a wrapper for configuration settings.
+
+    Use this object to pass configuration options to the other classes.
+
+    Attributes
+    ----------
+    disable (`bool`): Whether to disable the simulation.
+    logging (`bool`): Whether to enable logging.
+    allow_newlines (`bool`): Whether to allow newlines in the simulation.
+    allow_unicode (`bool`): Whether to allow unicode in the simulation.
+    logfile (`bool`): The logfile to use for logging.
+    banned_keys (`str`): The list of banned keys.
+    round_digits (`int`): The number of digits to round to.
+    max_simulation_time (`int | float`): The maximum time to simulate.
+    simulation_speed_multiple (`int`): The speed multiple to simulate at.
+    exclude_outliers_in_analysis (`bool`): Whether to exclude outliers in analysis.
     """
 
     def __init__(
@@ -27,7 +40,7 @@ class Config:
             simulation_speed_multiple: int | float = SIM_SPEED_MULTIPLE,
             exclude_outliers_in_analysis: bool = DEFAULT_EXCLUDE_OUTLIERS) -> None:
         """
-        Initialize the Config class.
+        Initialize the Config class. All arguments are optional and have defaults in config.py
         """
         self.disable = disable_simulation
         self.logging = logging
@@ -42,30 +55,7 @@ class Config:
         self.max_simulation_time = float(max_simulation_time)
         self.simulation_speed_multiple = float(simulation_speed_multiple)
         self.exclude_outliers = exclude_outliers_in_analysis
-        print(self)
-
-    # Below scripts may be pulled from Script class in the future.
-    def listen_script(self) -> None:
-        listen_main(
-            disable=self.disable,
-            logging=self.logging,
-            allow_newlines=self.allow_newlines,
-            allow_unicode=self.allow_unicode)
-
-    def clipboard_script(self) -> None:
-        clipboard_main(
-            disable=self.disable,
-            logging=self.logging,
-            allow_newlines=self.allow_newlines,
-            allow_unicode=self.allow_unicode)
-
-    def string_script(self, input_string: str) -> None:
-        simulate_from_string(
-            input_string=input_string,
-            disable=self.disable,
-            logging=self.logging,
-            allow_newlines=self.allow_newlines,
-            allow_unicode=self.allow_unicode)
+        # print(self)
 
     def set(
             self,
@@ -104,11 +94,17 @@ class Config:
             self.exclude_outliers = exclude_outliers_in_analysis
 
     def ban_key(self, key: str) -> None:
+        """
+        Ban a key (tied to BANNED_KEYS used for validation)
+        """
         if len(key) != 1:
             raise ValueError("ban_key: Error. Char length must be 1.")
         self.banned_keys.append(key)
 
     def unban_key(self, key: str) -> None:
+        """
+        Unban a key
+        """
         if len(key) != 1:
             raise ValueError("unban_key: Error. Char length must be 1.")
         # remove key from banned_keys if it exists
@@ -116,6 +112,9 @@ class Config:
             self.banned_keys.remove(key)
 
     def KeyLogger(self) -> KeyLogger:
+        """
+        Return a KeyLogger object with the current configuration.
+        """
         if self.logging is False:
             filename = None
         else:
@@ -126,6 +125,9 @@ class Config:
             round_digits=self.round_digits)
 
     def KeyParser(self) -> KeyParser:
+        """
+        Return a KeyParser object with the current configuration.
+        """
         if self.logging is False:
             filename = None
         else:
@@ -135,6 +137,9 @@ class Config:
             exclude_outliers=self.exclude_outliers)
 
     def KeyGenerator(self) -> KeyGenerator:
+        """
+        Return a KeyGenerator object with the current configuration.
+        """
         return KeyGenerator(
             disable=self.disable,
             max_duration=self.max_simulation_time,
@@ -144,11 +149,28 @@ class Config:
             banned_keys=list(self.banned_keys))
 
     def __repr__(self) -> str:
-        pretty_string = (
-            f"# Configuration:\ndisable={self.disable},\nlogging={self.logging},\nallow_newlines={self.allow_newlines},\n" +
-            f"allow_unicode={self.allow_unicode},\nlogfile={resolve_filename(self.logfile)},\nbanned_keys={self.banned_keys},\n" +
-            f"round_digits={self.round_digits}\n#")
-        return pretty_string
+        changed_values = []  # List to store the changed values
 
-    def __str__(self) -> str:
-        return self.__repr__()
+        # Compare each attribute with the default configuration and add the
+        # changed values to the list
+        if self.disable != DEFAULT_DISABLE_SIMULATION:
+            changed_values.append(f"disable={self.disable}")
+        if self.logging != DEFAULT_LOGGING:
+            changed_values.append(f"logging={self.logging}")
+        if self.allow_newlines != DEFAULT_ALLOW_NEWLINES:
+            changed_values.append(f"allow_newlines={self.allow_newlines}")
+        if self.allow_unicode != DEFAULT_ALLOW_UNICODE:
+            changed_values.append(f"allow_unicode={self.allow_unicode}")
+        if self.logfile != "REG":
+            changed_values.append(f"logfile={resolve_filename(self.logfile)}")
+        if self.banned_keys != BANNED_KEYS:
+            changed_values.append(f"banned_keys={self.banned_keys}")
+        if self.round_digits != ROUND_DIGITS:
+            changed_values.append(f"round_digits={self.round_digits}")
+
+        if not changed_values:
+            return f"Configuration=default\nLogfile:{resolve_filename(self.logfile)}"
+        # Create the pretty string representation with the changed values
+        pretty_string = f"# Configuration:\n" + \
+            '\n'.join(changed_values) + '\n#'
+        return pretty_string

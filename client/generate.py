@@ -18,6 +18,10 @@ class Generate:
     def set_speed(self, speed: int | float) -> None:
         """
         Set the speed of the generator.
+
+        Parameters
+        ----------
+        speed (`int` | `float`): The speed to set.
         """
         self.generator.set_speed(speed)
 
@@ -36,12 +40,28 @@ class Generate:
     def generate_keystrokes_from_string(self, string: str) -> KeystrokeList:
         """
         Generate keystrokes from a string.
+
+        Parameters
+        ----------
+        string (`str`): The string to generate keystrokes from.
+
+        Returns
+        -------
+        `KeystrokeList`: The generated keystrokes.
         """
         return self.generator.generate_keystrokes_from_string(string)
 
     def generate_keystroke(self, char: str) -> Keystroke:
         """
         Generate keystrokes from a character.
+
+        Parameters
+        ----------
+        char (`str`): The character to generate keystrokes from.
+
+        Returns
+        -------
+        `Keystroke`: The generated keystroke.
         """
         if not isinstance(char, str) or len(char) != 1:
             raise ValueError("Character must be a single character string.")
@@ -52,15 +72,26 @@ class Generate:
 
     def simulate_keystrokes(self, keystrokes: KeystrokeList) -> None:
         """
-        Simulate the keystroke list
+        Simulate the given keystrokes.
+
+        Parameters
+        ----------
+        keystrokes (`KeystrokeList`): The keystrokes to simulate.
         """
         self.generator.simulate_keystrokes(keystrokes)
 
     def simulate_string(self, string: str) -> KeystrokeList:
         """
         Simulate a string and return the KeystrokeList.
+
+        Parameters
+        ----------
+        string (`str`): The string to simulate.
         """
         keystrokes = self.generate_keystrokes_from_string(string)
         if not keystrokes.is_empty():
             self.simulate_keystrokes(keystrokes)
         return keystrokes
+
+    def __repr__(self) -> str:
+        return self.generator.__repr__()

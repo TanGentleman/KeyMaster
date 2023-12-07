@@ -49,6 +49,22 @@ def create_directories() -> None:
     create_dir(path.join(DOCS_DIR, "client"))
 
 
+def extract_class_info(source):
+    """
+    Extracts class name and docstring for each class in the source code.
+    """
+    tree = ast.parse(source)
+    class_info = []
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            class_name = node.name
+            docstring = ast.get_docstring(node, clean=True)
+            class_info.append((class_name, docstring))
+
+    return class_info
+
+
 def extract_function_info(source):
     """
     Extracts function name, parameters, and docstring for each function in the source code.
@@ -59,84 +75,42 @@ def extract_function_info(source):
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
             func_name = node.name
-            params = [arg.arg for arg in node.args.args]
+            # params = [arg.arg for arg in node.args.args]
             docstring = ast.get_docstring(node, clean=True)
-            function_info.append((func_name, params, docstring))
+            # function_info.append((func_name, params, docstring))
+            function_info.append((func_name, docstring))
 
     return function_info
 
 
-def write_to_markdown(function_info, filepath) -> tuple[list[str], int]:
+def write_to_markdown(class_info, function_info, filepath):
     """Writes function information to a markdown file."""
+    errors = []
+    error_count = 0
     with open(filepath, 'w') as file:
+        if len(class_info) != 0:
+            file.write('# Class Documentation\n\n')
+            for info in class_info:
+                class_name = info[0]
+                file.write(f'## Class: `{class_name}`\n')
+                if info[1] is None:
+                    continue
+                file.write(info[1] + '\n\n')
+        if len(function_info) == 0:
+            return
         file.write('# Function Documentation\n\n')
-
         def wrap_in_grave(x): return "`" + x + "`"
-        errors = []
-        error_count = 0
-        ERROR_BASE = 'ERROR: FIX DOCSTRING. '
 
+        ERROR_BASE = 'ERROR: FIX DOCSTRING. '
         for info in function_info:
-            function_name = wrap_in_grave(
-                "init" if "__init__" in info[0] else info[0])
-            file.write(f'## Function: {function_name}\n')
-            if info[2] is None:
+            function_name = info[0]
+            if function_name[:2] == '__' and function_name[-2:] == '__':
                 continue
-            content_chunks: list[str] = info[2].split('\n\n')
-            # check if one liner
-            chunk_count = len(content_chunks)
-            if chunk_count == 1:
-                file.write(info[2] + '\n')
+            function_name = wrap_in_grave(function_name)
+            file.write(f'## Method: {function_name}\n')
+            if info[1] is None:
                 continue
-            if chunk_count > 3:
-                error_message = f'Chunk count {chunk_count} > 3'
-                file.write(ERROR_BASE + error_message + '\n')
-                errors.append(error_message)
-                error_count += 1
-                continue
-            # write docstring
-            for i in range(len(content_chunks)):
-                if i == 0:
-                    info_string = content_chunks[i].strip()
-                    file.write(info_string + '\n')
-                elif i == 1:
-                    if 'Args:' not in content_chunks[i]:
-                        if 'Returns:' in content_chunks[i]:
-                            # Write without the returns
-                            return_block = content_chunks[i].split('\n')
-                            file.write(f'### Returns\n')
-                            for line in return_block:
-                                line = line.strip()
-                                if line == "Returns:":
-                                    continue
-                                file.write(line + '\n')
-                        continue
-                    file.write(f'### Parameters:\n')
-                    args_block = content_chunks[i].split('\n')
-                    for arg in args_block:
-                        arg = arg.strip()
-                        if arg == "Args:":
-                            continue
-                        file.write(f'- {arg}\n')
-                elif i == 2:
-                    if 'Args:' in content_chunks[i]:
-                        error_message = 'Args should be chunk 2, not 3'
-                        file.write(ERROR_BASE + error_message + '\n')
-                        errors.append(error_message)
-                        error_count += 1
-                        continue
-                    if 'Returns:' not in content_chunks[i]:
-                        continue
-                    return_block = content_chunks[i].split('\n')
-                    file.write(f'### Returns\n')
-                    for line in return_block:
-                        line = line.strip()
-                        if line == "Returns:":
-                            continue
-                        file.write(line + '\n')
-    if len(errors) != error_count:
-        print("Error count does not match error list length!")
-    return errors, error_count
+            file.write(info[1] + '\n\n')
 
 
 def main():
@@ -147,10 +121,13 @@ def main():
     files = get_files()
     for folder in files:
         if folder == 'utils':
+            continue
             source_folder = UTILS_DIR
         elif folder == 'classes':
+            continue
             source_folder = CLASSES_DIR
         elif folder == 'scripts':
+            continue
             source_folder = SCRIPTS_DIR
         elif folder == 'client':
             source_folder = CLIENT_DIR
@@ -161,21 +138,14 @@ def main():
             if filename == '__init__.py':
                 continue
             source_filepath = path.join(source_folder, filename)
-            print(f'Documenting {filename}...')
             with open(source_filepath, 'r') as f:
                 source = f.read()
+            class_info = extract_class_info(source)
             function_info = extract_function_info(source)
             new_filename = f'docs_{filename[:-3]}.md'
             new_filepath = path.join(DOCS_DIR, folder, new_filename)
-            errors, error_count = write_to_markdown(
-                function_info, new_filepath)
-            if error_count == 0:
-                print(f'File {filename} is now well documented.')
-            else:
-                count = 0
-                for error in errors:
-                    count += 1
-                    print(f'{count}. {error}')
+            write_to_markdown(class_info, function_info, new_filepath)
+            print(f'{filename} ☑')
 
 
 if __name__ == "__main__":

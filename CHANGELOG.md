@@ -2,26 +2,37 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-See GitHub [Issues](https://github.com/tangentleman/KeyMaster/issues) for up-to date planned features and bugs
+See GitHub [Issues](https://github.com/tangentleman/KeyMaster/issues) for features in the works, as well as potential bugs or questions.
 
-## [In Progress Goals]
-- Simple, intuitively pythonic handling from an unwrapped key, to Keystroke, KeystrokeList, Log, and the classes themselves
-- Jupyter notebook examples for all classes and their methods
-- Formalize client facing interface functions and documentation
-- Fully migrate from print statements to the logging module
-- Utilize public datasets to make custom algorithm choices for generating keystroke delays
-
-## [1.1.3] - 2023-November-2
+## [1.1.3] - 2023-Early December
+- 100 commits on the repository!
+- KeyMaster 3.0 is live, with a new architecture and a focus on client facing code
 
 ### Added
-- Patched a bunch of annoyances and creatively tackled many problems, check out the issues page!
-- Added user friendly cli.py to run the program from the command line with various flags
-    - These run various simple scripts defined in simulate.py
+
+- Custom JSON encoder and decoder (this was a frustrating puzzle piece)
+- Robust test cases for reading/writing to logfiles
+- Greatly improved validation and error handling for backend
+- New testing framework for client facing code
+- Add client classes `Config`, `Collect`, `Analyze`, and `Generate`
+- Adjust `cli.py` to use client functions and run the program from the command line, still accepting various flags
+- Handled edge cases, squashed numerous bugs, and closed many issues
+
+## [In Progress]
+- Fully migrate from print statements to the logging module
+- Jupyter notebook walkthroughs and workflows for client facing classes
+- Utilize public datasets to make custom algorithm choices for generating keystroke delays
+
+## [1.1.3] - 2023-Late November
+
+### Added
+- Implement client-facing code with files found in the `client/` folder
+- Add client files `configuration.py`, `collect.py`, `analyze.py`, and `generate.py` 
+- Add `cli.py` to run scripts as defined in `simulate.py` from the command line
 - Nailed handling obscure unicode and edge cases across various stages and functions
 - Released initial test cases for cross-compatibility
-- Create (getting there) consistent documentation format
-    - Function info is now auto-generated for the classes using scripts/update_docs.py
-- Strengthen validation of keystrokes and add `KeystrokeList` that will eventually replace `list[Keystroke]`
+- Auto-generate documentation for the classes using `update_docs.py`
+- `KeystrokeList` replacement for `List[Keystroke]` with new methods for client facing interface
 
 ## [1.1.2] - 2023-November
 
@@ -55,10 +66,4 @@ See GitHub [Issues](https://github.com/tangentleman/KeyMaster/issues) for up-to 
 - Simulation disabling works consistently
 - Move KeyLogger.simulate to KeyGenerator
 
-### Changed
-
-- Things I've changed...
-
-### Removed
-
-- Things I've removed...
+[Active Issues](https://github.com/tangentleman/KeyMaster/issues)
