@@ -17,17 +17,21 @@ from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, Ke
 
 class KeyLogger:
     """
-    A class used to log keystrokes and calculate delays between each keypress.
-    This class is responsible for capturing and storing keystrokes values and timings.
-    It also keeps track of the total number of words typed and the entire string of characters typed.
-    """
+    A class used manage the listener and to accurately log keystroke data.
 
+    Attributes:
+    ----------
+    - filename (`str`): The filename of the log file.
+    - only_typeable (`bool`): Whether to only log typeable characters.
+    - round_digits (`int`): The number of digits to round to.
+    - duration (`int | float`): The duration to listen for.
+    """
     def __init__(
             self,
             filename: str | None = "REG",
             only_typeable: bool = COLLECT_ONLY_TYPEABLE,
             round_digits: int = ROUND_DIGITS,
-            listen_duration: int | float = DEFAULT_LISTENER_DURATION) -> None:
+            duration: int | float = DEFAULT_LISTENER_DURATION) -> None:
         """
         Initialize the KeyLogger. If filename is None, the logger will not save to a file.
         Defaults to keystrokes.json in the logs directory.
@@ -44,7 +48,7 @@ class KeyLogger:
 
         self.only_typeable = only_typeable
         self.round_digits = round_digits
-        self.duration = listen_duration
+        self.duration = duration
 
     def reset(self) -> None:
         """Client facing.

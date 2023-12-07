@@ -24,9 +24,9 @@ class KeyParser:
 
     Attributes:
     ----------
-    filename (`str`): The filename of the log file.
-    exclude_outliers (`bool`): A flag indicating whether to exclude outliers.
-    logs (`list`): A list of Log objects.
+    - filename (`str`): The filename of the log file.
+    - exclude_outliers (`bool`): A flag indicating whether to exclude outliers.
+    - logs (`list`): A list of Log objects.
     """
 
     def __init__(self, filename: str | None = 'REG',
