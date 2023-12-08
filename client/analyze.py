@@ -21,7 +21,7 @@ class Analyze:
 
         Parameters
         ----------
-        logfile (`str`): The logfile to use for logging.
+        - logfile (`str`): The logfile to use for logging.
         """
         self.parser.filename = logfile
         self.parser.load_logs()
@@ -32,7 +32,7 @@ class Analyze:
 
         Parameters
         ----------
-        identifier (`str`): The identifier to check.
+        - identifier (`str`): The identifier to check.
         """
         return self.parser.is_id_present(identifier)
 
@@ -42,7 +42,7 @@ class Analyze:
 
         Parameters
         ----------
-        index (`int`): The index to check.
+        - index (`int`): The index to check.
         """
         length = len(self.parser)
         if index > length:
@@ -60,7 +60,7 @@ class Analyze:
 
         Parameters
         ----------
-        substring (`str`): The substring to check.
+        - substring (`str`): The substring to check.
         """
         id = self.parser.id_from_substring(substring)
         if id is None:
@@ -73,7 +73,7 @@ class Analyze:
 
         Parameters
         ----------
-        identifier (`str`, optional): The identifier to check.
+        - identifier (`str`, optional): The identifier to check.
         """
         return self.parser.get_strings(identifier)
 
@@ -84,9 +84,9 @@ class Analyze:
 
         Parameters
         ----------
-        max (`int`, optional): The maximum number of strings to print.
-        truncate (`int`, optional): The maximum number of characters to print.
-        identifier (`str`, optional): The identifier to check.
+        - max (`int`, optional): The maximum number of strings to print.
+        - truncate (`int`, optional): The maximum number of characters to print.
+        - identifier (`str`, optional): The identifier to check.
         """
         self.parser.print_strings(max, truncate, identifier)
 
@@ -100,8 +100,8 @@ class Analyze:
 
         Parameters
         ----------
-        identifier (`str`, optional): The identifier to check.
-        exclude_outliers (`bool`, optional): Whether to exclude outliers.
+        - identifier (`str`, optional): The identifier to check.
+        - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
         wpm = self.parser.wpm(identifier, exclude_outliers)
         if wpm is None:
@@ -117,8 +117,8 @@ class Analyze:
 
         Parameters
         ----------
-        identifier (`str`, optional): The identifier to check.
-        exclude_outliers (`bool`, optional): Whether to exclude outliers.
+        - identifier (`str`, optional): The identifier to check.
+        - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
         return self.parser.get_highest_keystroke_times(
             identifier, exclude_outliers)
@@ -132,8 +132,8 @@ class Analyze:
 
         Parameters
         ----------
-        identifier (`str`, optional): The identifier to check.
-        exclude_outliers (`bool`, optional): Whether to exclude outliers.
+        - identifier (`str`, optional): The identifier to check.
+        - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
         avg_delay = self.parser.get_average_delay(
             keystrokes, exclude_outliers, id)
@@ -150,8 +150,8 @@ class Analyze:
 
         Parameters
         ----------
-        identifier (`str`, optional): The identifier to check.
-        exclude_outliers (`bool`, optional): Whether to exclude outliers.
+        - identifier (`str`, optional): The identifier to check.
+        - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
         std_dev = self.parser.get_std_deviation(
             keystrokes, exclude_outliers, id)
@@ -170,9 +170,9 @@ class Analyze:
 
         Parameters
         ----------
-        identifier (`str`, optional): The identifier to check.
-        keystrokes (`KeystrokeList`, optional): The keystrokes to plot.
-        exclude_outliers (`bool`, optional): Whether to exclude outliers.
+        - identifier (`str`, optional): The identifier to check.
+        - keystrokes (`KeystrokeList`, optional): The keystrokes to plot.
+        - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
         self.parser.visualize(
             mode,
@@ -187,7 +187,7 @@ class Analyze:
 
         Parameters
         ----------
-        identifier (`str`, optional): The identifier to check.
+        - identifier (`str`, optional): The identifier to check.
         """
         return self.parser.get_keystrokes(identifier)
 

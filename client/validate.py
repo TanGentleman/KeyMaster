@@ -7,9 +7,9 @@ class Key:
 
     Attributes
     ----------
-    key (`str`): The key.
-    time (`float` | `None`): The time of the keystroke.
-    keystroke (`Keystroke`): The Keystroke object.
+    - key (`str`): The key.
+    - time (`float` | `None`): The time of the keystroke.
+    - keystroke (`Keystroke`): The Keystroke object.
     """
 
     def __init__(self, key: str, time: float | None):
@@ -24,7 +24,7 @@ class Keys:
 
     Attributes
     ----------
-    keys (`KeystrokeList`): The KeystrokeList object.
+    - keys (`KeystrokeList`): The KeystrokeList object.
 
     Methods
     -------
@@ -32,8 +32,16 @@ class Keys:
     to_string(): Returns the string representation of the list of keystrokes.
     """
 
-    def __init__(self, keys: list[Key]):
-        self.keys = KeystrokeList([key.keystroke for key in keys])
+    def __init__(self, keys: list[Key] | KeystrokeList):
+        if isinstance(keys, KeystrokeList):
+            self.keys = keys
+        elif isinstance(keys, list):
+            try:
+                self.keys = KeystrokeList([key.keystroke for key in keys])
+            except Exception as e:
+                raise TypeError("Invalid KeystrokeList.")
+        else:
+            raise TypeError("Invalid type for Keys.")
 
     def is_empty(self) -> bool:
         return self.keys.is_empty()

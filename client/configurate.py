@@ -14,16 +14,16 @@ class Config:
 
     Attributes
     ----------
-    disable (`bool`): Whether to disable the simulation.
-    logging (`bool`): Whether to enable logging.
-    allow_newlines (`bool`): Whether to allow newlines in the simulation.
-    allow_unicode (`bool`): Whether to allow unicode in the simulation.
-    logfile (`bool`): The logfile to use for logging.
-    banned_keys (`str`): The list of banned keys.
-    round_digits (`int`): The number of digits to round to.
-    max_simulation_time (`int | float`): The maximum time to simulate.
-    simulation_speed_multiple (`int`): The speed multiple to simulate at.
-    exclude_outliers_in_analysis (`bool`): Whether to exclude outliers in analysis.
+    - disable (`bool`): Whether to disable the simulation.
+    - logging (`bool`): Whether to enable logging.
+    - allow_newlines (`bool`): Whether to allow newlines in the simulation.
+    - allow_unicode (`bool`): Whether to allow unicode in the simulation.
+    - logfile (`bool`): The logfile to use for logging.
+    - banned_keys (`str`): The list of banned keys.
+    - round_digits (`int`): The number of digits to round to.
+    - max_simulation_time (`int | float`): The maximum time to simulate.
+    - simulation_speed_multiple (`int`): The speed multiple to simulate at.
+    - exclude_outliers_in_analysis (`bool`): Whether to exclude outliers in analysis.
     """
 
     def __init__(

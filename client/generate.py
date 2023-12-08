@@ -21,7 +21,7 @@ class Generate:
 
         Parameters
         ----------
-        speed (`int` | `float`): The speed to set.
+        - speed (`int` | `float`): The speed to set.
         """
         self.generator.set_speed(speed)
 
@@ -43,7 +43,7 @@ class Generate:
 
         Parameters
         ----------
-        string (`str`): The string to generate keystrokes from.
+        - string (`str`): The string to generate keystrokes from.
 
         Returns
         -------
@@ -57,7 +57,7 @@ class Generate:
 
         Parameters
         ----------
-        char (`str`): The character to generate keystrokes from.
+        - char (`str`): The character to generate keystrokes from.
 
         Returns
         -------
@@ -76,7 +76,7 @@ class Generate:
 
         Parameters
         ----------
-        keystrokes (`KeystrokeList`): The keystrokes to simulate.
+        - keystrokes (`KeystrokeList`): The keystrokes to simulate.
         """
         self.generator.simulate_keystrokes(keystrokes)
 
@@ -86,7 +86,7 @@ class Generate:
 
         Parameters
         ----------
-        string (`str`): The string to simulate.
+        - string (`str`): The string to simulate.
         """
         keystrokes = self.keystrokes_from_string(string)
         if not keystrokes.is_empty():

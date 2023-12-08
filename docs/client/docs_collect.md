@@ -13,7 +13,7 @@ Set the filename of the collector.
 
 Parameters
 ----------
-filename (`str`): The filename to use for logging.
+- filename (`str`): The filename to use for logging.
 
 ## Method: `start_listener`
 Start the listener.
@@ -23,8 +23,8 @@ Replace the internal log with the provided keystrokes and input string.
 
 Parameters
 ----------
-keystrokes (`KeystrokeList`): The keystrokes to use.
-string (`str`): The string to use.
+- keystrokes (`KeystrokeList`): The keystrokes to use.
+- string (`str`): The string to use.
 
 ## Method: `get_string`
 Get the string from the collector.

@@ -10,7 +10,7 @@ Set the speed of the generator.
 
 Parameters
 ----------
-speed (`int` | `float`): The speed to set.
+- speed (`int` | `float`): The speed to set.
 
 ## Method: `disable`
 Disable the generator.
@@ -18,12 +18,12 @@ Disable the generator.
 ## Method: `enable`
 Enable the generator.
 
-## Method: `generate_keystrokes_from_string`
+## Method: `keystrokes_from_string`
 Generate keystrokes from a string.
 
 Parameters
 ----------
-string (`str`): The string to generate keystrokes from.
+- string (`str`): The string to generate keystrokes from.
 
 Returns
 -------
@@ -34,7 +34,7 @@ Generate keystrokes from a character.
 
 Parameters
 ----------
-char (`str`): The character to generate keystrokes from.
+- char (`str`): The character to generate keystrokes from.
 
 Returns
 -------
@@ -45,12 +45,12 @@ Simulate the given keystrokes.
 
 Parameters
 ----------
-keystrokes (`KeystrokeList`): The keystrokes to simulate.
+- keystrokes (`KeystrokeList`): The keystrokes to simulate.
 
 ## Method: `simulate_string`
 Simulate a string and return the KeystrokeList.
 
 Parameters
 ----------
-string (`str`): The string to simulate.
+- string (`str`): The string to simulate.
 

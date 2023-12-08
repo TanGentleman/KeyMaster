@@ -27,7 +27,7 @@ class Collect:
 
         Parameters
         ----------
-        filename (`str`): The filename to use for logging.
+        - filename (`str`): The filename to use for logging.
         """
         self.collector.set_filename(filename)
 
@@ -45,8 +45,8 @@ class Collect:
 
         Parameters
         ----------
-        keystrokes (`KeystrokeList`): The keystrokes to use.
-        string (`str`): The string to use.
+        - keystrokes (`KeystrokeList`): The keystrokes to use.
+        - string (`str`): The string to use.
         """
         self.collector.set_internal_log(keystrokes, string)
 
