@@ -90,8 +90,11 @@ class Analyze:
         """
         self.parser.print_strings(max, truncate, identifier)
 
-    def wpm(self, identifier: str | None = None,
-            exclude_outliers: bool | None = None) -> float:
+    def wpm(self,
+            keystrokes: KeystrokeList | None = None,
+            exclude_outliers: bool | None = None,
+            id: str | None = None,
+            ) -> float:
         """
         Get the words per minute from the logs.
 
@@ -132,7 +135,8 @@ class Analyze:
         identifier (`str`, optional): The identifier to check.
         exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
-        avg_delay = self.parser.get_average_delay(identifier, exclude_outliers)
+        avg_delay = self.parser.get_average_delay(
+            keystrokes, exclude_outliers, id)
         if avg_delay is None:
             raise ValueError("Average delay not present.")
         return avg_delay
@@ -149,14 +153,16 @@ class Analyze:
         identifier (`str`, optional): The identifier to check.
         exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
-        std_dev = self.parser.get_std_deviation(identifier, exclude_outliers)
+        std_dev = self.parser.get_std_deviation(
+            keystrokes, exclude_outliers, id)
         if std_dev is None:
             raise ValueError("Standard deviation not present.")
         return std_dev
 
-    def visualize_keystroke_times(
+    def visualize(
             self,
-            identifier: str | None = None,
+            mode: str | None = None,
+            save_file: bool | None = None,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None) -> None:
         """
@@ -168,8 +174,12 @@ class Analyze:
         keystrokes (`KeystrokeList`, optional): The keystrokes to plot.
         exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
-        self.parser.visualize_keystroke_times(
-            identifier, keystrokes, exclude_outliers)
+        self.parser.visualize(
+            mode,
+            save_file,
+            keystrokes,
+            exclude_outliers,
+            id)
 
     def get_keystrokes(self, identifier: str | None = None) -> KeystrokeList:
         """

@@ -14,8 +14,8 @@ except ImportError:
 from utils.validation import KeystrokeDecoder, KeystrokeList, Log, KeystrokeEncoder
 from utils.helpers import get_filepath, resolve_filename
 
-NUKABLE = True
-OUTLIER_CUTOFF = 0.8
+
+OUTLIER_CUTOFF = 3.0  # seconds
 
 
 class KeyParser:
@@ -36,7 +36,8 @@ class KeyParser:
         """
         self.filename = filename  # Client facing.
         self.exclude_outliers = exclude_outliers  # Client facing.
-        self.logs: list[Log] = self.extract_logs()  # Not client facing.
+        # Not client facing.
+        self.logs: list[Log] = self.extract_logs() if autoload else []
 
     def load_logs(self) -> None:
         """Client facing.
@@ -162,8 +163,10 @@ class KeyParser:
                     return [log['string']]
         return [log['string'] for log in self.logs]
 
-    def print_strings(self, max: int = 5, truncate: int = 25,
-                      identifier: str | None = None) -> None:
+    def print_strings(self,
+                      max: int = 5,
+                      truncate: int = 25,
+                      id: str | None = None) -> None:
         """Client facing.
         Prints strings from logs. If `identifier` is provided, prints associated string.
         Strings longer than `truncate` value are appended with "...[truncated]".
@@ -194,8 +197,11 @@ class KeyParser:
             # curr_string = curr_string.replace("\n", "\\n")
             print(f'{count}|{curr_string}')
 
-    def get_only_times(self, identifier: str | None = None,
-                       exclude_outliers: bool | None = None) -> list[float]:
+    def get_only_times(self,
+                       keystrokes: KeystrokeList | None = None,
+                       exclude_outliers: bool | None = None,
+                       id: str | None = None,
+                       ) -> list[float]:
         """Not client facing.
         Get a list of all keystroke delay times.
 
@@ -218,23 +224,26 @@ class KeyParser:
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         outlier_count = 0
+        outliers = []
         times: list[float] = []
         for keystroke in keystrokes:
             time = keystroke.time
             if time is None:
                 continue
             elif time > OUTLIER_CUTOFF and exclude_outliers:
+                outliers.append((keystroke.key, time))
                 outlier_count += 1
                 continue
             else:
                 times.append(time)
         if outlier_count > 0:
-            print(
-                f"Removed {outlier_count} outliers in getting keystroke times.")
+            print(f"{outlier_count} Outlier times removed:\n{outliers}")
         return times
 
-    def wpm(self, identifier: str | None = None,
-            exclude_outliers: bool | None = None) -> float | None:
+    def wpm(self,
+            keystrokes: KeystrokeList | None = None,
+            exclude_outliers: bool | None = None,
+            id: str | None = None) -> float | None:
         """Client facing.
         Calculate the average words per minute.
         Formula is CPM/5, where CPM is characters per minute.
@@ -245,27 +254,30 @@ class KeyParser:
         Returns:
             `float` or `None`: If no characters are found, None is returned.
         """
-        if not self.logs:
-            print("No logs found.")
-            return None
+
         num_chars = 0
         total_seconds = 0
         # If identifier is provided, calculate WPM for specific log
         if identifier is not None:
             if not self.is_id_present(identifier):
                 return None
-            for log in self.logs:
-                if log['id'] == identifier or log['string'] == identifier:
-                    times = self.get_only_times(identifier, exclude_outliers)
-                    num_chars = len(times)
-                    total_seconds = sum(times)  # type: ignore
-                    break
-        # If identifier is not provided, calculate WPM for all logs
+            if id is not None:
+                if not self.is_id_present(id=id):
+                    return None
+                times = self.get_only_times(
+                    id=id, exclude_outliers=exclude_outliers)
+                num_chars = len(times)
+                total_seconds = sum(times)  # type: ignore
+            # If id is not provided, calculate WPM for all logs
+            else:
+                times = self.get_only_times(exclude_outliers=exclude_outliers)
+                num_chars = len(times)
+                total_seconds = sum(times)  # type: ignore
         else:
-            times = self.get_only_times(exclude_outliers=exclude_outliers)
+            times = self.get_only_times(
+                keystrokes, exclude_outliers=exclude_outliers,)
             num_chars = len(times)
-            total_seconds = sum(times)  # type: ignore
-
+            total_seconds = sum(times)
         if num_chars == 0 or total_seconds == 0:
             print("Num_chars or total_seconds is 0. Unable to get WPM.")
             return None
@@ -294,7 +306,8 @@ class KeyParser:
             isPresent = self.is_id_present(identifier)
             if isPresent is False:
                 return []
-            times = self.get_only_times(identifier, exclude_outliers)
+            times = self.get_only_times(
+                exclude_outliers=exclude_outliers, id=id)
             if len(times) == 0:
                 print("No keystroke times found.")
                 return []
@@ -302,8 +315,9 @@ class KeyParser:
         highest_times = []
         # iterate through logs
         for log in self.logs:
-            id = log['id']
-            times = self.get_only_times(id, exclude_outliers)
+            keystrokes = log['keystrokes']
+            times = self.get_only_times(
+                keystrokes, exclude_outliers=exclude_outliers)
             if times:
                 highest_times.append(max(times))
         return highest_times
@@ -322,13 +336,18 @@ class KeyParser:
             `float` or `None`: Return average delay in seconds. If no keystroke times are found, None is returned.
         """
         times = []
-        if identifier is not None:
-            isPresent = self.is_id_present(identifier)
-            if isPresent is False:
-                return None
-            times = self.get_only_times(identifier, exclude_outliers)
+        if keystrokes is None:
+            if id is not None:
+                isPresent = self.is_id_present(id)
+                if isPresent is False:
+                    return None
+                times = self.get_only_times(
+                    exclude_outliers=exclude_outliers, id=id)
+            else:
+                times = self.get_only_times(exclude_outliers=exclude_outliers)
         else:
-            times = self.get_only_times(exclude_outliers=exclude_outliers)
+            times = self.get_only_times(
+                keystrokes, exclude_outliers=exclude_outliers)
         if len(times) == 0:
             print("No keystrokes found.")
             return 0
@@ -347,19 +366,58 @@ class KeyParser:
         Returns:
             `float` or `None`: If insufficient keystrokes are found, None is returned.
         """
-        if identifier is not None:
-            isPresent = self.is_id_present(identifier)
-            if isPresent is False:
-                return None
-            times = self.get_only_times(identifier, exclude_outliers)
+        times = []
+        if keystrokes is None:
+            if id is not None:
+                isPresent = self.is_id_present(id)
+                if isPresent is False:
+                    return None
+                times = self.get_only_times(
+                    exclude_outliers=exclude_outliers, id=id)
+            else:
+                times = self.get_only_times(exclude_outliers=exclude_outliers)
         else:
-            times = self.get_only_times(exclude_outliers=exclude_outliers)
+            times = self.get_only_times(
+                keystrokes, exclude_outliers=exclude_outliers)
         if len(times) < 2:
             print("Not enough keystrokes to calculate standard deviation.")
             return None
         return round(statistics.stdev(times), 4)
 
-    def plot_keystroke_times(self, character_times: dict[str, float]):
+    def plot_boxplot(
+            self,
+            keystrokes: KeystrokeList,
+            exclude_outliers: bool | None = None) -> None:
+        """Not client facing.
+        Plots a boxplot of the keystroke times.
+
+        Args:
+            `keystrokes` (`KeystrokeList`): A list of Keystroke items.
+            `exclude_outliers` (bool, optional): A flag indicating whether to exclude outliers.
+        """
+        if plt is None:
+            print("Matplotlib not installed. Cannot visualize.")
+            return
+        if keystrokes.is_empty():
+            print("No keystrokes found.")
+            return
+        if exclude_outliers is None:
+            exclude_outliers = self.exclude_outliers
+        times = self.get_only_times(keystrokes, exclude_outliers=True)
+        if len(times) == 0:
+            print("No keystroke times found.")
+            return
+        plt.figure(figsize=(15, 10))
+        plt.boxplot(times, vert=False)
+        plt.xlabel('Keystroke Time (s)')
+        plt.title('Keystroke Times')
+        plt.tight_layout()
+        plt.show()
+
+    def plot_bar(self,
+                 character_times: dict[str, float],
+                 save_file=False,
+                 display=True) -> None:
         """Not client facing.
         Plots a bar chart of the average keystroke times for each character.
 
@@ -373,26 +431,26 @@ class KeyParser:
         characters = list(character_times.keys())
         times = list(character_times.values())
 
-        # Create the bar chart
-        plt.figure(figsize=(15, 5))
+        plt.figure(figsize=(15, 10))
+        # plt.scatter(characters, times, color='skyblue') # Scatter plot!
         plt.bar(characters, times, color='skyblue')
-
+        # plt.barh(characters, times, color='skyblue')
         # Add labels and title
         plt.xlabel('Characters')
         plt.ylabel('Average Keystroke Time (s)')
         plt.title('Average Keystroke Times by Character')
 
-        # Rotate x-axis labels for better readability if there are many
-        # characters
+        # Rotate x-axis labels for long strings
         plt.xticks(rotation=45, ha='right')
-
-        # Show the plot
         plt.tight_layout()
-        plt.show()
+        if save_file:
+            plt.savefig('keystroke_times.png', dpi=200)
+        plt.show(block=display)
 
-    def visualize_keystroke_times(
+    def visualize(
             self,
-            identifier: str | None = None,
+            mode: str | None = None,
+            save_file: bool | None = None,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None) -> None:
         """Client facing.
@@ -418,11 +476,19 @@ class KeyParser:
 
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
-        character_times = self.map_chars_to_times(keystrokes, exclude_outliers)
-        if not character_times:  # If no characters found
-            print("No characters to visualize.")
-            return
-        self.plot_keystroke_times(character_times)
+        if save_file is None:
+            save_file = False
+        if mode is None:
+            mode = 'bar'
+        if mode == 'bar':
+            character_times = self.map_chars_to_times(
+                keystrokes, exclude_outliers)
+            if not character_times:  # If no characters found
+                print("No characters to visualize.")
+                return
+            self.plot_bar(character_times, save_file=save_file)
+        elif mode == 'box':
+            self.plot_boxplot(keystrokes, exclude_outliers)
 
     def get_keystrokes(self, identifier: str | None = None) -> KeystrokeList:
         """Client facing.
@@ -490,6 +556,7 @@ class KeyParser:
             exclude_outliers = self.exclude_outliers
 
         outlier_count = 0
+        outliers = []
         for keystroke in keystrokes:
 
             legal_key = keystroke.legal_key
@@ -504,6 +571,7 @@ class KeyParser:
                 continue
             if time > OUTLIER_CUTOFF and exclude_outliers:
                 outlier_count += 1
+                outliers.append((key, time))
                 continue
             if key in character_times:
                 character_times[key] += time
@@ -515,11 +583,10 @@ class KeyParser:
         for key in character_times:
             character_times[key] /= character_counts[key]
         if not character_times:
-            print("No characters to map.")
+            print("No character times to map.")
             return {}
         if outlier_count > 0:
-            print(
-                f"Removed {outlier_count} outliers in mapping characters to average times.")
+            print(f"{outlier_count} Outliers removed:\n{outliers}")
         return character_times
 
     def compare_keystroke_lists(
@@ -592,9 +659,3 @@ class KeyParser:
 
     def __len__(self) -> int:
         return len(self.logs)
-
-
-if __name__ == "__main__":
-    parser = KeyParser()
-    id = parser.id_from_substring("")
-    print('Parser active!' if id else 'Get some keystrokes logged!')

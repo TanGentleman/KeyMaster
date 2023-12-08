@@ -14,6 +14,8 @@ from utils.config import COLLECT_ONLY_TYPEABLE
 from utils.helpers import get_filepath, is_key_valid, resolve_filename
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 
+IGNORE_SHIFT = True
+
 
 class KeyLogger:
     """
@@ -101,6 +103,8 @@ class KeyLogger:
         Args:
                 `keypress` (`Key` or `KeyCode`): The key press event to log.
         """
+        if IGNORE_SHIFT and keypress == Key.shift:
+            return
         if is_key_valid(keypress) is False:
             print('CRITICAL: Only keys that pass is_key_valid .')
             raise ValueError(
@@ -155,17 +159,13 @@ class KeyLogger:
         return
 
     # on_press still needs to be tidied up a bit
-    def on_press(self, keypress: Key | KeyCode | None) -> None:
+    def handle_keypress(self, keypress: Key | KeyCode) -> None:
         """Not client facing.
         Handles the event when a key is pressed.
         """
-        if keypress is None:
-            return None
         # Validate keypress
-        if is_key_valid(keypress) is False:
-            return None
-        # do a cool function
-        self.log_valid_keypress(keypress)
+        if is_key_valid(keypress):
+            self.log_valid_keypress(keypress)
         return
 
     def stop_listener_condition(self, keypress: Key | KeyCode) -> bool:
@@ -176,9 +176,17 @@ class KeyLogger:
             return True
         if self.word_count >= LISTENER_WORD_LIMIT:
             return True
-        if isinstance(keypress, KeyCode) and keypress.char is not None:
+        if isinstance(keypress, KeyCode):
             return keypress.char == STOP_KEY
         return False
+
+    def on_press(self, keypress: Key | KeyCode | None) -> None:
+        """Not client facing.
+        Handles key press events.
+        """
+        if keypress == Key.esc:
+            raise KeyboardInterrupt
+        return
 
     def on_release(self, keypress: Key | KeyCode | None) -> None:
         """Not client facing.
@@ -186,6 +194,7 @@ class KeyLogger:
         """
         if keypress is None:
             return None
+        self.handle_keypress(keypress)
         if self.stop_listener_condition(keypress):
             print('')
             if self.timer is None:
@@ -195,7 +204,8 @@ class KeyLogger:
             raise KeyboardInterrupt
         return
 
-    def start_listener(self, duration: int | float | None = None) -> None:
+    def start_listener(self, duration: int | float |
+                       None = None) -> KeystrokeList:
         """Client facing.
         Function to start the key listener.
         Listener will stop on conditions in stop_listener_condition or when duration reached.
@@ -224,7 +234,7 @@ class KeyLogger:
             # Ensure the timer is stopped
             if self.timer is not None:
                 self.timer.cancel()
-        return
+        return self.keystrokes
 
     def is_loggable(
             self,
@@ -336,6 +346,7 @@ class KeyLogger:
         # Append the log object to the file
         try:
             with open(filepath, 'r+') as f:
+                # I can use the KeystrokeDecoder here, but it seems unnecessary
                 logs: list[Log] = json_load(f)
                 logs.append(log)
                 f.seek(0)

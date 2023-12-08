@@ -37,7 +37,7 @@ class Generate:
         """
         self.generator.disable = False
 
-    def generate_keystrokes_from_string(self, string: str) -> KeystrokeList:
+    def keystrokes_from_string(self, string: str) -> KeystrokeList:
         """
         Generate keystrokes from a string.
 
@@ -49,7 +49,7 @@ class Generate:
         -------
         `KeystrokeList`: The generated keystrokes.
         """
-        return self.generator.generate_keystrokes_from_string(string)
+        return self.generator.keystrokes_from_string(string)
 
     def generate_keystroke(self, char: str) -> Keystroke:
         """
@@ -88,7 +88,7 @@ class Generate:
         ----------
         string (`str`): The string to simulate.
         """
-        keystrokes = self.generate_keystrokes_from_string(string)
+        keystrokes = self.keystrokes_from_string(string)
         if not keystrokes.is_empty():
             self.simulate_keystrokes(keystrokes)
         return keystrokes

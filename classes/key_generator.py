@@ -78,7 +78,8 @@ class KeyGenerator:
             speed = SIM_MAX_SPEED
         self.speed_multiplier = float(speed)
 
-    def calculate_delay(self, speed_multiple: int | float | None) -> float:
+    def calculate_delay(self, speed_multiple: int |
+                        float | None = None) -> float:
         """Not client facing.
         Get a normally distributed delay between keystrokes.
 
@@ -106,7 +107,7 @@ class KeyGenerator:
             delay = MIN_DELAY + delay / 10
         return delay
 
-    def generate_keystrokes_from_string(
+    def keystrokes_from_string(
             self, input_string: str) -> KeystrokeList:
         """Client facing.
         Generate valid Keystrokes from a string. Output object can be simulated.
@@ -197,9 +198,7 @@ class KeyGenerator:
                 f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
             return None
 
-        delay1 = self.calculate_delay(1)
-        delay2 = self.calculate_delay(1.5)
-        delay = round(delay1 + delay2, self.round_digits)
+        delay = round(self.calculate_delay(), self.round_digits)
         return Keystroke(key_string, delay)
 
     def stop_simulation(self) -> None:
@@ -305,7 +304,7 @@ class KeyGenerator:
         Args:
             string (str): The string to simulate.
         """
-        keystrokes = self.generate_keystrokes_from_string(string)
+        keystrokes = self.keystrokes_from_string(string)
         if keystrokes.is_empty():
             logging.error("Given input was not simulated.")
             return None

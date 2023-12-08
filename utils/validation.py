@@ -89,8 +89,17 @@ class Keystroke:
                 self.is_typeable_char = True
 
             self.legal_key: LegalKey | None = None
-            if self.is_typeable_char:
+            if self.is_typeable_char or self.key in SPECIAL_KEYS:
                 self.legal_key = self.legalize()
+
+    def props(self):
+        print(f"key: {self.key}"
+              + f"\ntime: {self.time}"
+              + f"\nvalid: {self.valid}"
+              + f"\nunicode_char: {self.unicode_char}"
+              + f"\nis_typeable_char: {self.is_typeable_char}"
+              + f"\nlegal_key: {self.legal_key}"
+              )
 
     def __iter__(self) -> Iterator[tuple[str, float | None]]:
         yield self.key, self.time
@@ -256,6 +265,21 @@ class KeystrokeList:
                 print(f"Validation string:{validation_char}<-")
                 break
         return False
+
+    def prune_bad_nuns(self) -> None:
+        """
+        Remove all extraneous null (None) times from the list of keystrokes.
+        """
+        pruned_keystrokes = KeystrokeList()
+        none_count = 0
+        for keystroke in self.keystrokes:
+            if keystroke.time is None:
+                none_count += 1
+                if none_count > 1:
+                    print("Skipping keystroke with None time")
+                    continue
+            pruned_keystrokes.append(keystroke)
+        self.keystrokes = pruned_keystrokes
 
 
 class Log(TypedDict):

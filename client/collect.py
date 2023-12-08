@@ -31,11 +31,12 @@ class Collect:
         """
         self.collector.set_filename(filename)
 
-    def start_listener(self) -> None:
+    def start_listener(self, duration: int | float |
+                       None = None) -> KeystrokeList:
         """
         Start the listener.
         """
-        self.collector.start_listener()
+        return self.collector.start_listener(duration)
 
     def set_internal_log(self, keystrokes: KeystrokeList,
                          string: str) -> None:
