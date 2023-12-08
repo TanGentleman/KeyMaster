@@ -92,7 +92,6 @@ class KeyGenerator:
         if speed_multiple is None:
             speed_multiple = self.speed_multiplier
 
-        speed_multiple = float(speed_multiple)
         if speed_multiple <= 0:
             # ERROR
             logging.error(
@@ -197,9 +196,8 @@ class KeyGenerator:
                 f"generate_keystroke: Non-printable character: {char} -> {ord(char)}")
             return None
 
-        delay1 = self.calculate_delay(1)
-        delay2 = self.calculate_delay(1.5)
-        delay = round(delay1 + delay2, self.round_digits)
+        delay = self.calculate_delay(self.speed_multiplier)
+        delay = round(delay, self.round_digits)
         return Keystroke(key_string, delay)
 
     def stop_simulation(self) -> None:

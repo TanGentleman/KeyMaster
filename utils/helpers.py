@@ -24,34 +24,27 @@ def is_key_valid(key: Key | KeyCode | str,
     elif isinstance(key, KeyCode):
         if key.char is None or len(key.char) != 1:
             return False
-        key = key.char
-        if key in BANNED_KEYS:
+        char = key.char
+        if char in BANNED_KEYS:
             return False
         return True
-    # We know isinstance(key, str)
-    # We are likely being handed an encoded string (e.g. "'a'" or 'STOP' or
-    # 'Key.shift')
     key_string = key
     if key_string == STOP_CODE:
         return True
     if key_string in SPECIAL_KEYS:
         return True
     # Decode the character
-    key_string = unwrap_key(key_string)
-    # Check the length of the key ensure a single character
+    char = ''
     if len(key_string) != 1:
-        # Banned key enters this clause as well, still wrapped.
-        # Technically this is unsafe for values of length 0, but that should
-        # never happen.
-        if key_string[1] in BANNED_KEYS:
+        if (key_string[0] != APOSTROPHE) or (key_string[-1] != APOSTROPHE):
+            print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
             return False
-        print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
-        # When this is inside a helper function, raise an exception instead
-        # raise ValueError("is_key_valid: Error. Char length must be 1.")
+        char = key_string[1]
+    else:
+        char = key_string
+    if char in BANNED_KEYS:
         return False
-    if key in BANNED_KEYS:
-        return False
-    # This means that both wrapped and unwrapped chars are valid
+    # We know char is a single character
     if only_typeable:
         return key in KEYBOARD_CHARS
     return key.isprintable()
@@ -62,8 +55,10 @@ def is_valid_wrapped_char(key: str) -> bool:
     Check if a character is wrapped in single quotes.
     Characters that fail is_key_valid() return False.
     """
-    return len(key) == 3 and key[0] == APOSTROPHE and is_key_valid(
-        key[1]) and key[2] == APOSTROPHE
+    return (len(key) == 3 
+        and key[0] == APOSTROPHE 
+        and is_key_valid(key[1]) 
+        and key[2] == APOSTROPHE)
 
 
 def is_valid_wrapped_special_key(key: str) -> bool:
@@ -76,24 +71,19 @@ def is_valid_wrapped_special_key(key: str) -> bool:
     return False
 
 
-def unwrap_key(key_string: str) -> str:
+def unwrap_char(key_string: str) -> str:
     """
-    Decode a key string into a single character.
-    Invalid keys are not unwrapped.
-    >>> unwrap_key("'a'")
-    'a'
-    >>> unwrap_key("'ß'")
-    'ß'
-    >>> unwrap_key("'√'") [This is the banned key]
-    "'√'"
+    Decode wrapped chars into a single character.
+
+    Raise ValueError if a character cannot be returned.
     """
     if len(key_string) == 1:
         return key_string
-    if is_valid_wrapped_char(key_string):
+    if len(key_string) == 3 and key_string[0] == APOSTROPHE and key_string[-1] == APOSTROPHE:
         char = key_string[1]
         return char
     else:
-        raise ValueError("unwrap_key: Error. Invalid key.")
+        raise ValueError("unwrap_char: Could not return a character.")
 
 
 def replace_unicode_chars(input_string: str) -> str:

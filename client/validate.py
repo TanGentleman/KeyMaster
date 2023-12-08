@@ -13,7 +13,11 @@ class Key:
     """
 
     def __init__(self, key: str, time: float | None):
-        self.keystroke = Keystroke(key, time)
+        try:
+            self.keystroke = Keystroke(key, time)
+        except Exception as e:
+            print(e)
+            raise ValueError("Invalid key or time.")
         self.key = self.keystroke.key
         self.time = self.keystroke.time
 
