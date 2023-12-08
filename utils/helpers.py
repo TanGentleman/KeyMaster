@@ -79,13 +79,7 @@ def unwrap_char(key_string: str) -> str:
     """
     if len(key_string) == 1:
         return key_string
-<<<<<<< Updated upstream
     if len(key_string) == 3 and key_string[0] == APOSTROPHE and key_string[-1] == APOSTROPHE:
-=======
-    if (len(key_string) == 3 
-            and key_string[0] == APOSTROPHE 
-            and key_string[-1] == APOSTROPHE):
->>>>>>> Stashed changes
         char = key_string[1]
         return char
     else:

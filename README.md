@@ -47,7 +47,7 @@ Each of these components is designed to work together seamlessly providing a com
 
 ## Documentation
 
-KeyMaster has documentation for each class and method, and can be referenced by markdown files in the `docs/` folder, amd in the docstrings of the appropriate files in the backend `classes/` and `utils`. Designed to be accessible for both beginners and advanced users, KeyMaster works best in conjunction with an IDE environment such as VSCode to take advantage of the strong type hints and hover documentation. I recommend experimenting using `notebook.ipynb` for an testing the deceptively simple and powerful structure of the toolkit.
+KeyMaster has documentation for each class and method, and can be referenced by markdown files in the `docs/` folder, and in the docstrings of the appropriate files in the backend `classes/` and `utils`. Designed to be accessible for both beginners and advanced users, KeyMaster works best in conjunction with an IDE environment such as VSCode to take advantage of the strong type hints and hover documentation. I recommend experimenting using `notebook.ipynb` for an testing the deceptively simple and powerful structure of the toolkit.
 
 ## Workflows
 - I've made some sample workflows for automation, with the backend in `scripts/simulate.py`, and an interface in `scripts/cli.py`
@@ -62,11 +62,8 @@ python -m scripts.cli -s 'Use -c instead for clipboard string'
 Contributions to KeyMaster are appreciated! If you have suggestions for improvements or new features, please feel free to create a new issue, and I'll get to it as soon as I can. Alternatively, fork the repository, make your changes, and submit a pull request!
 
 ## License
-KeyMaster is released under the MIT License. This license allows you to use, modify, and distribute the code as you see fit. I believe strongly in the power of transparent, open-source code, and I hope to continue making this project accessible to everyone.
-
-## Acknowledgments
-Thank you for taking the time to explore KeyMaster. Despite it being a solo labor of love, I warmly welcome all feedback and contributions from the community!
+KeyMaster is released under the MIT License. This license allows you to use, modify, and distribute the code as you see fit. Transparent, open-source code is awesome, and I hope you find the project useful!
 
 Cheers,
 
-Tan
+`Tan`
