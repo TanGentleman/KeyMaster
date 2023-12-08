@@ -18,8 +18,8 @@ Attributes
 
 Methods
 -------
-is_empty(): Returns whether the list of keystrokes is empty.
-to_string(): Returns the string representation of the list of keystrokes.
+- is_empty(): Returns whether the list of keystrokes is empty.
+- to_string(): Returns the string representation of the list of keystrokes.
 
 # Function Documentation
 

@@ -9,7 +9,7 @@ from pynput.keyboard import Key
 
 # KeyMaster imports
 from utils.config import APOSTROPHE, MAX_KEY_LENGTH, SPECIAL_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
-from utils.helpers import is_valid_wrapped_char, is_valid_wrapped_special_key, unwrap_key, is_key_valid
+from utils.helpers import is_valid_wrapped_char, is_valid_wrapped_special_key, unwrap_char, is_key_valid
 
 
 class LegalKey:
@@ -80,7 +80,7 @@ class Keystroke:
             is_unwrapped = len(self.key) == 1
 
             if is_valid_wrapped_char(self.key):
-                self.unicode_char = unwrap_key(self.key)
+                self.unicode_char = unwrap_char(self.key)
 
             elif is_unwrapped and self.valid:
                 self.unicode_char = self.key
@@ -116,28 +116,24 @@ class Keystroke:
 
     def legalize(self) -> LegalKey:
         """
-        Returns a LegalKey object or None if the key is not valid.
+        Returns a LegalKey object or raises a ValueError.
         """
-        # Ensure the key is valid
         if self.valid is False:
             raise ValueError('Invalid char not legalized')
-        # Exclude non-typeable chars
-        if self.unicode_char is not None:
-            if self.is_typeable_char is False:
-                raise ValueError('Unicode char not legalized')
-
         is_special = False
         legal_key = ''
-        if self.key == STOP_CODE or self.key in SPECIAL_KEYS:
-            is_special = True
-            legal_key = APOSTROPHE + self.key + APOSTROPHE
+        if self.unicode_char is None:
+            if self.key == STOP_CODE or self.key in SPECIAL_KEYS:
+                is_special = True
+                legal_key = APOSTROPHE + self.key + APOSTROPHE
+            else:
+                raise ValueError('Non-char not legalized')
         else:
-            key = unwrap_key(self.key)
-            if len(key) != 1 or key not in KEYBOARD_CHARS:
-                print(f"Invalid key!->{self.key}")
-                raise ValueError(
-                    'Legal chars are 1 character and must be typeable')
-            legal_key = key
+            if self.is_typeable_char is False:
+                raise ValueError('Unicode char not legalized')
+            else:
+                char = self.unicode_char
+                legal_key = char
         return LegalKey(legal_key, is_special)
 
 

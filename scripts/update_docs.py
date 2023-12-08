@@ -49,7 +49,7 @@ def create_directories() -> None:
     create_dir(path.join(DOCS_DIR, "client"))
 
 
-def extract_class_info(source):
+def extract_class_info(source) -> list[tuple]:
     """
     Extracts class name and docstring for each class in the source code.
     """
@@ -65,7 +65,7 @@ def extract_class_info(source):
     return class_info
 
 
-def extract_function_info(source):
+def extract_function_info(source) -> list[tuple]:
     """
     Extracts function name, parameters, and docstring for each function in the source code.
     """
@@ -83,7 +83,8 @@ def extract_function_info(source):
     return function_info
 
 
-def write_to_markdown(class_info, function_info, filepath):
+def write_to_markdown(
+        class_info: list[tuple], function_info, filepath):
     """Writes function information to a markdown file."""
     errors = []
     error_count = 0
@@ -95,6 +96,34 @@ def write_to_markdown(class_info, function_info, filepath):
                 file.write(f'## Class: `{class_name}`\n')
                 if info[1] is None:
                     continue
+                # chunks: list[str] = []
+                # chunks = info[1].split('\n\n')
+                # for chunk in chunks:
+                #     lines = chunk.splitlines()
+                #     if len(lines) == 0:
+                #         continue
+                #     if 'Parameters' in lines[0] or 'Attributes' in lines[0]:
+                #         print('yee')
+                #         raise ValueError('yee')
+                #     for line in lines:
+                #         if line == '':
+                #             continue
+                #         if 'Parameters' in line or 'Attributes' in line:
+                #             if not lines[1] or '----------' not in lines[1]:
+                #                 print(f'Missing Separator! {class_name} in {filepath[-20:]}')
+                #                 file.write(chunk + '\n\n')
+                #                 break
+                #             # Write parameters block and then break
+                #             # Append '- ' to each line after the separator
+                #             file.write(line + '\n')
+                #             file.write(lines[1] + '\n')
+                #             for line in lines[2:]:
+                #                 file.write(f'- {line}\n')
+                #             print('Bullets after separator ☑')
+                #             print(f'{class_name} in {filepath[-20:]}')
+                #             print(chunk)
+                #             break
+
                 file.write(info[1] + '\n\n')
         if len(function_info) == 0:
             return

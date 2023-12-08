@@ -93,7 +93,6 @@ class KeyGenerator:
         if speed_multiple is None:
             speed_multiple = self.speed_multiplier
 
-        speed_multiple = float(speed_multiple)
         if speed_multiple <= 0:
             # ERROR
             logging.error(

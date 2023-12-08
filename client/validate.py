@@ -13,7 +13,11 @@ class Key:
     """
 
     def __init__(self, key: str, time: float | None):
-        self.keystroke = Keystroke(key, time)
+        try:
+            self.keystroke = Keystroke(key, time)
+        except Exception as e:
+            print(e)
+            raise ValueError("Invalid key or time.")
         self.key = self.keystroke.key
         self.time = self.keystroke.time
 
@@ -28,8 +32,8 @@ class Keys:
 
     Methods
     -------
-    is_empty(): Returns whether the list of keystrokes is empty.
-    to_string(): Returns the string representation of the list of keystrokes.
+    - is_empty(): Returns whether the list of keystrokes is empty.
+    - to_string(): Returns the string representation of the list of keystrokes.
     """
 
     def __init__(self, keys: list[Key] | KeystrokeList):

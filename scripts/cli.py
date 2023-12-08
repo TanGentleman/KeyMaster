@@ -133,8 +133,7 @@ def main():
     if not allow_unicode:
         print("Simulating unicode OFF.")
     if input_string != DEFAULT_STRING:
-        print(f"Input string: {input_string[:5]}" +
-              ("[...]" if len(input_string) > 5 else ""))
+        print(f"Input string: {input_string[:5]} [+]")
 
     simulate = Script(
         None,
