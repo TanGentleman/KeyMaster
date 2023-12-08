@@ -43,7 +43,7 @@ def simulate_keystrokes(
     simulator.simulate_keystrokes(keystrokes)
 
 
-def generate_keystrokes_from_string(
+def keystrokes_from_string(
         input_string: str,
         allow_newlines=DEFAULT_ALLOW_NEWLINES,
         allow_unicode=DEFAULT_ALLOW_UNICODE) -> KeystrokeList:
@@ -55,7 +55,7 @@ def generate_keystrokes_from_string(
         disable=True,
         allow_newlines=allow_newlines,
         allow_unicode=allow_unicode)
-    keystrokes = simulator.generate_keystrokes_from_string(input_string)
+    keystrokes = simulator.keystrokes_from_string(input_string)
     if keystrokes.is_empty():
         print("No keystrokes found.")
         return keystrokes
@@ -108,7 +108,7 @@ def simulate_from_string(
     if not input_string:
         print("No input string provided.")
         return
-    keystrokes = generate_keystrokes_from_string(
+    keystrokes = keystrokes_from_string(
         input_string, allow_newlines, allow_unicode)
     if logging:
         saved = validate_and_save_keystrokes(keystrokes, input_string)
