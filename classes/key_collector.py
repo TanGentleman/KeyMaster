@@ -52,6 +52,8 @@ class KeyLogger:
         self.round_digits = round_digits
         self.duration = duration
 
+        self.is_reset = True
+
     def reset(self) -> None:
         """Client facing.
         Clear the current state of the logger.
@@ -60,6 +62,7 @@ class KeyLogger:
         self.word_count = 0
         self.typed_string = ""
         self.prev_time = time()
+        self.is_reset = True
 
     def set_filename(self, filename: str) -> None:
         """Client facing.
@@ -331,6 +334,9 @@ class KeyLogger:
         Returns:
                 `bool`: True if the log was saved successfully, False otherwise.
         """
+        if self.is_reset is False:
+            print("You have already saved a log. Please reset the logger before saving again.")
+            return False
         filepath = get_filepath(self.filename)
         if filepath is None:
             print("Filename null. Log not saved.")
@@ -362,6 +368,7 @@ class KeyLogger:
         except Exception as e:
             print(f"An error occurred: {e}")
             return False
+        self.is_reset = False
         if reset:
             self.reset()
         return True

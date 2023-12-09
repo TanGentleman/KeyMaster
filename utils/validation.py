@@ -143,16 +143,26 @@ class KeystrokeList:
             keystrokes = []
         if not isinstance(keystrokes, list):
             raise TypeError('keystrokes must be a list')
-        if not all(isinstance(keystroke, Keystroke)
-                   for keystroke in keystrokes):
-            raise TypeError('keystrokes must be a list of Keystroke objects')
-
-        self.length = len(keystrokes)
+        # if not all(isinstance(keystroke, Keystroke)
+        #            for keystroke in keystrokes):
+        #     raise TypeError('keystrokes must be a list of Keystroke objects')
         self.keystrokes = keystrokes
+        self.length = len(keystrokes)
+        self.set_null_time()
+
+    def set_null_time(self) -> None:
+        """
+        Set the time of the first keystroke to None.
+        """
+        if self.is_empty():
+            return
+        self.keystrokes[0].time = None
 
     def append(self, keystroke: Keystroke) -> None:
         if not isinstance(keystroke, Keystroke):
             raise TypeError('keystroke must be a Keystroke object')
+        if self.is_empty():
+            keystroke.time = None
         self.keystrokes.append(keystroke)
         self.length += 1
 
@@ -160,8 +170,12 @@ class KeystrokeList:
         if not isinstance(keystrokes, KeystrokeList):
             raise TypeError(
                 'Must use KeystrokeList.extend with a KeystrokeList')
+        
         self.keystrokes.extend(keystrokes.keystrokes)
         self.length = len(self.keystrokes)
+        # Ensure first Keystone.time set to None
+        self.set_null_time()
+        
 
     def is_empty(self) -> bool:
         return self.length == 0
