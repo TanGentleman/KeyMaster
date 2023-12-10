@@ -7,12 +7,12 @@ class Analyze:
     The Analyze class is a wrapper for all the analysis options.
     """
 
-    def __init__(self, config: Config | None = None) -> None:
+    def __init__(self, config: Config | None = None, preload=True) -> None:
         """
         Initialize the Analyze class.
         """
         if config is None:
-            config = Config()
+            config = Config(preload_analysis=preload)
         self.parser = config.KeyParser()
 
     def load_logfile(self, logfile: str | None = None) -> None:
@@ -91,7 +91,7 @@ class Analyze:
         """
         self.parser.print_strings(max, truncate, id)
 
-    def wpm(self, 
+    def wpm(self,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
             id: str | None = None,
@@ -136,7 +136,8 @@ class Analyze:
         - id (`str`, optional): The id to check.
         - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
-        avg_delay = self.parser.get_average_delay(keystrokes, exclude_outliers, id)
+        avg_delay = self.parser.get_average_delay(
+            keystrokes, exclude_outliers, id)
         if avg_delay is None:
             raise ValueError("Average delay not present.")
         return avg_delay
@@ -154,7 +155,8 @@ class Analyze:
         - id (`str`, optional): The id to check.
         - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
-        std_dev = self.parser.get_std_deviation(keystrokes, exclude_outliers, id)
+        std_dev = self.parser.get_std_deviation(
+            keystrokes, exclude_outliers, id)
         if std_dev is None:
             raise ValueError("Standard deviation not present.")
         return std_dev

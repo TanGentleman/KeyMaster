@@ -24,6 +24,7 @@ class Config:
     - max_simulation_time (`int | float`): The maximum time to simulate.
     - simulation_speed_multiple (`int`): The speed multiple to simulate at.
     - exclude_outliers_in_analysis (`bool`): Whether to exclude outliers in analysis.
+    - preload_analysis (`bool`): Whether to preload the analysis.
     """
 
     def __init__(
@@ -38,7 +39,9 @@ class Config:
             round_digits: int = ROUND_DIGITS,
             max_simulation_time: int | float = SIM_MAX_DURATION,
             simulation_speed_multiple: int | float = SIM_SPEED_MULTIPLE,
-            exclude_outliers_in_analysis: bool = DEFAULT_EXCLUDE_OUTLIERS) -> None:
+            exclude_outliers_in_analysis: bool = DEFAULT_EXCLUDE_OUTLIERS,
+            preload_analysis: bool = True
+    ) -> None:
         """
         Initialize the Config class. All arguments are optional and have defaults in config.py
         """
@@ -56,6 +59,7 @@ class Config:
         self.simulation_speed_multiple = float(simulation_speed_multiple)
         self.exclude_outliers = exclude_outliers_in_analysis
         # print(self)
+        self.preload = preload_analysis
 
     def set(
             self,
@@ -134,7 +138,9 @@ class Config:
             filename = self.logfile
         return KeyParser(
             filename=filename,
-            exclude_outliers=self.exclude_outliers)
+            exclude_outliers=self.exclude_outliers,
+            preload=self.preload
+        )
 
     def KeyGenerator(self) -> KeyGenerator:
         """

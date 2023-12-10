@@ -31,13 +31,17 @@ class KeyParser:
 
     def __init__(self, filename: str | None = 'REG',
                  exclude_outliers: bool = True,
-                 autoload: bool = True) -> None:
+                 preload: bool = True) -> None:
         """
         Initialize the KeyParser and load logs. None value for filename will initialize an empty KeyParser.
         """
         self.filename = filename  # Client facing.
         self.exclude_outliers = exclude_outliers  # Client facing.
-        self.logs: list[Log] = self.extract_logs() if autoload else []  # Not client facing.
+        # Not client facing.
+        self.logs: list[Log] = []
+        if preload:
+            self.logs = self.extract_logs()
+            print(f"Loaded {len(self.logs)} logs.")
 
     def load_logs(self) -> None:
         """Client facing.
@@ -163,8 +167,8 @@ class KeyParser:
                     return [log['string']]
         return [log['string'] for log in self.logs]
 
-    def print_strings(self, 
-                      max: int = 5, 
+    def print_strings(self,
+                      max: int = 5,
                       truncate: int = 25,
                       id: str | None = None) -> None:
         """Client facing.
@@ -197,7 +201,7 @@ class KeyParser:
             # curr_string = curr_string.replace("\n", "\\n")
             print(f'{count}|{curr_string}')
 
-    def get_only_times(self, 
+    def get_only_times(self,
                        keystrokes: KeystrokeList | None = None,
                        exclude_outliers: bool | None = None,
                        id: str | None = None,
@@ -241,7 +245,7 @@ class KeyParser:
             print(f"{outlier_count} Outlier times removed:\n{outliers}")
         return times
 
-    def wpm(self, 
+    def wpm(self,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
             id: str | None = None) -> float | None:
@@ -255,7 +259,7 @@ class KeyParser:
         Returns:
             `float` or `None`: If no characters are found, None is returned.
         """
-        
+
         num_chars = 0
         total_seconds = 0
         # If id is provided, calculate WPM for specific log
@@ -266,7 +270,8 @@ class KeyParser:
             if id is not None:
                 if not self.is_id_present(id=id):
                     return None
-                times = self.get_only_times(id=id, exclude_outliers=exclude_outliers)
+                times = self.get_only_times(
+                    id=id, exclude_outliers=exclude_outliers)
                 num_chars = len(times)
                 total_seconds = sum(times)  # type: ignore
             # If id is not provided, calculate WPM for all logs
@@ -275,7 +280,8 @@ class KeyParser:
                 num_chars = len(times)
                 total_seconds = sum(times)  # type: ignore
         else:
-            times = self.get_only_times(keystrokes, exclude_outliers=exclude_outliers,)
+            times = self.get_only_times(
+                keystrokes, exclude_outliers=exclude_outliers,)
             num_chars = len(times)
             total_seconds = sum(times)
         if num_chars == 0 or total_seconds == 0:
@@ -306,7 +312,8 @@ class KeyParser:
             isPresent = self.is_id_present(id)
             if isPresent is False:
                 return []
-            times = self.get_only_times(exclude_outliers=exclude_outliers, id=id)
+            times = self.get_only_times(
+                exclude_outliers=exclude_outliers, id=id)
             if len(times) == 0:
                 print("No keystroke times found.")
                 return []
@@ -315,7 +322,8 @@ class KeyParser:
         # iterate through logs
         for log in self.logs:
             keystrokes = log['keystrokes']
-            times = self.get_only_times(keystrokes, exclude_outliers=exclude_outliers)
+            times = self.get_only_times(
+                keystrokes, exclude_outliers=exclude_outliers)
             if times:
                 highest_times.append(max(times))
         return highest_times
@@ -340,11 +348,13 @@ class KeyParser:
                 isPresent = self.is_id_present(id)
                 if isPresent is False:
                     return None
-                times = self.get_only_times(exclude_outliers=exclude_outliers, id=id)
+                times = self.get_only_times(
+                    exclude_outliers=exclude_outliers, id=id)
             else:
                 times = self.get_only_times(exclude_outliers=exclude_outliers)
         else:
-            times = self.get_only_times(keystrokes, exclude_outliers=exclude_outliers)
+            times = self.get_only_times(
+                keystrokes, exclude_outliers=exclude_outliers)
         if len(times) == 0:
             print("No keystrokes found.")
             return 0
@@ -370,11 +380,13 @@ class KeyParser:
                 isPresent = self.is_id_present(id)
                 if isPresent is False:
                     return None
-                times = self.get_only_times(exclude_outliers=exclude_outliers, id=id)
+                times = self.get_only_times(
+                    exclude_outliers=exclude_outliers, id=id)
             else:
                 times = self.get_only_times(exclude_outliers=exclude_outliers)
         else:
-            times = self.get_only_times(keystrokes, exclude_outliers=exclude_outliers)
+            times = self.get_only_times(
+                keystrokes, exclude_outliers=exclude_outliers)
         if len(times) < 2:
             print("Not enough keystrokes to calculate standard deviation.")
             return None
