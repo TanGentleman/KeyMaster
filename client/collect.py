@@ -13,7 +13,7 @@ class Collect:
         """
         if config is None:
             config = Config()
-        self.collector = config.KeyLogger()
+        self.collector = config.config.KeyLogger()
 
     def reset(self) -> None:
         """

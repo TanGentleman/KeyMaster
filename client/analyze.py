@@ -13,7 +13,7 @@ class Analyze:
         """
         if config is None:
             config = Config(preload_analysis=preload)
-        self.parser = config.KeyParser()
+        self.parser = config.config.KeyParser()
 
     def load_logfile(self, logfile: str | None = None) -> None:
         """

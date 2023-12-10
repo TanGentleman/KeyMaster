@@ -13,7 +13,7 @@ class Generate:
         """
         if config is None:
             config = Config()
-        self.generator = config.KeyGenerator()
+        self.generator = config.config.KeyGenerator()
 
     def set_speed(self, speed: int | float) -> None:
         """
