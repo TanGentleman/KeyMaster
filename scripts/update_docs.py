@@ -6,7 +6,7 @@ import ast
 from os import path, listdir, mkdir
 
 # KeyMaster imports
-from utils.config import DOCS_DIR, ROOT
+from utils.config import ROOT
 
 DOCS_DIR = path.join(ROOT, "docs")
 CLASSES_DIR = path.join(ROOT, "classes")
@@ -14,6 +14,7 @@ UTILS_DIR = path.join(ROOT, "utils")
 SCRIPTS_DIR = path.join(ROOT, "scripts")
 CLIENT_DIR = path.join(ROOT, "client")
 
+PRODUCTION_DIRS = [CLIENT_DIR]
 
 def create_dir(dir) -> None:
     """Creates a directory if it doesn't exist."""
@@ -30,13 +31,14 @@ def get_filenames(dir) -> list[str]:
     return filenames
 
 
-def get_files() -> dict[str, list[str]]:
+def get_files(directories: list[str]) -> dict[str, list[str]]:
     """Returns a dictionary of folder:list of filenames."""
     files = {}
-    files['scripts'] = get_filenames(SCRIPTS_DIR)
-    files['utils'] = get_filenames(UTILS_DIR)
-    files['classes'] = get_filenames(CLASSES_DIR)
-    files['client'] = get_filenames(CLIENT_DIR)
+    for folderpath in directories:
+        # get the filenames for each filepath
+        folder = path.basename(folderpath)
+        files[folder] = get_filenames(folderpath)
+
     return files
 
 
@@ -147,7 +149,7 @@ def main():
     Main function to read the input file and store function information.
     """
     create_directories()
-    files = get_files()
+    files = get_files(PRODUCTION_DIRS)
     for folder in files:
         if folder == 'utils':
             continue
