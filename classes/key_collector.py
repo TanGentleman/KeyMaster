@@ -28,12 +28,15 @@ class KeyLogger:
     - round_digits (`int`): The number of digits to round to.
     - duration (`int | float`): The duration to listen for.
     """
+
     def __init__(
             self,
             filename: str | None = "REG",
             only_typeable: bool = COLLECT_ONLY_TYPEABLE,
             round_digits: int = ROUND_DIGITS,
-            duration: int | float = DEFAULT_LISTENER_DURATION) -> None:
+            duration: int | float = DEFAULT_LISTENER_DURATION,
+            banned_keys: list[str] | None = None
+            ) -> None:
         """
         Initialize the KeyLogger. If filename is None, the logger will not save to a file.
         Defaults to keystrokes.json in the logs directory.
@@ -51,6 +54,8 @@ class KeyLogger:
         self.only_typeable = only_typeable
         self.round_digits = round_digits
         self.duration = duration
+
+        self.banned_keys = banned_keys
 
         self.is_reset = True
 
@@ -170,6 +175,13 @@ class KeyLogger:
         """Not client facing.
         Handles the event when a key is pressed.
         """
+        # Exclude banned keys
+        if isinstance(keypress, KeyCode):
+            if keypress.char is None:
+                return
+            if self.banned_keys is not None and keypress.char in self.banned_keys:
+                print(f"Key {keypress.char} is banned. Ignoring.")
+                return
         # Validate keypress
         if is_key_valid(keypress):
             self.log_valid_keypress(keypress)
@@ -335,7 +347,8 @@ class KeyLogger:
                 `bool`: True if the log was saved successfully, False otherwise.
         """
         if self.is_reset is False:
-            print("You have already saved a log. Please reset the logger before saving again.")
+            print(
+                "You have already saved a log. Please reset the logger before saving again.")
             return False
         filepath = get_filepath(self.filename)
         if filepath is None:

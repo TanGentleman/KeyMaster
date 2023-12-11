@@ -22,9 +22,11 @@ class Config:
         """
         Initialize the Config class. All arguments are optional and have defaults in config.py
         """
-        self._config = config if config is not None else Configurator()
+        config = config if config is not None else Configurator()
         if not isinstance(config, Configurator):
             raise TypeError("config must be a Configurator.")
+        
+        self._config = config
         self._disable = disable if disable is not None else config.disable
         self._logging = logging if logging is not None else config.logging
         self._allow_newlines = allow_newlines if allow_newlines is not None else config.allow_newlines

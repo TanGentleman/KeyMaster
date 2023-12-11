@@ -48,7 +48,7 @@ def nuke_converted_logs(logs: list[Log], logfile=CONVERTED_LOGFILE) -> None:
     # Analyze logfile using backend KeyParser class for heightened log
     # permissions
     config = Config(logfile=logfile)
-    parser = config.KeyParser()
+    parser = config.config.KeyParser()
     # parser = Analyze(config).parser
     parser.logs = logs
     parser.confirm_nuke()

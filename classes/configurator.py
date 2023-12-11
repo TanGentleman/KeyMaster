@@ -126,7 +126,8 @@ class Configurator:
         return KeyLogger(
             filename=filename,
             only_typeable=not (self.allow_unicode),
-            round_digits=self.round_digits)
+            round_digits=self.round_digits,
+            banned_keys=list(self.banned_keys))
 
     def KeyParser(self) -> KeyParser:
         """
