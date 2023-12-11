@@ -18,7 +18,7 @@ See GitHub [Issues](https://github.com/tangentleman/KeyMaster/issues) for featur
 - Adjust `cli.py` to use client functions and run the program from the command line, still accepting various flags
 - Handled edge cases, squashed numerous bugs, and closed many issues
 
-## [In Progress]
+### In Progress
 - Fully migrate from print statements to the logging module
 - Jupyter notebook walkthroughs and workflows for client facing classes
 - Utilize public datasets to make custom algorithm choices for generating keystroke delays

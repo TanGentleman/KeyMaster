@@ -23,12 +23,15 @@ DEFAULT_STRING = "hey look ma, it's a simulation!"
 BANNED_KEYS = ['√']
 ROUND_DIGITS = 4  # Precision for the time value in the log files
 SIM_MAX_DURATION = 30
-SIM_SPEED_MULTIPLE = 10
+SIM_SPEED_MULTIPLE = 1
+# NOTE:
+# DEFAULT: SIM_SPEED_MULTIPLE = 1, SIM_DELAY_MEAN = 0.12, SIM_DELAY_STD_DEV = 0.04
+# With these settings, WPM averages around 99 as a benchmark
 
 ### KeyGenerator.py CONSTANTS ###
 SHOW_SHIFT_INSERTIONS = True
-SIM_DELAY_MEAN = 0.06
-SIM_DELAY_STD_DEV = 0.015
+SIM_DELAY_MEAN = 0.12
+SIM_DELAY_STD_DEV = 0.04
 SIM_MAX_WORDS = 300
 MIN_DELAY = 0.03
 SIM_MAX_SPEED = 10  # This is the maximum speed multiple for the simulation

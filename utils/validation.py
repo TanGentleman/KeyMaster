@@ -170,12 +170,11 @@ class KeystrokeList:
         if not isinstance(keystrokes, KeystrokeList):
             raise TypeError(
                 'Must use KeystrokeList.extend with a KeystrokeList')
-        
+
         self.keystrokes.extend(keystrokes.keystrokes)
         self.length = len(self.keystrokes)
         # Ensure first Keystone.time set to None
         self.set_null_time()
-        
 
     def is_empty(self) -> bool:
         return self.length == 0

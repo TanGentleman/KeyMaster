@@ -55,10 +55,10 @@ def is_valid_wrapped_char(key: str) -> bool:
     Check if a character is wrapped in single quotes.
     Characters that fail is_key_valid() return False.
     """
-    return (len(key) == 3 
-        and key[0] == APOSTROPHE 
-        and is_key_valid(key[1]) 
-        and key[2] == APOSTROPHE)
+    return (len(key) == 3
+            and key[0] == APOSTROPHE
+            and is_key_valid(key[1])
+            and key[2] == APOSTROPHE)
 
 
 def is_valid_wrapped_special_key(key: str) -> bool:
@@ -79,7 +79,8 @@ def unwrap_char(key_string: str) -> str:
     """
     if len(key_string) == 1:
         return key_string
-    if len(key_string) == 3 and key_string[0] == APOSTROPHE and key_string[-1] == APOSTROPHE:
+    if len(
+            key_string) == 3 and key_string[0] == APOSTROPHE and key_string[-1] == APOSTROPHE:
         char = key_string[1]
         return char
     else:
