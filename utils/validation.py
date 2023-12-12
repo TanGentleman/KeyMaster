@@ -88,8 +88,7 @@ class Keystroke:
             if self.unicode_char is not None and self.unicode_char in KEYBOARD_CHARS:
                 self.is_typeable_char = True
 
-            self.legal_key: LegalKey | None = None
-            if self.is_typeable_char or self.key in SPECIAL_KEYS:
+            if self.is_typeable_char or self.key == STOP_CODE or self.key in SPECIAL_KEYS:
                 self.legal_key = self.legalize()
 
     def props(self):
