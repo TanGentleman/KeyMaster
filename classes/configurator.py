@@ -35,7 +35,6 @@ class Configurator:
             allow_unicode: bool = DEFAULT_ALLOW_UNICODE,  # KeyGenerator and scripts
             logfile: str | None = "REG",  # KeyLogger and KeyParser
             banned_keys: list[str] = BANNED_KEYS,
-            # Warning: aliased to list referenced by is_key_valid.
             round_digits: int = ROUND_DIGITS,
             max_simulation_time: int | float = SIM_MAX_DURATION,
             simulation_speed_multiple: int | float = SIM_SPEED_MULTIPLE,
@@ -50,9 +49,8 @@ class Configurator:
         self.allow_newlines = allow_newlines
         self.allow_unicode = allow_unicode
         self.logfile = logfile  # Files are .json and in the logs/ directory
-        # Create a copy of the banned_keys list to prevent aliasing?
-        # self.banned_keys = list(banned_keys)
-        self.banned_keys = banned_keys  # ["√"]
+        # Create a copy of the banned_keys list to prevent aliasing
+        self.banned_keys = list(banned_keys)
         self.round_digits = round_digits
 
         self.max_simulation_time = float(max_simulation_time)
@@ -127,7 +125,7 @@ class Configurator:
             filename=filename,
             only_typeable=not (self.allow_unicode),
             round_digits=self.round_digits,
-            banned_keys=list(self.banned_keys))
+            banned_keys=self.banned_keys)
 
     def KeyParser(self) -> KeyParser:
         """
@@ -153,7 +151,7 @@ class Configurator:
             allow_newlines=self.allow_newlines,
             allow_unicode=self.allow_unicode,
             round_digits=self.round_digits,
-            banned_keys=list(self.banned_keys))
+            banned_keys=self.banned_keys)
 
     def __repr__(self) -> str:
         changed_values = []  # List to store the changed values
