@@ -4,6 +4,7 @@ from pynput.keyboard import Key, KeyCode
 
 from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH
 from utils.config import APOSTROPHE, STOP_CODE, SPECIAL_KEYS, BANNED_KEYS, KEYBOARD_CHARS
+from utils.constants import DEFAULT_LOG_ID
 
 REPLACE_WONKY_UNICODE = False
 REPLACEMENTS = {
@@ -192,3 +193,51 @@ def resolve_filename(filename: str | None) -> str | None:
         return None
     # Return the last part of the filepath
     return path.basename(filepath)
+
+def get_log_id() -> str:
+    """
+    Get the current log id.
+    """
+    filepath = path.join(LOG_DIR, "LOG_ID.txt")
+    log_id = DEFAULT_LOG_ID
+    try: 
+        with open(filepath, "r") as f:
+            log_id = f.read()
+            # Should I add assertions to make sure the log id is valid?
+            if len(log_id) != 4:
+                raise ValueError("Invalid log id. Needs to be 4 digit")
+            return log_id
+    except FileNotFoundError:
+        return log_id
+    except AssertionError:
+        return log_id
+
+def update_log_id(log_id: str) -> None:
+    # Increment the number (Current is A001, update to A002)
+    # Write the new number to {LOG_DIR}/LOG_ID.txt
+    def next_id(id) -> str:
+        """
+        Get the next log id.
+        """
+        if len(id) != 4:
+            raise ValueError("Invalid log id. Needs to be 4 digit")
+        letter = id[0]
+        number = int(id[1:])
+        if not(ord('A') <= ord(letter) < ord('Z')):
+            raise ValueError("Invalid log id. Series must be A-Z.")
+        if number == 999:
+            letter = chr(ord(letter) + 1)
+            number = 0
+        else:
+            number += 1
+        return letter + str(number).zfill(3)
+    new_id = DEFAULT_LOG_ID
+    try:
+        new_id = next_id(log_id)
+    except ValueError:
+        print("Invalid log id. Using default.")
+        pass
+    filepath = path.join(LOG_DIR, "LOG_ID.txt")
+    with open(filepath, "w") as f:
+        f.write(new_id)
+    return

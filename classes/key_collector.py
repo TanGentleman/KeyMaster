@@ -11,11 +11,10 @@ from pynput.keyboard import Key, KeyCode, Listener
 from utils.config import APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
 from utils.config import LISTENER_WORD_LIMIT, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY
 from utils.config import COLLECT_ONLY_TYPEABLE
-from utils.helpers import get_filepath, is_key_valid, resolve_filename
+from utils.helpers import get_filepath, is_key_valid, resolve_filename, get_log_id, update_log_id
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 
 IGNORE_SHIFT = True
-
 
 class KeyLogger:
     """
@@ -315,11 +314,12 @@ class KeyLogger:
         self.word_count = input_string.count(' ')
         return True
 
-    def create_log(self) -> Log | None:
+    def create_log(self, log_id: str | None = None) -> Log | None:
         """Not client facing.
         Returns a Log object using the internal keystrokes and input string.
         """
         # ensure log is legit
+        assert log_id is None or len(log_id) == 4
         legit = self.is_loggable()
         if legit is False:
             print("Log not created.")
@@ -330,7 +330,7 @@ class KeyLogger:
 
         # Create the log object of class Log
         log: Log = {
-            'id': unique_id,
+            'id': log_id or unique_id,
             'string': self.typed_string,
             'keystrokes': self.keystrokes
         }
@@ -359,8 +359,8 @@ class KeyLogger:
             if reset:
                 self.reset()
             return False
-
-        log = self.create_log()
+        log_id = get_log_id()
+        log = self.create_log(log_id)
         if not log:
             print("Log had trouble saving!")
             return False
@@ -381,6 +381,7 @@ class KeyLogger:
         except Exception as e:
             print(f"An error occurred: {e}")
             return False
+        update_log_id(log_id)
         self.is_reset = False
         if reset:
             self.reset()
