@@ -7,12 +7,14 @@ class Analyze:
     The Analyze class is a wrapper for all the analysis options.
     """
 
-    def __init__(self, config: Config | None = None, preload=True) -> None:
+    def __init__(self, config: Config | None = None, preload: bool | None = None) -> None:
         """
         Initialize the Analyze class.
         """
         if config is None:
-            config = Config(preload_analysis=preload)
+            config = Config()
+        if preload is not None:
+            config.preload = preload
         self.parser = config.config.KeyParser()
 
     def load_logfile(self, logfile: str | None = None) -> None:
