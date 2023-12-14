@@ -7,8 +7,8 @@ from utils.validation import Log
 from utils.config import LOG_DIR
 from utils.helpers import get_filepath
 
-ENCODED_FILEPATH = join_path(LOG_DIR, "example.log")
-CONVERTED_LOGFILE = "converted-keystrokes-example"
+ENCODED_FILEPATH = join_path(LOG_DIR, "keystrokes.log")
+CONVERTED_LOGFILE = "converted-keystrokes"
 # Read logfile
 
 
@@ -45,11 +45,8 @@ def nuke_converted_logs(logs: list[Log], logfile=CONVERTED_LOGFILE) -> None:
     ----------
     - logs (`list[Log]`): The list of logs to dump.
     """
-    # Analyze logfile using backend KeyParser class for heightened log
-    # permissions
-    config = Config(logfile=logfile)
-    parser = config.config.KeyParser()
-    # parser = Analyze(config).parser
+    # Analyze using backend KeyParser for direct log access
+    parser = Config(logfile=logfile).config.KeyParser()
     parser.logs = logs
     parser.confirm_nuke()
 

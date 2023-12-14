@@ -13,22 +13,22 @@ DOCS_DIR = path.join(ROOT, "docs")  # Define the path for the docs directory
 ABSOLUTE_REG_FILEPATH = path.join(LOG_DIR, "keystrokes.json")
 ABSOLUTE_SIM_FILEPATH = path.join(LOG_DIR, "simulated-keystrokes.json")
 
-### CONFIGURATION.PY CONFIG ###
+### CONFIGURATION ###
 DEFAULT_EXCLUDE_OUTLIERS = True
 DEFAULT_DISABLE_SIMULATION = False
 DEFAULT_LOGGING = True
 DEFAULT_ALLOW_NEWLINES = True
 DEFAULT_ALLOW_UNICODE = True
-DEFAULT_STRING = "hey look ma, it's a simulation!"
+DEFAULT_STRING = "hey look ma, it's a simulation!" # also used by scripts simulate.py and cli.py
 BANNED_KEYS = ['√']
 ROUND_DIGITS = 4  # Precision for the time value in the log files
 SIM_MAX_DURATION = 30
-SIM_SPEED_MULTIPLE = 1
+SIM_SPEED_MULTIPLE = 20
 # NOTE:
 # DEFAULT: SIM_SPEED_MULTIPLE = 1, SIM_DELAY_MEAN = 0.12, SIM_DELAY_STD_DEV = 0.04
 # With these settings, WPM averages around 99 as a benchmark
 
-### KeyGenerator.py CONSTANTS ###
+### KeyGenerator ###
 SHOW_SHIFT_INSERTIONS = True
 SIM_DELAY_MEAN = 0.12
 SIM_DELAY_STD_DEV = 0.04
@@ -36,16 +36,19 @@ SIM_MAX_WORDS = 300
 MIN_DELAY = 0.03
 SIM_MAX_SPEED = 10  # This is the maximum speed multiple for the simulation
 
-### KeyLogger CONSTANTS ###
+### KeyLogger ###
 DEFAULT_LISTENER_DURATION = 30
 MAX_LOGGABLE_DELAY = 3
 LISTENER_WORD_LIMIT = 50
 COLLECT_ONLY_TYPEABLE = False
 
 # Misc
-STOP_KEY = "*"  # This key is used to stop the listener when pressed
+STOP_KEY = "*"  # Special char that stops the listener and halts keystrokes generation
 STOP_CODE = 'STOP'
 SHIFT_SPEED = 0.2222  # keystroke.time value of formulaically generated shift keystrokes
+
+
+# UNOFFICIAL
 # max length of Keystroke.key (to prevent invalid overflow)
 MAX_KEY_LENGTH = 20
 

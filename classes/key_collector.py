@@ -14,7 +14,7 @@ from utils.config import COLLECT_ONLY_TYPEABLE
 from utils.helpers import get_filepath, is_key_valid, resolve_filename, get_log_id, update_log_id
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 
-IGNORE_SHIFT = True
+LOG_SHIFT_PRESSES = False
 
 class KeyLogger:
     """
@@ -114,7 +114,7 @@ class KeyLogger:
         Args:
                 `keypress` (`Key` or `KeyCode`): The key press event to log.
         """
-        if IGNORE_SHIFT and keypress == Key.shift:
+        if LOG_SHIFT_PRESSES is False and keypress == Key.shift:
             return
         if is_key_valid(keypress) is False:
             print('CRITICAL: Only keys that pass is_key_valid .')
@@ -389,7 +389,7 @@ class KeyLogger:
 
     def __repr__(self) -> str:
         pretty_string = (
-            f"# Configuration:\nfile={resolve_filename(self.filename)}" +
+            f"# Configuration:\nfile={resolve_filename(self.filename)}\nBanned Keys: {self.banned_keys}" +
             (f"\nTypeable-only mode enabled." if self.only_typeable else "")
         )
         return pretty_string
