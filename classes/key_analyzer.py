@@ -354,7 +354,7 @@ class KeyParser:
                 times = self.get_only_times(exclude_outliers=exclude_outliers)
         else:
             times = self.get_only_times(
-                keystrokes, exclude_outliers=exclude_outliers)
+                keystrokes, exclude_outliers)
         if len(times) == 0:
             print("No keystrokes found.")
             return 0
@@ -386,7 +386,7 @@ class KeyParser:
                 times = self.get_only_times(exclude_outliers=exclude_outliers)
         else:
             times = self.get_only_times(
-                keystrokes, exclude_outliers=exclude_outliers)
+                keystrokes, exclude_outliers)
         if len(times) < 2:
             print("Not enough keystrokes to calculate standard deviation.")
             return None
@@ -411,7 +411,7 @@ class KeyParser:
             return
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
-        times = self.get_only_times(keystrokes, exclude_outliers=True)
+        times = self.get_only_times(keystrokes, exclude_outliers)
         if len(times) == 0:
             print("No keystroke times found.")
             return
@@ -515,8 +515,6 @@ class KeyParser:
             if isPresent is False:
                 return keystrokes
         for log in self.logs:
-            if not isinstance(log['keystrokes'], KeystrokeList):
-                raise TypeError("Keystrokes must be of type KeystrokeList.")
             if id is not None and self.is_id_present(id, log):
                 keystrokes.extend(log['keystrokes'])
                 return keystrokes
@@ -659,6 +657,34 @@ class KeyParser:
         except Exception as e:
             print(f"An error occurred: {e}")
             return
+        
+    def stats(self, 
+                keystrokes: KeystrokeList | None = None,
+                exclude_outliers: bool | None = None,
+                id: str | None = None,
+                ) -> None:
+        """Client facing.
+        Print statistics for the given log.
+        """
+        if keystrokes is None:
+            if id is not None:
+                isPresent = self.is_id_present(id)
+                if isPresent is False:
+                    print("ID invalid, no strings found.")
+                    return None
+                keystrokes = self.get_keystrokes(id)
+            else:
+                keystrokes = self.get_keystrokes(id)
+        if keystrokes.is_empty():
+            print("No keystrokes found.")
+            return None
+        if exclude_outliers is None:
+            exclude_outliers = self.exclude_outliers
+        print(f"Total keystrokes: {len(keystrokes)}")
+        print(f"Average delay: {self.get_average_delay(keystrokes, exclude_outliers)}")
+        print(f"Standard deviation: {self.get_std_deviation(keystrokes, exclude_outliers)}")
+        print(f"Highest keystroke time: {max(self.get_only_times(keystrokes, exclude_outliers))}")
+        print(f"Average WPM: {self.wpm(keystrokes, exclude_outliers)}")
 
     def __repr__(self) -> str:
         pretty_string = (
