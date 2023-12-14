@@ -108,7 +108,7 @@ class Keystroke:
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Keystroke):
-            return self.key == other.key
+            return self.key == other.key and self.time == other.time
         elif isinstance(other, str):
             return self.key == other
         return False
