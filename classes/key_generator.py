@@ -53,7 +53,6 @@ class KeyGenerator:
         self.max_words = max_words
         self.round_digits = round_digits
         self.banned_keys = banned_keys
-        self.simulation_timer: Timer | None = None
         self.whitespace_dict = {
             ' ': str(Key.space),
             '\t': str(Key.tab),
@@ -200,16 +199,6 @@ class KeyGenerator:
         delay = round(self.calculate_delay(), self.round_digits)
         return Keystroke(key_string, delay)
 
-    def stop_simulation(self) -> None:
-        """Not client facing.
-        Stop the simulation.
-        """
-        if self.simulation_timer:
-            self.simulation_timer.cancel()
-        if self.stop:
-            return
-        self.stop = True
-
     def simulate_keystrokes(self, keystrokes: KeystrokeList) -> None:
         """Client facing.
         Function to simulate the given keystrokes.
@@ -228,39 +217,41 @@ class KeyGenerator:
         self.stop = False
         # Initialize the keyboard controller
         keyboard = Controller()
-        self.simulation_timer = Timer(self.max_duration, self.stop_simulation)
-        self.simulation_timer.start()
-        for keystroke in keystrokes:
-            if self.stop:
-                logging.info(
-                    f'Duration {self.max_duration}s elapsed. Stopping simulation.')
-                break
-            if keystroke.valid is False:
-                logging.error(
-                    f"simulate_keystrokes: Invalid key: {keystroke.key}")
-                continue
-
-            key = keystroke.key
-            if key == STOP_CODE:
-                key = STOP_KEY
-            time = keystroke.time
-            if time is None:
-                none_count += 1
-                if none_count > 1:
-                    logging.error(
-                        'Critical error: None value marks first character. Only use once')
+        def stop_simulation() -> None:
+            self.stop = True
+        simulation_timer = Timer(self.max_duration, stop_simulation)
+        simulation_timer.start()
+        try:
+            for keystroke in keystrokes:
+                if self.stop:
+                    logging.info(
+                        f'Duration {self.max_duration}s elapsed. Stopping simulation.')
                     break
-                # What should this time diff be?
-                delay = 0.0
-            else:
-                delay = time
-                # If time difference is greater than 3 seconds, set diff to 3.x
-                # seconds with decimal coming from delay
-                if self.speed_multiplier > 0:
-                    delay = delay / self.speed_multiplier
-                if delay > 3:
-                    delay = 3 + (delay / 1000)
-            try:
+                if keystroke.valid is False:
+                    logging.error(
+                        f"simulate_keystrokes: Invalid key: {keystroke.key}")
+                    continue
+
+                key = keystroke.key
+                if key == STOP_CODE:
+                    key = STOP_KEY
+                time = keystroke.time
+                if time is None:
+                    none_count += 1
+                    if none_count > 1:
+                        logging.error(
+                            'Critical error: None value marks first character. Only use once')
+                        break
+                    # What should this time diff be?
+                    delay = 0.0
+                else:
+                    delay = time
+                    # If time difference is greater than 3 seconds, set diff to 3.x
+                    # seconds with decimal coming from delay
+                    if self.speed_multiplier > 0:
+                        delay = delay / self.speed_multiplier
+                    if delay > 3:
+                        delay = 3 + (delay / 1000)
                 if delay > 0:
                     # Wait for the time difference between keystrokes
                     sleep(delay)
@@ -268,7 +259,13 @@ class KeyGenerator:
                     # Ignore shift and caps lock
                     if key == 'Key.shift' or key == 'Key.caps_lock':
                         continue
-                    keyboard.tap(SPECIAL_KEYS[key])
+                    try:
+                        keyboard.tap(SPECIAL_KEYS[key])
+                    except Exception as e:    
+                        logging.error(
+                            f"ERROR! special key not pressed: {key}")
+                        continue
+                    
                 else:
                     # Decode the character
                     char = keystroke.unicode_char
@@ -291,10 +288,11 @@ class KeyGenerator:
                 if key == STOP_KEY:
                     logging.warning('STOP key found. Stopping simulation.')
                     break
-            except Exception as e:
-                logging.critical(f"An error occurred: {e}")
-                break
-        self.stop_simulation()
+        except KeyboardInterrupt:
+            logging.info("Simulation interrupted.")
+        finally:
+            if simulation_timer.is_alive():
+                simulation_timer.cancel()
 
     def simulate_string(self, string: str) -> KeystrokeList | None:
         """Client facing.
@@ -307,9 +305,5 @@ class KeyGenerator:
         if keystrokes.is_empty():
             logging.error("Given input was not simulated.")
             return None
-        try:
-            self.simulate_keystrokes(keystrokes)
-        except KeyboardInterrupt:
-            self.stop_simulation()
-            print("Simulation stopped.")
+        self.simulate_keystrokes(keystrokes)
         return keystrokes
