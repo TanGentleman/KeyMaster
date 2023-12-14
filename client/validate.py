@@ -12,7 +12,7 @@ class Key:
     - keystroke (`Keystroke`): The Keystroke object.
     """
 
-    def __init__(self, key: str, time: float | None):
+    def __init__(self, key: str, time: float | None = None):
         try:
             self.keystroke = Keystroke(key, time)
         except Exception as e:
@@ -20,6 +20,9 @@ class Key:
             raise ValueError("Invalid key or time.")
         self.key = self.keystroke.key
         self.time = self.keystroke.time
+    
+    def __repr__(self):
+        return self.keystroke.props()
 
 
 class Keys:

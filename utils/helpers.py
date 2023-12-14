@@ -68,7 +68,7 @@ def is_valid_wrapped_special_key(key: str) -> bool:
     """
     if len(key) > 3 and key[0] == APOSTROPHE and key[-1] == APOSTROPHE:
         key = key[1:-1]
-        return key == STOP_CODE or key in SPECIAL_KEYS
+        return key == STOP_CODE or "Key." + key in SPECIAL_KEYS
     return False
 
 

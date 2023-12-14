@@ -37,7 +37,7 @@ class LegalKey:
         self.is_special = is_special
 
     def __repr__(self) -> str:
-        return f"key={self.key}"
+        return f"|{self.key}|"
 
     def __eq__(self, other) -> bool:
         if isinstance(other, LegalKey):
@@ -92,7 +92,7 @@ class Keystroke:
                 self.legal_key = self.legalize()
 
     def props(self):
-        print(f"key: {self.key}"
+        return (f"key: {self.key}"
               + f"\ntime: {self.time}"
               + f"\nvalid: {self.valid}"
               + f"\nunicode_char: {self.unicode_char}"
@@ -122,7 +122,10 @@ class Keystroke:
         is_special = False
         legal_key = ''
         if self.unicode_char is None:
-            if self.key == STOP_CODE or self.key in SPECIAL_KEYS:
+            if self.key in SPECIAL_KEYS:
+                is_special = True
+                legal_key = APOSTROPHE + self.key[4:] + APOSTROPHE
+            elif self.key == STOP_CODE: 
                 is_special = True
                 legal_key = APOSTROPHE + self.key + APOSTROPHE
             else:
