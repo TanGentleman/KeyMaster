@@ -4,13 +4,15 @@ from json import load as json_load
 from time import time, perf_counter
 from uuid import uuid4
 from threading import Timer
-
+import logging
+logging.basicConfig(encoding='utf-8', level=logging.INFO)
 # Third party imports
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
-from utils.config import APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
-from utils.config import LISTENER_WORD_LIMIT, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY
-from utils.config import COLLECT_ONLY_TYPEABLE
+from utils.config import (  APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS,
+                            LISTENER_WORD_LIMIT, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY,
+                            COLLECT_ONLY_TYPEABLE
+                        )
 from utils.helpers import get_filepath, is_key_valid, resolve_filename, get_log_id, update_log_id
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 
@@ -117,10 +119,9 @@ class KeyLogger:
         if LOG_SHIFT_PRESSES is False and keypress == Key.shift:
             return
         if is_key_valid(keypress) is False:
-            print('CRITICAL: Only keys that pass is_key_valid .')
+            logging.error('log_valid_keypress: Keys must pass is_key_valid')
             raise ValueError(
                 "log_valid_keypress: Invalid keypress. This should not happen.")
-
         encoded_key = ""
         # Calculate delay between keystrokes
         current_time = perf_counter()
@@ -136,7 +137,7 @@ class KeyLogger:
                 return
             key = keypress.char
             if len(key) != 1:
-                print(f"WARNING: Ignoring input length != 1: {key}")
+                logging.error(f"log_valid_keypress: Ignoring input length != 1: {key}")
                 return
             if self.only_typeable and key not in KEYBOARD_CHARS:
                 return
@@ -179,7 +180,7 @@ class KeyLogger:
             if keypress.char is None:
                 return
             if self.banned_keys is not None and keypress.char in self.banned_keys:
-                print(f"Key {keypress.char} is banned. Ignoring.")
+                logging.info(f"Key {keypress.char} is banned. Ignoring.")
                 return
         # Validate keypress
         if is_key_valid(keypress):
@@ -235,20 +236,20 @@ class KeyLogger:
         try:
             with Listener(on_press=self.on_press, on_release=self.on_release) as listener:
                 print(
-                    f"Listening for {duration} seconds. The listener will stop on ESC, STOP_KEY, or after {LISTENER_WORD_LIMIT} words.")
+                    f"Listening for {duration} seconds. The listener will stop on ESC, STOP_KEY, or after {LISTENER_WORD_LIMIT} words.\n")
                 # Start a timer of 10 seconds
                 self.timer = Timer(duration, listener.stop)
                 self.timer.start()
                 listener.join()
         except KeyboardInterrupt:
-            print("Listener stopped.")
+            logging.info("Listener stopped.")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logging.error(f"An error occurred: {e}")
         finally:
             # Ensure the listener is stopped
             if listener is not None:
                 listener.stop()
-                print("Listener stopped!")
+                logging.info("Listener stopped!")
             # Ensure the timer is stopped
             if self.timer is not None:
                 self.timer.cancel()
@@ -275,7 +276,7 @@ class KeyLogger:
             input_string = self.typed_string
 
         if keystrokes.is_empty():
-            print("No keystrokes found. Log not legit")
+            logging.error("No keystrokes found. Log not legit")
             return False
         none_count = 0
         for keystroke in keystrokes:
@@ -283,10 +284,10 @@ class KeyLogger:
             if delay is None:
                 none_count += 1
                 if none_count > 1:
-                    print('None value marks first character ONLY! Log not legit.')
+                    logging.error('None value marks first character ONLY! Log not legit.')
                     return False
         success = keystrokes.validate(input_string)
-        print(f"{len(keystrokes)} Keystrokes validated: {success}")
+        logging.info(f"{len(keystrokes)} Keystrokes validated: {success}")
         # I want to solve banned key problem (spam prints), but for now, just return success
         # Eventually, one should be able to store banned keys in simulated string,
         # so string should be adjusted before using as an argument here
@@ -307,7 +308,7 @@ class KeyLogger:
                 bool: True if state successfully replaced. False if arguments invalid.
         """
         if self.is_loggable(keystrokes, input_string) is False:
-            print("Invalid log. Internal log not set")
+            logging.error("Invalid log. Internal log not set")
             return False
         self.keystrokes = keystrokes
         self.typed_string = input_string
@@ -322,15 +323,19 @@ class KeyLogger:
         assert log_id is None or len(log_id) == 4
         legit = self.is_loggable()
         if legit is False:
-            print("Log not created.")
+            logging.error("Log not created.")
             return None
 
         # Create a unique ID
-        unique_id = str(uuid4())
+        id = ''
+        if log_id is None:
+            id = str(uuid4())
+        else:
+            id = log_id
 
         # Create the log object of class Log
         log: Log = {
-            'id': log_id or unique_id,
+            'id': id,
             'string': self.typed_string,
             'keystrokes': self.keystrokes
         }
@@ -347,22 +352,22 @@ class KeyLogger:
                 `bool`: True if the log was saved successfully, False otherwise.
         """
         if self.is_reset is False:
-            print(
+            logging.error(
                 "You have already saved a log. Please reset the logger before saving again.")
             return False
         filepath = get_filepath(self.filename)
         if filepath is None:
-            print("Filename null. Log not saved.")
+            logging.info("Filename null. Log not saved.")
             return False
         if self.keystrokes.is_empty():
-            print("No keystrokes to save.")
+            logging.error("No keystrokes to save.")
             if reset:
                 self.reset()
             return False
         log_id = get_log_id()
         log = self.create_log(log_id)
         if not log:
-            print("Log had trouble saving!")
+            logging.error("Log had trouble saving!")
             return False
         # Create var logs to store the logs
         # Replace keystrokes in json using KeystrokeEncoder
@@ -374,12 +379,12 @@ class KeyLogger:
                 logs.append(log)
                 f.seek(0)
                 json_dump(logs, f, cls=KeystrokeEncoder)
-                print("Logfile updated.")
+                logging.info("Logfile updated.")
         except FileNotFoundError:
             with open(filepath, 'w') as f:
                 json_dump([log], f, cls=KeystrokeEncoder)
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logging.error(f"An error occurred: {e}")
             return False
         update_log_id(log_id)
         self.is_reset = False

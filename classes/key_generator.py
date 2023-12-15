@@ -2,19 +2,17 @@
 from time import sleep
 from threading import Timer
 from random import normalvariate
-
+import logging
+logging.basicConfig(encoding='utf-8', level=logging.INFO)
 # Third party imports
 from pynput.keyboard import Controller
 
-
 # KeyMaster imports
-from utils.config import DEFAULT_DISABLE_SIMULATION, BANNED_KEYS, SIM_SPEED_MULTIPLE, SIM_MAX_WORDS, SIM_MAX_DURATION, ROUND_DIGITS, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE
-from utils.config import STOP_KEY, STOP_CODE, APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, SHIFTED_CHARS, SHOW_SHIFT_INSERTIONS, SHIFT_SPEED, SIM_MAX_SPEED, MIN_DELAY, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV
+from utils.config import (
+    SIM_SPEED_MULTIPLE, DEFAULT_DISABLE_SIMULATION, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, SIM_MAX_DURATION, SIM_MAX_WORDS, ROUND_DIGITS, BANNED_KEYS,
+    SIM_MAX_SPEED, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, MIN_DELAY, GENERATE_SHIFTS, SHIFTED_CHARS, PRINT_SHIFT_INSERTIONS, SHIFT_SPEED,
+    STOP_KEY, APOSTROPHE, STOP_CODE, KEYBOARD_CHARS, SPECIAL_KEYS)
 from utils.validation import Keystroke, Key, KeystrokeList
-
-import logging
-logging.basicConfig(encoding='utf-8', level=logging.INFO)
-
 
 class KeyGenerator:
     """
@@ -71,10 +69,11 @@ class KeyGenerator:
         """
         if speed < 0:
             raise ValueError("Speed multiplier must be greater than 0.")
-        if speed > SIM_MAX_SPEED:
+        max_speed = SIM_MAX_SPEED
+        if speed > max_speed:
             logging.error(
-                f"Invalid speed multiplier: {speed}. Setting to {SIM_MAX_SPEED}")
-            speed = SIM_MAX_SPEED
+                f"Invalid speed multiplier: {speed}. Setting to {max_speed}")
+            speed = max_speed
         self.speed_multiplier = float(speed)
 
     def calculate_delay(self, speed_multiple: int |
@@ -101,7 +100,6 @@ class KeyGenerator:
             SIM_DELAY_MEAN / (speed_multiple),
             SIM_DELAY_STD_DEV / speed_multiple)
         if delay < MIN_DELAY:
-            # print(f"Delay too low: {delay}")
             delay = MIN_DELAY + delay / 10
         return delay
 
@@ -116,7 +114,7 @@ class KeyGenerator:
         # The rest of the code from the simulate_keystrokes function goes here.
         keystrokes = KeystrokeList()
         if not input_string:
-            print("No input string provided.")
+            logging.error("No input string provided.")
             return keystrokes
         word_count = 0
 
@@ -129,33 +127,27 @@ class KeyGenerator:
             keystroke = self.generate_keystroke(char)
             if keystroke is None:
                 continue
+            
             if char == ' ':
                 word_count += 1
-
-            if len(keystrokes) == 0:
-                last_key = None
-            else:
-                last_key = keystrokes[-1].key
-            # Lambda function to check if a key is eligible to have shift
-            # before it
-
-            def shift_eligible(k): return (
-                k is None or k == ' ') or (
-                k not in SHIFTED_CHARS and not k.isupper())
-
-            # Check if a shift key needs to be added
-            if shift_eligible(
-                    last_key):  # isn't last key wrapped in apostrophes?
-                if char.isupper() or (char in SHIFTED_CHARS):
-                    if SHOW_SHIFT_INSERTIONS:
-                        logging.info(f"Inserting shift before key {i}: {char}")
-                    # Add a shift keypress
-                    if keystrokes.is_empty():
-                        time = None
-                    else:
-                        time = SHIFT_SPEED
-                    key = str(Key.shift)
-                    keystrokes.append(Keystroke(key, time))
+            last_key = None
+            if GENERATE_SHIFTS:
+                if not keystrokes.is_empty():
+                    last_key = keystrokes[-1].key
+                if (last_key is None 
+                    or last_key in self.whitespace_dict 
+                    or (last_key not in SHIFTED_CHARS and not last_key.isupper())):
+                    # Check if a shift key needs to be added
+                    if char.isupper() or (char in SHIFTED_CHARS):
+                        if PRINT_SHIFT_INSERTIONS:
+                            logging.info(f"Inserting shift before key {i}: {char}")
+                        # Add a shift keypress
+                        if keystrokes.is_empty():
+                            time = None
+                        else:
+                            time = SHIFT_SPEED
+                        key = str(Key.shift)
+                        keystrokes.append(Keystroke(key, time))
             if keystrokes.is_empty():
                 keystroke.time = None
             keystrokes.append(keystroke)
@@ -271,8 +263,8 @@ class KeyGenerator:
                     char = keystroke.unicode_char
                     if char is None:
                         if key != STOP_KEY:
-                            print(f"Unicode value is None, key: {key}")
-                            print(f"Pre-emptively stopping simulation.")
+                            logging.error(f"Unicode value is None, key: {key}")
+                            logging.info(f"Pre-emptively stopping simulation.")
                             break
                         char = STOP_KEY
                     # Don't simulate banned keys
