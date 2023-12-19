@@ -29,15 +29,15 @@ class Analyze:
             self.parser.filename = logfile
         self.parser.load_logs()
 
-    def is_id_present(self, id: str) -> bool:
+    def is_id_present(self, km_id: str) -> bool:
         """
         Check if the string is in the logs.
 
         Parameters
         ----------
-        - id (`str`): The id to check.
+        - km_id (`str`): The id to check.
         """
-        return self.parser.is_id_present(id)
+        return self.parser.is_id_present(km_id)
 
     def id_by_index(self, index: int) -> str:
         """
@@ -52,10 +52,10 @@ class Analyze:
             print("Warning! Index too high. Returning the last id.")
             return self.id_by_index(length)
 
-        id = self.parser.id_by_index(index)
-        if id is None:
+        km_id = self.parser.id_by_index(index)
+        if km_id is None:
             raise ValueError("Logs are empty.")
-        return id
+        return km_id
 
     def id_from_substring(self, substring: str) -> str:
         """
@@ -65,23 +65,23 @@ class Analyze:
         ----------
         - substring (`str`): The substring to check.
         """
-        id = self.parser.id_from_substring(substring)
-        if id is None:
+        km_id = self.parser.id_from_substring(substring)
+        if km_id is None:
             raise ValueError("Substring not present in logs.")
-        return id
+        return km_id
 
-    def get_strings(self, id: str | None = None) -> list[str]:
+    def get_strings(self, km_id: str | None = None) -> list[str]:
         """
         Get the strings from the logs.
 
         Parameters
         ----------
-        - id (`str`, optional): The id to check.
+        - km_id (`str`, optional): The id to check.
         """
-        return self.parser.get_strings(id)
+        return self.parser.get_strings(km_id)
 
     def print_strings(self, max: int = 5, truncate: int = 25,
-                      id: str | None = None) -> None:
+                      km_id: str | None = None) -> None:
         """
         Print the strings from the logs.
 
@@ -89,24 +89,24 @@ class Analyze:
         ----------
         - max (`int`, optional): The maximum number of strings to print.
         - truncate (`int`, optional): The maximum number of characters to print.
-        - id (`str`, optional): The id to check.
+        - km_id (`str`, optional): The id to check.
         """
-        self.parser.print_strings(max, truncate, id)
+        self.parser.print_strings(max, truncate, km_id)
 
     def wpm(self,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
-            id: str | None = None,
+            km_id: str | None = None,
             ) -> float:
         """
         Get the words per minute from the logs.
 
         Parameters
         ----------
-        - id (`str`, optional): The id to check.
+        - km_id (`str`, optional): The id to check.
         - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
-        wpm = self.parser.wpm(keystrokes, exclude_outliers, id)
+        wpm = self.parser.wpm(keystrokes, exclude_outliers, km_id)
         if wpm is None:
             raise ValueError("WPM not present.")
         return wpm
@@ -114,32 +114,32 @@ class Analyze:
     def get_highest_keystroke_times(
             self,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> list[float]:
+            km_id: str | None = None) -> list[float]:
         """
         Get the highest keystroke times from the logs.
 
         Parameters
         ----------
-        - id (`str`, optional): The id to check.
+        - km_id (`str`, optional): The id to check.
         - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
-        return self.parser.get_highest_keystroke_times(exclude_outliers, id)
+        return self.parser.get_highest_keystroke_times(exclude_outliers, km_id)
 
     def get_average_delay(
             self,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> float:
+            km_id: str | None = None) -> float:
         """
         Get the average delay from the logs.
 
         Parameters
         ----------
-        - id (`str`, optional): The id to check.
+        - km_id (`str`, optional): The id to check.
         - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
         avg_delay = self.parser.get_average_delay(
-            keystrokes, exclude_outliers, id)
+            keystrokes, exclude_outliers, km_id)
         if avg_delay is None:
             raise ValueError("Average delay not present.")
         return avg_delay
@@ -148,17 +148,17 @@ class Analyze:
             self,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> float:
+            km_id: str | None = None) -> float:
         """
         Get the standard deviation from the logs.
 
         Parameters
         ----------
-        - id (`str`, optional): The id to check.
+        - km_id (`str`, optional): The id to check.
         - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
         std_dev = self.parser.get_std_deviation(
-            keystrokes, exclude_outliers, id)
+            keystrokes, exclude_outliers, km_id)
         if std_dev is None:
             raise ValueError("Standard deviation not present.")
         return std_dev
@@ -169,13 +169,13 @@ class Analyze:
             save_file: bool | None = None,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> None:
+            km_id: str | None = None) -> None:
         """
         Plot the keystroke times from the logs.
 
         Parameters
         ----------
-        - id (`str`, optional): The id to check.
+        - km_id (`str`, optional): The id to check.
         - keystrokes (`KeystrokeList`, optional): The keystrokes to plot.
         - exclude_outliers (`bool`, optional): Whether to exclude outliers.
         """
@@ -184,17 +184,17 @@ class Analyze:
             save_file,
             keystrokes,
             exclude_outliers,
-            id)
+            km_id)
 
-    def get_keystrokes(self, id: str | None = None) -> KeystrokeList:
+    def get_keystrokes(self, km_id: str | None = None) -> KeystrokeList:
         """
         Get the keystrokes from the logs.
 
         Parameters
         ----------
-        - id (`str`, optional): The id to check.
+        - km_id (`str`, optional): The id to check.
         """
-        return self.parser.get_keystrokes(id)
+        return self.parser.get_keystrokes(km_id)
 
     def nuke_duplicates(self) -> None:
         """

@@ -76,32 +76,32 @@ class KeyParser:
             logging.error(f"An error occurred! {e}")
             return []
 
-    def is_id_present(self, id: str, log: Log | None = None) -> bool:
+    def is_id_present(self, km_id: str, log: Log | None = None) -> bool:
         """Client facing.
         Check if a log with the id exists in the loaded logs.
 
         Args:
-            `id` (`str`): The UUID or exact string formatted as STOP_KEY + string
+            `km_id` (`str`): The UUID or exact string formatted as STOP_KEY + string
             `log` (`Log`): The log to check.
 
         Returns:
             `bool`: True if a log with the given UUID or exact string exists, False otherwise.
         """
-        if not id:
+        if not km_id:
             logging.error("No id provided.")
             return False
         if log is not None:
-            if log['id'] == id:
+            if log['id'] == km_id:
                 return True
-            if id[0] == STOP_KEY:
-                if log['string'] == id[1:]:
+            if km_id[0] == STOP_KEY:
+                if log['string'] == km_id[1:]:
                     return True
                 else:
                     logging.info('Exact string not found.')
             return False
         else:
             for unchecked_log in self.logs:
-                if self.is_id_present(id, unchecked_log):
+                if self.is_id_present(km_id, unchecked_log):
                     return True
             return False
 
@@ -144,13 +144,13 @@ class KeyParser:
                 return log['id']
         return None
 
-    def get_strings(self, id: str | None = None) -> list[str]:
+    def get_strings(self, km_id: str | None = None) -> list[str]:
         """Client facing.
         Get a list of all strings in the logs. If an id is provided,
         only the associated string is included.
 
         Args:
-            `id` (`str`, optional): The UUID or exact string to check for.
+            `km_id` (`str`, optional): The UUID or exact string to check for.
 
         Returns:
             `list`: A list of all strings in the logs. If an id is provided,
@@ -159,20 +159,20 @@ class KeyParser:
         """
         if not self.logs:
             return []
-        if id is not None:
-            isPresent = self.is_id_present(id)
+        if km_id is not None:
+            isPresent = self.is_id_present(km_id)
             if isPresent is False:
                 logging.error("ID invalid.")
                 return []
             for log in self.logs:
-                if self.is_id_present(id, log):
+                if self.is_id_present(km_id, log):
                     return [log['string']]
         return [log['string'] for log in self.logs]
 
     def print_strings(self,
                       max: int = 5,
                       truncate: int = 25,
-                      id: str | None = None) -> None:
+                      km_id: str | None = None) -> None:
         """Client facing.
         Prints strings from logs. If `id` is provided, prints associated string.
         Strings longer than `truncate` value are appended with "...[truncated]".
@@ -180,14 +180,14 @@ class KeyParser:
         Args:
             `max` (int): Maximum number of strings to print. Defaults to 5.
             `truncate` (int): Maximum number of characters to print. Defaults to 25.
-            `id` (str, optional): The UUID or exact string to check for.
+            `km_id` (str, optional): The UUID or exact string to check for.
         """
-        if id is not None:
-            isPresent = self.is_id_present(id)
+        if km_id is not None:
+            isPresent = self.is_id_present(km_id)
             if not isPresent:
                 logging.error("ID invalid.")
                 return
-            string_list = self.get_strings(id)
+            string_list = self.get_strings(km_id)
         else:
             string_list = self.get_strings()
         logging.info(f"Total strings: {len(string_list)}")
@@ -204,24 +204,24 @@ class KeyParser:
     def get_only_times(self,
                        keystrokes: KeystrokeList | None = None,
                        exclude_outliers: bool | None = None,
-                       id: str | None = None,
+                       km_id: str | None = None,
                        ) -> list[float]:
         """Not client facing.
         Get a list of all keystroke delay times.
 
         Args:
-            `id` (str, optional): The UUID or exact string to check for.
+            `km_id` (str, optional): The UUID or exact string to check for.
 
         Returns:
             `list[float]`: A list of float values.
         """
         if keystrokes is None:
-            if id is not None:
-                isPresent = self.is_id_present(id)
+            if km_id is not None:
+                isPresent = self.is_id_present(km_id)
                 if isPresent is False:
                     logging.error("ID invalid.")
                     return []
-                keystrokes = self.get_keystrokes(id)
+                keystrokes = self.get_keystrokes(km_id)
             else:
                 keystrokes = self.get_keystrokes()
         if keystrokes.is_empty():
@@ -249,13 +249,13 @@ class KeyParser:
     def wpm(self,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> float | None:
+            km_id: str | None = None) -> float | None:
         """Client facing.
         Calculate the average words per minute.
         Formula is CPM/5, where CPM is characters per minute.
 
         Args:
-            `id` (str, optional): The UUID or exact string to check for.
+            `km_id` (str, optional): The UUID or exact string to check for.
 
         Returns:
             `float` or `None`: If no characters are found, None is returned.
@@ -270,11 +270,11 @@ class KeyParser:
             if not self.logs:
                 logging.warning("No logs found.")
                 return None
-            if id is not None:
-                if not self.is_id_present(id):
+            if km_id is not None:
+                if not self.is_id_present(km_id):
                     return None
                 times = self.get_only_times(
-                        exclude_outliers=exclude_outliers, id=id)
+                        exclude_outliers=exclude_outliers, km_id=km_id)
                 num_chars = len(times)
                 total_seconds = sum(times)  # type: ignore
             # If id is not provided, calculate WPM for all logs
@@ -298,12 +298,12 @@ class KeyParser:
     def get_highest_keystroke_times(
             self,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> list[float]:
+            km_id: str | None = None) -> list[float]:
         """Client facing.
         Get the highest keystroke time for each log.
 
         Args:
-            `id` (str, optional): The UUID or exact string to check for.
+            `km_id` (str, optional): The UUID or exact string to check for.
 
         Returns:
             `list`: A list of float values.
@@ -311,13 +311,13 @@ class KeyParser:
         if not self.logs:
             logging.warning("No logs found.")
             return []
-        if id is not None:
-            isPresent = self.is_id_present(id)
+        if km_id is not None:
+            isPresent = self.is_id_present(km_id)
             if isPresent is False:
                 logging.error("ID invalid.")
                 return []
             times = self.get_only_times(
-                exclude_outliers=exclude_outliers, id=id)
+                exclude_outliers=exclude_outliers, km_id=km_id)
             if len(times) == 0:
                 logging.warning("No keystroke times found.")
                 return []
@@ -336,25 +336,25 @@ class KeyParser:
             self,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> float | None:
+            km_id: str | None = None) -> float | None:
         """Client facing.
         Get the average time between keystrokes.
 
         Args:
-            `id` (str, optional): The UUID or exact string to check for.
+            `km_id` (str, optional): The UUID or exact string to check for.
 
         Returns:
             `float` or `None`: Return average delay in seconds. If no keystroke times are found, None is returned.
         """
         times = []
         if keystrokes is None:
-            if id is not None:
-                isPresent = self.is_id_present(id)
+            if km_id is not None:
+                isPresent = self.is_id_present(km_id)
                 if isPresent is False:
                     logging.error("ID invalid.")
                     return None
                 times = self.get_only_times(
-                    exclude_outliers=exclude_outliers, id=id)
+                    exclude_outliers=exclude_outliers, km_id=km_id)
             else:
                 times = self.get_only_times(exclude_outliers=exclude_outliers)
         else:
@@ -369,25 +369,25 @@ class KeyParser:
             self,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> float | None:
+            km_id: str | None = None) -> float | None:
         """Client facing.
         Get the standard deviation of the time between keystrokes.
 
         `Args`:
-            `id (`str`, optional): The UUID or exact string to check for.
+            `km_id (`str`, optional): The UUID or exact string to check for.
 
         Returns:
             `float` or `None`: If insufficient keystrokes are found, None is returned.
         """
         times = []
         if keystrokes is None:
-            if id is not None:
-                isPresent = self.is_id_present(id)
+            if km_id is not None:
+                isPresent = self.is_id_present(km_id)
                 if isPresent is False:
                     logging.error("ID invalid.")
                     return None
                 times = self.get_only_times(
-                    exclude_outliers=exclude_outliers, id=id)
+                    exclude_outliers=exclude_outliers, km_id=km_id)
             else:
                 times = self.get_only_times(exclude_outliers=exclude_outliers)
         else:
@@ -468,22 +468,22 @@ class KeyParser:
             save_file: bool | None = None,
             keystrokes: KeystrokeList | None = None,
             exclude_outliers: bool | None = None,
-            id: str | None = None) -> None:
+            km_id: str | None = None) -> None:
         """Client facing.
         Plots the average keystroke time for each character.
 
         Args:
-            `id` (`str`, optional): The UUID or exact string to check for.
+            `km_id` (`str`, optional): The UUID or exact string to check for.
             `keystrokes`: (`KeystrokeList`, optional): A list of Keystroke items.
             `exclude_outliers` (bool, optional): A flag indicating whether to exclude outliers.
         """
         if keystrokes is not None:
-            if id is not None:
-                isPresent = self.is_id_present(id)
+            if km_id is not None:
+                isPresent = self.is_id_present(km_id)
                 if isPresent is False:
                     logging.error("ID invalid.")
                     return
-                keystrokes = self.get_keystrokes(id)
+                keystrokes = self.get_keystrokes(km_id)
         else:
             keystrokes = self.get_keystrokes()
 
@@ -506,24 +506,24 @@ class KeyParser:
         elif mode == 'box':
             self.plot_boxplot(keystrokes, exclude_outliers)
 
-    def get_keystrokes(self, id: str | None = None) -> KeystrokeList:
+    def get_keystrokes(self, km_id: str | None = None) -> KeystrokeList:
         """Client facing.
        Get a list of all keystrokes in the logs.
 
         Args:
-            id (str, optional): The UUID or exact string to check for.
+            km_id (str, optional): The UUID or exact string to check for.
 
         Returns:
             list: A list of Keystroke items.
         """
         keystrokes = KeystrokeList()
-        if id is not None:
-            isPresent = self.is_id_present(id)
+        if km_id is not None:
+            isPresent = self.is_id_present(km_id)
             if isPresent is False:
                 logging.error("ID invalid.")
                 return keystrokes
         for log in self.logs:
-            if id is not None and self.is_id_present(id, log):
+            if km_id is not None and self.is_id_present(km_id, log):
                 keystrokes.extend(log['keystrokes'])
                 return keystrokes
             else:
@@ -669,30 +669,40 @@ class KeyParser:
     def stats(self, 
                 keystrokes: KeystrokeList | None = None,
                 exclude_outliers: bool | None = None,
-                id: str | None = None,
-                ) -> None:
+                km_id: str | None = None,
+                ) -> list[None | int | float] | None:
         """Client facing.
-        Print statistics for the given log.
+        Print statistics for the given log. 
+        PRECONDITION: km_id is valid if provided.
         """
         if keystrokes is None:
-            if id is not None:
-                isPresent = self.is_id_present(id)
+            if km_id is not None:
+                # In the future, I can have this line instead be:
+                # assert self.is_id_present(km_id), "ID invalid."
+                isPresent = self.is_id_present(km_id)
                 if isPresent is False:
                     logging.error("ID invalid.")
                     return None
-                keystrokes = self.get_keystrokes(id)
+                keystrokes = self.get_keystrokes(km_id)
             else:
-                keystrokes = self.get_keystrokes(id)
+                keystrokes = self.get_keystrokes(km_id)
         if keystrokes.is_empty():
             logging.warning("No keystrokes found.")
             return None
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
-        logging.info(f"Total keystrokes: {len(keystrokes)}")
-        logging.info(f"Average delay: {self.get_average_delay(keystrokes, exclude_outliers)}")
-        logging.info(f"Standard deviation: {self.get_std_deviation(keystrokes, exclude_outliers)}")
-        logging.info(f"Highest keystroke time: {max(self.get_only_times(keystrokes, exclude_outliers))}")
-        logging.info(f"Average WPM: {self.wpm(keystrokes, exclude_outliers)}")
+        keystroke_count = len(keystrokes)
+        average_delay = self.get_average_delay(keystrokes, exclude_outliers)
+        std_deviation = self.get_std_deviation(keystrokes, exclude_outliers)
+        highest_keystroke_time = max(self.get_only_times(keystrokes, exclude_outliers))
+        wpm = self.wpm(keystrokes, exclude_outliers)
+        # TODO: Handle Outliers
+        logging.info(f"Total keystrokes: {keystroke_count}")
+        logging.info(f"Average delay: {average_delay}")
+        logging.info(f"Standard deviation: {std_deviation}")
+        logging.info(f"Highest keystroke time: {highest_keystroke_time}")
+        logging.info(f"Average WPM: {wpm}")
+        return [keystroke_count, average_delay, std_deviation, highest_keystroke_time, wpm]
 
     def __repr__(self) -> str:
         pretty_string = (
