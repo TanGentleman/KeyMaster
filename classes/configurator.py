@@ -56,7 +56,6 @@ class Configurator:
         self.max_simulation_time = float(max_simulation_time)
         self.simulation_speed_multiple = float(simulation_speed_multiple)
         self.exclude_outliers = exclude_outliers_in_analysis
-        # print(self)
         self.preload = preload_analysis
 
     def set(
@@ -155,7 +154,7 @@ class Configurator:
 
     def __repr__(self) -> str:
         changed_values = []  # List to store the changed values
-
+        filename = resolve_filename(self.logfile)
         # Compare each attribute with the default configuration and add the
         # changed values to the list
         if self.disable != DEFAULT_DISABLE_SIMULATION:
@@ -167,15 +166,14 @@ class Configurator:
         if self.allow_unicode != DEFAULT_ALLOW_UNICODE:
             changed_values.append(f"allow_unicode={self.allow_unicode}")
         if self.logfile != "REG":
-            changed_values.append(f"logfile={resolve_filename(self.logfile)}")
+            changed_values.append(f"logfile={filename}")
         if self.banned_keys != BANNED_KEYS:
             changed_values.append(f"banned_keys={self.banned_keys}")
         if self.round_digits != ROUND_DIGITS:
             changed_values.append(f"round_digits={self.round_digits}")
 
         if not changed_values:
-            return f"Configuration=default\nLogfile:{resolve_filename(self.logfile)}"
+            return f"Configuration=default\nLogfile:{filename}"
         # Create the pretty string representation with the changed values
-        pretty_string = f"# Configuration:\n" + \
-            '\n'.join(changed_values) + '\n#'
+        pretty_string = f"Configuration:\nLogfile:{filename}" + ('\n'.join(changed_values) + '\n#')
         return pretty_string

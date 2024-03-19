@@ -116,12 +116,9 @@ class KeyLogger:
         Args:
                 `keypress` (`Key` or `KeyCode`): The key press event to log.
         """
+        assert is_key_valid(keypress), "log_valid_keypress: Invalid keypress"
         if LOG_SHIFT_PRESSES is False and keypress == Key.shift:
             return
-        if is_key_valid(keypress) is False:
-            logging.error('log_valid_keypress: Keys must pass is_key_valid')
-            raise ValueError(
-                "log_valid_keypress: Invalid keypress. This should not happen.")
         encoded_key = ""
         # Calculate delay between keystrokes
         current_time = perf_counter()
@@ -133,16 +130,14 @@ class KeyLogger:
 
         if isinstance(keypress, KeyCode):
             # This is a non-special character
-            if keypress.char is None:
+            char = keypress.char
+            if char is None or len(char) != 1:
+                raise ValueError(
+                    f"log_valid_keypress: Key length != 1: {char}")
+            if self.only_typeable and char not in KEYBOARD_CHARS:
                 return
-            key = keypress.char
-            if len(key) != 1:
-                logging.error(f"log_valid_keypress: Ignoring input length != 1: {key}")
-                return
-            if self.only_typeable and key not in KEYBOARD_CHARS:
-                return
-            self.typed_string += key
-            encoded_key = self.encode_keycode_char(key)
+            self.typed_string += char
+            encoded_key = self.encode_keycode_char(char)
         else:
             # This is a KeyCode object
             if keypress in SPECIAL_KEYS.values():
@@ -180,7 +175,7 @@ class KeyLogger:
             if keypress.char is None:
                 return
             if self.banned_keys is not None and keypress.char in self.banned_keys:
-                logging.info(f"Key {keypress.char} is banned. Ignoring.")
+                # logging.debug(f"Key {keypress.char} is banned. Ignoring.")
                 return
         # Validate keypress
         if is_key_valid(keypress):
@@ -216,10 +211,8 @@ class KeyLogger:
         self.handle_keypress(keypress)
         if self.stop_listener_condition(keypress):
             print('')
-            if self.timer is None:
-                raise ValueError(
-                    "Timer is None. Start it before listener.join")
-            self.timer.cancel()
+            if self.timer:
+                self.timer.cancel()
             raise KeyboardInterrupt
         return
 
@@ -235,7 +228,7 @@ class KeyLogger:
         listener = None
         try:
             with Listener(on_press=self.on_press, on_release=self.on_release) as listener:
-                print(
+                logging.info(
                     f"Listening for {duration} seconds. The listener will stop on ESC, STOP_KEY, or after {LISTENER_WORD_LIMIT} words.\n")
                 # Start a timer of 10 seconds
                 self.timer = Timer(duration, listener.stop)
@@ -327,15 +320,15 @@ class KeyLogger:
             return None
 
         # Create a unique ID
-        id = ''
+        unique_id = ''
         if log_id is None:
-            id = str(uuid4())
+            unique_id = str(uuid4())
         else:
-            id = log_id
+            unique_id = log_id
 
         # Create the log object of class Log
         log: Log = {
-            'id': id,
+            'id': unique_id,
             'string': self.typed_string,
             'keystrokes': self.keystrokes
         }
@@ -357,7 +350,7 @@ class KeyLogger:
             return False
         filepath = get_filepath(self.filename)
         if filepath is None:
-            logging.info("Filename null. Log not saved.")
+            logging.error("Filename null. Log not saved.")
             return False
         if self.keystrokes.is_empty():
             logging.error("No keystrokes to save.")

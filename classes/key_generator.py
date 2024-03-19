@@ -3,6 +3,8 @@ from time import sleep
 from threading import Timer
 from random import normalvariate
 import logging
+
+from utils.constants import SHIFT_KEY
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
 # Third party imports
 from pynput.keyboard import Controller
@@ -146,7 +148,7 @@ class KeyGenerator:
                             time = None
                         else:
                             time = SHIFT_SPEED
-                        key = str(Key.shift)
+                        key = SHIFT_KEY
                         keystrokes.append(Keystroke(key, time))
             if keystrokes.is_empty():
                 keystroke.time = None
@@ -249,7 +251,7 @@ class KeyGenerator:
                     sleep(delay)
                 if key in SPECIAL_KEYS:
                     # Ignore shift and caps lock
-                    if key == 'Key.shift' or key == 'Key.caps_lock':
+                    if key == SHIFT_KEY or key == 'Key.caps_lock':
                         continue
                     try:
                         keyboard.tap(SPECIAL_KEYS[key])

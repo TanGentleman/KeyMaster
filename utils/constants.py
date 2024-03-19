@@ -1,4 +1,5 @@
-import string
+from string import ascii_letters
+SHIFT_KEY = "Key.shift"
 DEFAULT_LOG_ID = "A000"
 
 shifted_number_keys = {
@@ -16,7 +17,7 @@ shifted_punctuation = {
 shifted_values = {**shifted_number_keys, **shifted_punctuation}
 
 # Create a mapping for all alphabetic characters to their uppercase equivalents
-shift_mapping = {char: char.upper() for char in string.ascii_letters}
+shift_mapping = {char: char.upper() for char in ascii_letters}
 
 # Update the shift_map with the shifted values for numbers and punctuation
 shift_mapping.update(shifted_values)

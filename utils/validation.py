@@ -281,7 +281,7 @@ class KeystrokeList:
         """
         Remove all extraneous null (None) times from the list of keystrokes.
         """
-        pruned_keystrokes = KeystrokeList()
+        pruned_keystrokes = []
         none_count = 0
         for keystroke in self.keystrokes:
             if keystroke.time is None:
@@ -292,6 +292,16 @@ class KeystrokeList:
             pruned_keystrokes.append(keystroke)
         self.keystrokes = pruned_keystrokes
 
+    def prune_shifts(self) -> None:
+        """
+        Remove all extraneous shift keys from the list of keystrokes.
+        """
+        pruned_keystrokes = []
+        for keystroke in self.keystrokes:
+            if keystroke.legal_key == "'shift'":
+                continue
+            pruned_keystrokes.append(keystroke)
+        self.keystrokes = pruned_keystrokes
 
 class Log(TypedDict):
     """
