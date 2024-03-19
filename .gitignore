@@ -6,4 +6,5 @@ __pycache__/
 *.json
 screenshots/*
 notebooks/
-venv/
+.venv/
+logs/

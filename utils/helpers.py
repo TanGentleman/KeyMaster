@@ -2,8 +2,8 @@ from os import path
 
 from pynput.keyboard import Key, KeyCode
 
-from utils.config import LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH
-from utils.config import APOSTROPHE, STOP_CODE, SPECIAL_KEYS, BANNED_KEYS, KEYBOARD_CHARS
+from utils.config import (LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH,
+                          APOSTROPHE, STOP_CODE, SPECIAL_KEYS, BANNED_KEYS, KEYBOARD_CHARS)
 from utils.constants import DEFAULT_LOG_ID
 
 REPLACE_WONKY_UNICODE = False

@@ -534,6 +534,7 @@ class KeyParser:
     def refactor_special_key(self, key: str) -> str:
         """Not client facing.
         Replace special key names with more readable versions for display.
+        These may be changed in the future.
         """
         display_names = {
             "'STOP'": "Stop",

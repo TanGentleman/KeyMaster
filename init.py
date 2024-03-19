@@ -3,6 +3,7 @@ from client.generate import Generate
 from client.analyze import Analyze
 from client.collect import Collect
 from client.configurate import Config
+from client.validate import Key, Keys, Keystroke, KeystrokeList
 ENABLE_BACKEND = False
 if __name__ == "__main__":
     print("You can import the following classes from this module:" +

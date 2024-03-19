@@ -55,3 +55,6 @@ class Keys:
 
     def to_string(self) -> str:
         return self.keys.to_string()
+    
+    def __repr__(self):
+        return 'Keys=' + self.to_string()

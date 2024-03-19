@@ -44,7 +44,6 @@ class Config:
         self._exclude_outliers = exclude_outliers_in_analysis if exclude_outliers_in_analysis is not None else config.exclude_outliers
         self._preload = preload_analysis if preload_analysis is not None else config.preload
         self.validate_config()
-        # print(self)
 
     def validate_config(self):
         if not isinstance(self.config, Configurator):
