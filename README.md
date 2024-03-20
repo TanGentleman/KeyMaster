@@ -1,68 +1,46 @@
-# KeyMaster
-## Table of Contents
-- [Introduction](#introduction)
-- [Installation](#installation)
-- [Features](#features)
-- [Usage](#usage)
-- [Documentation](#documentation)
-- [Workflows](#workflows)
-- [Contributing](#contributing)
-- [License](#license)
+# KeyMaster - Keyboard Event Toolkit
 
-## Introduction
-KeyMaster is a Python toolkit for collecting, analyzing, and generating keyboard event data. It is designed to scale the collection and analysis of keystroke data, as well as to create human-realistic simulation scripts. After countless "maybe I should clean this up first" moments have turned into hundreds of hours invested in the project, I'm proud to release the full source code for KeyMaster under the MIT License! With friendly documentation and open arms to Windows, Mac, and Linux users, I introduce the perfect tool to wield control over your keyboard.
+## Quick Start
 
-## Installation
-
-All you need need to install the two dependencies is the following terminal command:
-
+Install dependencies, with pyperclip being optional for clipboard simulation:
 ```bash
-pip install pynput==1.7.6 matplotlib==3.8.2
+pip install pynput matplotlib
+pip install pyperclip
 ```
-
-For convenience, I've included a `requirements.txt` file. To quickly get KeyMaster running from scratch, simply type the following commands in your terminal:
-
+Clone KeyMaster:
 ```bash
 git clone https://github.com/TanGentleman/KeyMaster
 cd KeyMaster
-pip install -r requirements.txt
 ```
-## Usage
-
-For detailed usage of each class and method in KeyMaster, please refer to the `notebook.ipynb` jupyter notebook for a friendly walkthrough. For zero-code users, see the workflow examples for executable scripts.
 
 ## Features
 
-KeyMaster offers a comprehensive suite of features designed to facilitate the collection, analysis, and simulation of keyboard event data. It consists of four main components:
+KeyMaster is a Python toolkit for collecting, analyzing, and simulating keyboard events. The object oriented framework has four simple classes:
 
-- **Config**: This is the control center of KeyMaster. It allows you to manage the toolkit's behavior by setting simulation parameters, logging options, and data processing rules. The `Config` class offers fine-grain control over various settings, intelligent defaults, and seamless integration with other components of KeyMaster.
+- **Config**: Customize settings, simulation parameters, and data processing.
+- **Analyze**: Analyze data, visualize, and calculate metrics like WPM.
+- **Collect**: Record real-time keystrokes, save to logs, and filter events.
+- **Generate**: Create realistic typing simulations with custom parameters.
 
-- **Analyze**: This component provides a suite of analytical tools to derive insights from keyboard event data. It offers versatile data handling, with methods for visualization, performance metrics, and more. With the `Analyze` class, you can effortlessly load and change log files, calculate words per minute (WPM), plot data without outliers, maintain clean datasets, and tailor the analysis environment to your needs.
+## Usage
 
-- **Collect**: This is the gateway to capturing real-time keystroke data. It provides robust mechanisms to accurately record keyboard events and manage collected data. With the `Collect` class, you can capture and filter keystrokes as they occur in real-time, save collected data to log files, and pass the data to the Analyze or Generate objects with ease.
-
-- **Generate**: This component is a powerful tool for creating realistic keystroke simulations. It enables users to generate and simulate typing behavior based on given strings or custom parameters. With the `Generate` class, you can match typing cadence, turn any string into rich keystroke data, and safely simulate keystrokes.
-
-Each of these components is designed to work together seamlessly providing a comprehensive and user-friendly interface for keyboard event data collection, analysis, and simulation.
-
-## Documentation
-
-KeyMaster has documentation for each class and method, and can be referenced by markdown files in the `docs/` folder, and in the docstrings of the appropriate files in the backend `classes/` and `utils`. Designed to be accessible for both beginners and advanced users, KeyMaster works best in conjunction with an IDE environment such as VSCode to take advantage of the strong type hints and hover documentation. I recommend experimenting using `notebook.ipynb` for an testing the deceptively simple and powerful structure of the toolkit.
-
-## Workflows
-- I've made some sample workflows for automation, with the backend in `scripts/simulate.py`, and an interface in `scripts/cli.py`
-- This integrates well with a hotkey, for instance `option+v` to simulate typing of the clipboard contents (With custom speed, personalized behavior, exclusion of certain keys or unicode, etc.)
-
+For detailed usage, refer to the `notebook.ipynb` Jupyter notebook. To initiate a sample workflow, run:
 ```bash
-cd KeyMaster
-python -m scripts.cli -s 'Use -c instead for clipboard string'
+python -m scripts.cli
+```
+For automated simulation, utilize the many simple flags found in the docs:
+```bash
+python -m scripts.cli -s 'Use the -c flag instead to simulate your clipboard'
 ```
 
-## Contributing
-Contributions to KeyMaster are appreciated! If you have suggestions for improvements or new features, please feel free to create a new issue, and I'll get to it as soon as I can. Alternatively, fork the repository, make your changes, and submit a pull request!
+## Docs & Contributing
+
+- Docs: Check `docs/` folder and the notebook.
+- Contributions: Raise issues, fork, make changes, and submit pull requests.
 
 ## License
-KeyMaster is released under the MIT License. This license allows you to use, modify, and distribute the code as you see fit. Transparent, open-source code is awesome, and I hope you find the project useful!
+
+KeyMaster is MIT licensed. Use, modify, and distribute freely.
 
 Cheers,
 
