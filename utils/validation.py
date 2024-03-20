@@ -8,7 +8,8 @@ from typing import Iterator, TypedDict, Any, Union
 from pynput.keyboard import Key
 
 # KeyMaster imports
-from utils.config import APOSTROPHE, MAX_KEY_LENGTH, SPECIAL_KEYS, STOP_KEY, STOP_CODE, EMPTY_WRAPPED_CHAR, KEYBOARD_CHARS
+from utils.config import MAX_KEY_LENGTH, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
+from utils.constants import EMPTY_WRAPPED_CHAR, APOSTROPHE, KEYBOARD_CHARS
 from utils.helpers import is_valid_wrapped_char, is_valid_wrapped_special_key, unwrap_char, is_key_valid
 
 
@@ -168,7 +169,14 @@ class KeystrokeList:
         self.keystrokes.append(keystroke)
         self.length += 1
 
-    def extend(self, keystrokes) -> None:
+    def extend(self, keystrokes, prune = False) -> None:
+        """
+        Extend the list of keystrokes with another list of keystrokes.
+
+        Args:
+            keystrokes (KeystrokeList): A list of Keystroke objects.
+            prune (bool): If True, prune null times in the list. The default prune is non-destructive.
+        """
         if not isinstance(keystrokes, KeystrokeList):
             raise TypeError(
                 'Must use KeystrokeList.extend with a KeystrokeList')
@@ -177,6 +185,9 @@ class KeystrokeList:
         self.length = len(self.keystrokes)
         # Ensure first Keystone.time set to None
         self.set_null_time()
+        # prune other null values
+        if prune:
+            self.prune_bad_nuns()
 
     def is_empty(self) -> bool:
         return self.length == 0
@@ -198,7 +209,7 @@ class KeystrokeList:
             return self.keystrokes == other.keystrokes
         return False
 
-    def to_string(self, allow_unsafe: bool = False) -> str:
+    def to_string(self) -> str:
         """
         Returns the string representation of the keystrokes.
         """
@@ -219,8 +230,8 @@ class KeystrokeList:
                 key = keystroke.key
                 # Handle special keys
                 if key == STOP_CODE:
-                    decoded_key = STOP_KEY
-                    output_string += decoded_key
+                    decoded_stop_key = STOP_KEY
+                    output_string += decoded_stop_key
                 elif key in SPECIAL_KEYS:
                     decoded_key = SPECIAL_KEYS[key]
                     if decoded_key == Key.backspace:
@@ -277,9 +288,16 @@ class KeystrokeList:
                 break
         return False
 
-    def prune_bad_nuns(self) -> None:
+    def prune_bad_nuns(self, destructive = False) -> int:
+        assert ROUND_DIGITS > 0
         """
         Remove all extraneous null (None) times from the list of keystrokes.
+        
+        Args:
+            destructive (bool): If False, null times are replaced with 0.001 second delays.
+
+        Returns:
+            int: The number of null times removed.
         """
         pruned_keystrokes = []
         none_count = 0
@@ -287,10 +305,16 @@ class KeystrokeList:
             if keystroke.time is None:
                 none_count += 1
                 if none_count > 1:
-                    print("Skipping keystroke with None time")
-                    continue
+                    if destructive:
+                        print("Removing keystroke with None time")
+                        continue
+                    else:
+                        print("Replacing keystroke with shortest delay")
+                        shortest_delay = float(1 / (10 ** (ROUND_DIGITS-1)))
+                        keystroke.time = shortest_delay
             pruned_keystrokes.append(keystroke)
         self.keystrokes = pruned_keystrokes
+        return none_count
 
     def prune_shifts(self) -> None:
         """
