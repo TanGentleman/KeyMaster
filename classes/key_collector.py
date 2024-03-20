@@ -9,10 +9,11 @@ logging.basicConfig(encoding='utf-8', level=logging.INFO)
 # Third party imports
 from pynput.keyboard import Key, KeyCode, Listener
 # KeyMaster imports
-from utils.config import (  APOSTROPHE, KEYBOARD_CHARS, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS,
+from utils.config import (  SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS,
                             LISTENER_WORD_LIMIT, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY,
                             COLLECT_ONLY_TYPEABLE
                         )
+from utils.constants import APOSTROPHE, KEYBOARD_CHARS
 from utils.helpers import get_filepath, is_key_valid, resolve_filename, get_log_id, update_log_id
 from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 

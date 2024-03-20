@@ -1,6 +1,5 @@
 # Standard library imports
 from os import path
-import string
 
 # Third party imports
 from pynput.keyboard import Key
@@ -49,18 +48,11 @@ STOP_KEY = "*"  # Special char that stops the listener and halts keystrokes gene
 STOP_CODE = 'STOP'
 SHIFT_SPEED = 0.2222  # keystroke.time value of formulaically generated shift keystrokes
 
-
 # UNOFFICIAL
 # max length of Keystroke.key (to prevent invalid overflow)
 MAX_KEY_LENGTH = 20
 
 # DO NOT CHANGE
-EMPTY_WRAPPED_CHAR = "''"
-APOSTROPHE = "'"
-SHIFTED_CHARS = r'~!@#$%^&*()_+{}|:"<>?'
-KEYBOARD_CHARS = string.ascii_letters + \
-    string.digits + string.punctuation + ' \n\t'
-
 SPECIAL_KEYS = {
     'Key.space': Key.space,
     'Key.backspace': Key.backspace,
