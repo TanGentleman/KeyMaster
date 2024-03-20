@@ -20,7 +20,7 @@ class Key:
             raise ValueError("Invalid key or time.")
         self.key = self.keystroke.key
         self.time = self.keystroke.time
-    
+
     def __repr__(self):
         return self.keystroke.props()
 
@@ -45,7 +45,7 @@ class Keys:
         elif isinstance(keys, list):
             try:
                 self.keys = KeystrokeList([key.keystroke for key in keys])
-            except:
+            except Exception:
                 raise TypeError("Invalid KeystrokeList.")
         else:
             raise TypeError("Invalid type for Keys.")
@@ -55,6 +55,6 @@ class Keys:
 
     def to_string(self) -> str:
         return self.keys.to_string()
-    
+
     def __repr__(self):
         return 'Keys=' + self.to_string()

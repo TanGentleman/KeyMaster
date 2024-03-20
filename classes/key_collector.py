@@ -1,3 +1,18 @@
+# KeyMaster imports
+from pynput.keyboard import Key, KeyCode, Listener
+from utils.config import (
+    SPECIAL_KEYS,
+    STOP_KEY,
+    STOP_CODE,
+    ROUND_DIGITS,
+    LISTENER_WORD_LIMIT,
+    DEFAULT_LISTENER_DURATION,
+    MAX_LOGGABLE_DELAY,
+    COLLECT_ONLY_TYPEABLE)
+from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
+from utils.helpers import get_filepath, is_key_valid, resolve_filename, get_log_id, update_log_id
+from utils.constants import APOSTROPHE, KEYBOARD_CHARS
+
 # Standard library imports
 from json import dump as json_dump
 from json import load as json_load
@@ -6,18 +21,10 @@ from uuid import uuid4
 from threading import Timer
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
-# Third party imports
-from pynput.keyboard import Key, KeyCode, Listener
-# KeyMaster imports
-from utils.config import (  SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS,
-                            LISTENER_WORD_LIMIT, DEFAULT_LISTENER_DURATION, MAX_LOGGABLE_DELAY,
-                            COLLECT_ONLY_TYPEABLE
-                        )
-from utils.constants import APOSTROPHE, KEYBOARD_CHARS
-from utils.helpers import get_filepath, is_key_valid, resolve_filename, get_log_id, update_log_id
-from utils.validation import Keystroke, KeystrokeList, Log, KeystrokeDecoder, KeystrokeEncoder
 
+# Third party imports
 LOG_SHIFT_PRESSES = False
+
 
 class KeyLogger:
     """
@@ -38,7 +45,7 @@ class KeyLogger:
             round_digits: int = ROUND_DIGITS,
             duration: int | float = DEFAULT_LISTENER_DURATION,
             banned_keys: list[str] | None = None
-            ) -> None:
+    ) -> None:
         """
         Initialize the KeyLogger. If filename is None, the logger will not save to a file.
         Defaults to keystrokes.json in the logs directory.
@@ -278,7 +285,8 @@ class KeyLogger:
             if delay is None:
                 none_count += 1
                 if none_count > 1:
-                    logging.error('None value marks first character ONLY! Log not legit.')
+                    logging.error(
+                        'None value marks first character ONLY! Log not legit.')
                     return False
         success = keystrokes.validate(input_string)
         logging.info(f"{len(keystrokes)} Keystrokes validated: {success}")

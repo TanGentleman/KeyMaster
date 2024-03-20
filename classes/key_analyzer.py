@@ -1,8 +1,12 @@
+# KeyMaster imports
+from utils.helpers import get_filepath, resolve_filename
+from utils.validation import KeystrokeDecoder, KeystrokeList, Log, KeystrokeEncoder
+from utils.config import STOP_KEY
+
 # Standard library imports
 from json import load as json_load
 from json import dump as json_dump
 import statistics
-from utils.config import STOP_KEY
 import logging
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
@@ -11,10 +15,6 @@ try:
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None  # type: ignore
-
-# KeyMaster imports
-from utils.validation import KeystrokeDecoder, KeystrokeList, Log, KeystrokeEncoder
-from utils.helpers import get_filepath, resolve_filename
 
 
 OUTLIER_CUTOFF = 3.0  # seconds
@@ -121,7 +121,8 @@ class KeyParser:
             return None
         if index < 1:
             if index == 0:
-                logging.warning("Index begins at 1. Returning first log anyways.")
+                logging.warning(
+                    "Index begins at 1. Returning first log anyways.")
                 index = 1
             else:
                 raise ValueError("Index must be greater than 0.")
@@ -274,7 +275,7 @@ class KeyParser:
                 if not self.is_id_present(km_id):
                     return None
                 times = self.get_only_times(
-                        exclude_outliers=exclude_outliers, km_id=km_id)
+                    exclude_outliers=exclude_outliers, km_id=km_id)
                 num_chars = len(times)
                 total_seconds = sum(times)  # type: ignore
             # If id is not provided, calculate WPM for all logs
@@ -286,9 +287,10 @@ class KeyParser:
             times = self.get_only_times(
                 keystrokes, exclude_outliers=exclude_outliers,)
             num_chars = len(times)
-            total_seconds = sum(times) # type: ignore
+            total_seconds = sum(times)  # type: ignore
         if num_chars == 0 or total_seconds == 0:
-            logging.warning("Num_chars or total_seconds is 0. Unable to get WPM.")
+            logging.warning(
+                "Num_chars or total_seconds is 0. Unable to get WPM.")
             return None
 
         # Calculate the CPM
@@ -394,7 +396,8 @@ class KeyParser:
             times = self.get_only_times(
                 keystrokes, exclude_outliers)
         if len(times) < 2:
-            logging.warning("Not enough keystrokes to calculate standard deviation.")
+            logging.warning(
+                "Not enough keystrokes to calculate standard deviation.")
             return None
         return round(statistics.stdev(times), 4)
 
@@ -447,7 +450,7 @@ class KeyParser:
 
         plt.figure(figsize=(15, 10))
         # plt.scatter(characters, times, color='skyblue') # Scatter plot!
-        plt.bar(characters, times, color='skyblue') # type: ignore
+        plt.bar(characters, times, color='skyblue')  # type: ignore
         # plt.barh(characters, times, color='skyblue')
         # Add labels and title
         plt.xlabel('Characters')
@@ -666,14 +669,14 @@ class KeyParser:
         except Exception as e:
             logging.error(f"An error occurred: {e}")
             return
-        
-    def stats(self, 
-                keystrokes: KeystrokeList | None = None,
-                exclude_outliers: bool | None = None,
-                km_id: str | None = None,
-                ) -> list[None | int | float] | None:
+
+    def stats(self,
+              keystrokes: KeystrokeList | None = None,
+              exclude_outliers: bool | None = None,
+              km_id: str | None = None,
+              ) -> list[None | int | float] | None:
         """Client facing.
-        Print statistics for the given log. 
+        Print statistics for the given log.
         PRECONDITION: km_id is valid if provided.
         """
         if keystrokes is None:
@@ -695,7 +698,9 @@ class KeyParser:
         keystroke_count = len(keystrokes)
         average_delay = self.get_average_delay(keystrokes, exclude_outliers)
         std_deviation = self.get_std_deviation(keystrokes, exclude_outliers)
-        highest_keystroke_time = max(self.get_only_times(keystrokes, exclude_outliers))
+        highest_keystroke_time = max(
+            self.get_only_times(
+                keystrokes, exclude_outliers))
         wpm = self.wpm(keystrokes, exclude_outliers)
         # TODO: Handle Outliers
         logging.info(f"Total keystrokes: {keystroke_count}")
@@ -703,7 +708,12 @@ class KeyParser:
         logging.info(f"Standard deviation: {std_deviation}")
         logging.info(f"Highest keystroke time: {highest_keystroke_time}")
         logging.info(f"Average WPM: {wpm}")
-        return [keystroke_count, average_delay, std_deviation, highest_keystroke_time, wpm]
+        return [
+            keystroke_count,
+            average_delay,
+            std_deviation,
+            highest_keystroke_time,
+            wpm]
 
     def __repr__(self) -> str:
         pretty_string = (

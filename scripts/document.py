@@ -16,6 +16,7 @@ CLIENT_DIR = path.join(ROOT, "client")
 
 PRODUCTION_DIRS = [CLIENT_DIR]
 
+
 def create_dir(dir) -> None:
     """Creates a directory if it doesn't exist."""
     if not path.exists(dir):

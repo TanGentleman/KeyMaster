@@ -175,5 +175,6 @@ class Configurator:
         if not changed_values:
             return f"Configuration=default\nLogfile:{filename}"
         # Create the pretty string representation with the changed values
-        pretty_string = f"Configuration:\nLogfile:{filename}" + ('\n'.join(changed_values) + '\n#')
+        pretty_string = f"Configuration:\nLogfile:{filename}" + \
+            ('\n'.join(changed_values) + '\n#')
         return pretty_string

@@ -48,13 +48,15 @@ def nuke_converted_logs(logs: list[Log], logfile=CONVERTED_LOGFILE) -> None:
     parser.logs = logs
     parser.confirm_nuke()
 
-def main(file = ENCODED_FILEPATH):
+
+def main(file=ENCODED_FILEPATH):
     logfile_as_string = read_logfile(file)
     if not logfile_as_string:
         print("Logfile is empty.")
         return
     logs = convert(logfile_as_string)
     nuke_converted_logs(logs)
+
 
 if __name__ == "__main__":
     import argparse

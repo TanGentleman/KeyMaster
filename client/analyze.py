@@ -7,7 +7,8 @@ class Analyze:
     The Analyze class is a wrapper for all the analysis options.
     """
 
-    def __init__(self, config: Config | None = None, preload: bool | None = None) -> None:
+    def __init__(self, config: Config | None = None,
+                 preload: bool | None = None) -> None:
         """
         Initialize the Analyze class.
         """

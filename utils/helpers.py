@@ -194,13 +194,14 @@ def resolve_filename(filename: str | None) -> str | None:
     # Return the last part of the filepath
     return path.basename(filepath)
 
+
 def get_log_id() -> str:
     """
     Get the current log id.
     """
     filepath = path.join(LOG_DIR, "LOG_ID.txt")
     log_id = DEFAULT_LOG_ID
-    try: 
+    try:
         with open(filepath, "r") as f:
             log_id = f.read()
             # Should I add assertions to make sure the log id is valid?
@@ -211,6 +212,7 @@ def get_log_id() -> str:
         return log_id
     except AssertionError:
         return log_id
+
 
 def update_log_id(log_id: str) -> None:
     # Increment the number (Current is A001, update to A002)
@@ -223,7 +225,7 @@ def update_log_id(log_id: str) -> None:
             raise ValueError("Invalid log id. Needs to be 4 digit")
         letter = id[0]
         number = int(id[1:])
-        if not(ord('A') <= ord(letter) < ord('Z')):
+        if not (ord('A') <= ord(letter) < ord('Z')):
             raise ValueError("Invalid log id. Series must be A-Z.")
         if number == 999:
             letter = chr(ord(letter) + 1)

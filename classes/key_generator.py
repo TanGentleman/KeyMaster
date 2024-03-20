@@ -1,21 +1,36 @@
+# KeyMaster imports
+from pynput.keyboard import Controller
+from utils.validation import Keystroke, Key, KeystrokeList
+from utils.constants import SHIFTED_CHARS, APOSTROPHE, KEYBOARD_CHARS, SHIFT_KEY
+from utils.config import (
+    SIM_SPEED_MULTIPLE,
+    DEFAULT_DISABLE_SIMULATION,
+    DEFAULT_ALLOW_NEWLINES,
+    DEFAULT_ALLOW_UNICODE,
+    SIM_MAX_DURATION,
+    SIM_MAX_WORDS,
+    ROUND_DIGITS,
+    BANNED_KEYS,
+    SIM_MAX_SPEED,
+    SIM_DELAY_MEAN,
+    SIM_DELAY_STD_DEV,
+    MIN_DELAY,
+    GENERATE_SHIFTS,
+    PRINT_SHIFT_INSERTIONS,
+    SHIFT_SPEED,
+    STOP_KEY,
+    STOP_CODE,
+    SPECIAL_KEYS)
+
 # Standard library imports
 from time import sleep
 from threading import Timer
 from random import normalvariate
 import logging
-
-from utils.constants import SHIFT_KEY
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
-# Third party imports
-from pynput.keyboard import Controller
 
-# KeyMaster imports
-from utils.config import (
-    SIM_SPEED_MULTIPLE, DEFAULT_DISABLE_SIMULATION, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, SIM_MAX_DURATION, SIM_MAX_WORDS, ROUND_DIGITS, BANNED_KEYS,
-    SIM_MAX_SPEED, SIM_DELAY_MEAN, SIM_DELAY_STD_DEV, MIN_DELAY, GENERATE_SHIFTS, PRINT_SHIFT_INSERTIONS, SHIFT_SPEED,
-    STOP_KEY, STOP_CODE, SPECIAL_KEYS)
-from utils.constants import SHIFTED_CHARS, APOSTROPHE, KEYBOARD_CHARS
-from utils.validation import Keystroke, Key, KeystrokeList
+# Third party imports
+
 
 class KeyGenerator:
     """
@@ -130,20 +145,20 @@ class KeyGenerator:
             keystroke = self.generate_keystroke(char)
             if keystroke is None:
                 continue
-            
+
             if char == ' ':
                 word_count += 1
             last_key = None
             if GENERATE_SHIFTS:
                 if not keystrokes.is_empty():
                     last_key = keystrokes[-1].key
-                if (last_key is None 
-                    or last_key in self.whitespace_dict 
-                    or (last_key not in SHIFTED_CHARS and not last_key.isupper())):
+                if (last_key is None or last_key in self.whitespace_dict or (
+                        last_key not in SHIFTED_CHARS and not last_key.isupper())):
                     # Check if a shift key needs to be added
                     if char.isupper() or (char in SHIFTED_CHARS):
                         if PRINT_SHIFT_INSERTIONS:
-                            logging.info(f"Inserting shift before key {i}: {char}")
+                            logging.info(
+                                f"Inserting shift before key {i}: {char}")
                         # Add a shift keypress
                         if keystrokes.is_empty():
                             time = None
@@ -212,6 +227,7 @@ class KeyGenerator:
         self.stop = False
         # Initialize the keyboard controller
         keyboard = Controller()
+
         def stop_simulation() -> None:
             self.stop = True
         simulation_timer = Timer(self.max_duration, stop_simulation)
@@ -256,11 +272,11 @@ class KeyGenerator:
                         continue
                     try:
                         keyboard.tap(SPECIAL_KEYS[key])
-                    except Exception as e:    
+                    except Exception as e:
                         logging.error(
                             f"ERROR! special key not pressed: {key}")
                         continue
-                    
+
                 else:
                     # Decode the character
                     char = keystroke.unicode_char

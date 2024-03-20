@@ -97,12 +97,12 @@ class Keystroke:
         Returns the properties of the keystroke.
         """
         return (f"key: {self.key}"
-              + f"\ntime: {self.time}"
-              + f"\nvalid: {self.valid}"
-              + f"\nunicode_char: {self.unicode_char}"
-              + f"\nis_typeable_char: {self.is_typeable_char}"
-              + f"\nlegal_key: {self.legal_key}"
-              )
+                + f"\ntime: {self.time}"
+                + f"\nvalid: {self.valid}"
+                + f"\nunicode_char: {self.unicode_char}"
+                + f"\nis_typeable_char: {self.is_typeable_char}"
+                + f"\nlegal_key: {self.legal_key}"
+                )
 
     def __iter__(self) -> Iterator[tuple[str, float | None]]:
         yield self.key, self.time
@@ -129,7 +129,7 @@ class Keystroke:
             if self.key in SPECIAL_KEYS:
                 is_special = True
                 legal_key = APOSTROPHE + self.key[4:] + APOSTROPHE
-            elif self.key == STOP_CODE: 
+            elif self.key == STOP_CODE:
                 is_special = True
                 legal_key = APOSTROPHE + self.key + APOSTROPHE
             else:
@@ -172,7 +172,7 @@ class KeystrokeList:
         self.keystrokes.append(keystroke)
         self.length += 1
 
-    def extend(self, keystrokes, prune = False) -> None:
+    def extend(self, keystrokes, prune=False) -> None:
         """
         Extend the list of keystrokes with another list of keystrokes.
 
@@ -291,11 +291,11 @@ class KeystrokeList:
                 break
         return False
 
-    def prune_bad_nuns(self, destructive = False) -> int:
+    def prune_bad_nuns(self, destructive=False) -> int:
         assert ROUND_DIGITS > 0
         """
         Remove all extraneous null (None) times from the list of keystrokes.
-        
+
         Args:
             destructive (bool): If False, null times are replaced with 0.001 second delays.
 
@@ -313,7 +313,7 @@ class KeystrokeList:
                         continue
                     else:
                         print("Replacing keystroke with shortest delay")
-                        shortest_delay = float(1 / (10 ** (ROUND_DIGITS-1)))
+                        shortest_delay = float(1 / (10 ** (ROUND_DIGITS - 1)))
                         keystroke.time = shortest_delay
             pruned_keystrokes.append(keystroke)
         self.keystrokes = pruned_keystrokes
@@ -329,6 +329,7 @@ class KeystrokeList:
                 continue
             pruned_keystrokes.append(keystroke)
         self.keystrokes = pruned_keystrokes
+
 
 class Log(TypedDict):
     """
