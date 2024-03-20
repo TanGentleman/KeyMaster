@@ -8,7 +8,7 @@ from classes.key_collector import KeyLogger
 from classes.key_generator import KeyGenerator
 from utils.validation import KeystrokeList
 from utils.helpers import clean_string
-from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING
+from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING, DEFAULT_SIM_INITIAL_LAG
 
 PRINT_KEYS = False
 
@@ -77,10 +77,12 @@ def validate_and_save_keystrokes(
 
 
 def listen_main(
+        # NOTE: Default initial lag is hardcoded to 5s for now
         disable=DEFAULT_DISABLE_SIMULATION,
         logging=DEFAULT_LOGGING,
         allow_newlines=DEFAULT_ALLOW_NEWLINES,
-        allow_unicode=DEFAULT_ALLOW_UNICODE) -> None:
+        allow_unicode=DEFAULT_ALLOW_UNICODE,
+        initial_lag=3) -> None:
     logger = KeyLogger()
     keystrokes = listen_for_keystrokes(logger)
     if keystrokes.is_empty():
@@ -94,8 +96,8 @@ def listen_main(
         print("Simulation disabled.")
         return
 
-    print("Starting simulation in 5 seconds...")
-    sleep(5)
+    print(f"Starting simulation in {initial_lag} seconds...")
+    sleep(initial_lag)
     simulate_keystrokes(keystrokes, disable, allow_newlines, allow_unicode)
 
 
@@ -104,7 +106,8 @@ def simulate_from_string(
         disable=DEFAULT_DISABLE_SIMULATION,
         logging=DEFAULT_LOGGING,
         allow_newlines=DEFAULT_ALLOW_NEWLINES,
-        allow_unicode=DEFAULT_ALLOW_UNICODE) -> None:
+        allow_unicode=DEFAULT_ALLOW_UNICODE,
+        initial_lag=float(DEFAULT_SIM_INITIAL_LAG)) -> None:
     if not input_string:
         print("No input string provided.")
         return
@@ -120,14 +123,18 @@ def simulate_from_string(
     if keystrokes.is_empty():
         print("No keystrokes found.")
         return
+    print(f"Starting simulation in {initial_lag} seconds...")
+    sleep(initial_lag)
     simulate_keystrokes(keystrokes, disable, allow_newlines, allow_unicode)
 
 
 def clipboard_main(
+        # NOTE: Default initial lag is hardcoded to 0.5s for now
         disable=DEFAULT_DISABLE_SIMULATION,
         logging=DEFAULT_LOGGING,
         allow_newlines=DEFAULT_ALLOW_NEWLINES,
-        allow_unicode=DEFAULT_ALLOW_UNICODE) -> None:
+        allow_unicode=DEFAULT_ALLOW_UNICODE,
+        initial_lag=0.5) -> None:
     from pyperclip import paste as py_paste  # type: ignore
     clipboard_contents = py_paste()
     if not clipboard_contents:
@@ -146,7 +153,8 @@ def clipboard_main(
         disable,
         logging,
         allow_newlines,
-        allow_unicode)
+        allow_unicode,
+        initial_lag)
 
 # UI-less Shortcuts integration.
 # Create a keyboard shortcut to run shell script `python -m

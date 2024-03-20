@@ -21,6 +21,9 @@ DEFAULT_ALLOW_UNICODE = True
 SIM_MAX_DURATION = 30
 SIM_SPEED_MULTIPLE = 3
 
+# NEW
+DEFAULT_SIM_INITIAL_LAG = 3
+
 # Precision for the time value in the log files. Must be an integer.
 ROUND_DIGITS = 4
 
