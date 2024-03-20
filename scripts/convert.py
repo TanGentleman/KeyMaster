@@ -1,7 +1,6 @@
 from os.path import join as join_path
 
 from classes.converter import convert
-from client.analyze import Analyze
 from client.configurate import Config
 from utils.validation import Log
 from utils.config import LOG_DIR
@@ -9,7 +8,6 @@ from utils.helpers import get_filepath
 
 ENCODED_FILEPATH = join_path(LOG_DIR, "keystrokes.log")
 CONVERTED_LOGFILE = "converted-keystrokes"
-# Read logfile
 
 
 def read_logfile(filename: str) -> str:
@@ -50,6 +48,13 @@ def nuke_converted_logs(logs: list[Log], logfile=CONVERTED_LOGFILE) -> None:
     parser.logs = logs
     parser.confirm_nuke()
 
+def main(file = ENCODED_FILEPATH):
+    logfile_as_string = read_logfile(file)
+    if not logfile_as_string:
+        print("Logfile is empty.")
+        return
+    logs = convert(logfile_as_string)
+    nuke_converted_logs(logs)
 
 if __name__ == "__main__":
     import argparse
@@ -62,12 +67,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.file:
-        logfile_as_string = read_logfile(args.file)
-        if not logfile_as_string:
-            print("Logfile is empty.")
-            exit(1)
-        logs = convert(logfile_as_string)
-        nuke_converted_logs(logs)
+        main(args.file)
     else:
         print("No logfile provided.")
         exit(1)

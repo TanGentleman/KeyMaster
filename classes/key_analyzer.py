@@ -286,7 +286,7 @@ class KeyParser:
             times = self.get_only_times(
                 keystrokes, exclude_outliers=exclude_outliers,)
             num_chars = len(times)
-            total_seconds = sum(times)
+            total_seconds = sum(times) # type: ignore
         if num_chars == 0 or total_seconds == 0:
             logging.warning("Num_chars or total_seconds is 0. Unable to get WPM.")
             return None

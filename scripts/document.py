@@ -88,8 +88,8 @@ def extract_function_info(source) -> list[tuple]:
 def write_to_markdown(
         class_info: list[tuple], function_info, filepath):
     """Writes function information to a markdown file."""
-    errors = []
-    error_count = 0
+    # errors = []
+    # error_count = 0
     with open(filepath, 'w') as file:
         if len(class_info) != 0:
             file.write('# Class Documentation\n\n')

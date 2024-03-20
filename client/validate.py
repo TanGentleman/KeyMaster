@@ -45,7 +45,7 @@ class Keys:
         elif isinstance(keys, list):
             try:
                 self.keys = KeystrokeList([key.keystroke for key in keys])
-            except Exception as e:
+            except:
                 raise TypeError("Invalid KeystrokeList.")
         else:
             raise TypeError("Invalid type for Keys.")

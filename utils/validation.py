@@ -93,6 +93,9 @@ class Keystroke:
                 self.legal_key = self.legalize()
 
     def props(self):
+        """
+        Returns the properties of the keystroke.
+        """
         return (f"key: {self.key}"
               + f"\ntime: {self.time}"
               + f"\nvalid: {self.valid}"

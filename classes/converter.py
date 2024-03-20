@@ -165,7 +165,9 @@ def prune_logfile(logfile_as_string: str) -> str:
 
 
 def convert_chunk(snippet: str) -> Log | None:
-    log = {}
+    """
+    Convert a snippet of a logfile into a Log dictionary.
+    """
     length = len(snippet)
     if length == 0:
         return None
@@ -196,6 +198,8 @@ def convert_chunk(snippet: str) -> Log | None:
             key = get_keystroke(char)
             keystrokes.append(key)
             continue
+    if keystrokes.is_empty():
+        return None
     return {
         "id": str(uuid4()),
         "string": keystrokes.to_string(),
@@ -217,8 +221,6 @@ def convert(logfile_as_string: str) -> list[Log]:
     """
     # Initialize the list of dictionaries
     logs: list[Log] = []
-    # Initialize the list of keystrokes
-    keystrokes = KeystrokeList()
 
     # Iterate through the each character in the logfile
     text = prune_logfile(logfile_as_string)

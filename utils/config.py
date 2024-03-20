@@ -20,7 +20,7 @@ DEFAULT_ALLOW_NEWLINES = True
 DEFAULT_ALLOW_UNICODE = True
 DEFAULT_STRING = "hey look ma, it's a simulation!" # also used by scripts simulate.py and cli.py
 BANNED_KEYS = ['√']
-ROUND_DIGITS = 4  # Precision for the time value in the log files
+ROUND_DIGITS = 4  # Precision for the time value in the log files. Must be an integer.
 SIM_MAX_DURATION = 30
 SIM_SPEED_MULTIPLE = 3
 # NOTE:
@@ -46,7 +46,7 @@ COLLECT_ONLY_TYPEABLE = False
 # Misc
 STOP_KEY = "*"  # Special char that stops the listener and halts keystrokes generation
 STOP_CODE = 'STOP'
-SHIFT_SPEED = 0.2222  # keystroke.time value of formulaically generated shift keystrokes
+SHIFT_SPEED = round(2/9, ROUND_DIGITS)  # keystroke.time value of formulaically generated shift keystrokes
 
 # UNOFFICIAL
 # max length of Keystroke.key (to prevent invalid overflow)
