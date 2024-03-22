@@ -73,6 +73,8 @@ class Configurator:
         """
         Set any of the client-facing configuration attributes.
         """
+        # NOTE: Type validity is not enforced here, use client Config
+        # attributes for safety
         if disable is not None:
             self.disable = disable
         if logging is not None:
@@ -152,6 +154,24 @@ class Configurator:
             round_digits=self.round_digits,
             banned_keys=self.banned_keys)
 
+    def get_attributes(self) -> dict:
+        """
+        Return a dictionary of the configuration attributes.
+        """
+        return {
+            "disable": self.disable,
+            "logging": self.logging,
+            "allow_newlines": self.allow_newlines,
+            "allow_unicode": self.allow_unicode,
+            "logfile": self.logfile,
+            "banned_keys": self.banned_keys,
+            "round_digits": self.round_digits,
+            "max_simulation_time": self.max_simulation_time,
+            "simulation_speed_multiple": self.simulation_speed_multiple,
+            "exclude_outliers_in_analysis": self.exclude_outliers,
+            "preload_analysis": self.preload
+        }
+
     def __repr__(self) -> str:
         changed_values = []  # List to store the changed values
         filename = resolve_filename(self.logfile)
@@ -165,8 +185,10 @@ class Configurator:
             changed_values.append(f"allow_newlines={self.allow_newlines}")
         if self.allow_unicode != DEFAULT_ALLOW_UNICODE:
             changed_values.append(f"allow_unicode={self.allow_unicode}")
-        if self.logfile != "REG":
-            changed_values.append(f"logfile={filename}")
+        # if self.logfile != "REG":
+        #     changed_values.append(f"logfile={filename}")
+        # The above is commented out because the Logfile should always be
+        # printed
         if self.banned_keys != BANNED_KEYS:
             changed_values.append(f"banned_keys={self.banned_keys}")
         if self.round_digits != ROUND_DIGITS:

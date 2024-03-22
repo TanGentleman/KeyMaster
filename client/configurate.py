@@ -29,9 +29,6 @@ class Config:
             raise TypeError("config must be a Configurator.")
 
         self._config = config
-        # BIG ERROR: ARGS FROM THIS WRAPPER CLASS ARE NOT BEING PASSED TO
-        # CONFIGURATOR OBJECT
-
         self._disable = disable if disable is not None else config.disable
         self._logging = logging if logging is not None else config.logging
         self._allow_newlines = allow_newlines if allow_newlines is not None else config.allow_newlines
@@ -216,6 +213,31 @@ class Config:
             raise TypeError("preload must be a bool.")
         self._preload = value
         self.config.preload = value
+
+    def get_attributes(self) -> dict:
+        """
+        Return a dictionary of the configuration attributes.
+        """
+        config_dict = self.config.get_attributes()
+        redundant_dict = {
+            "disable": self.disable,
+            "logging": self.logging,
+            "allow_newlines": self.allow_newlines,
+            "allow_unicode": self.allow_unicode,
+            "logfile": self.logfile,
+            "banned_keys": self.banned_keys,
+            "round_digits": self.round_digits,
+            "max_simulation_time": self.max_simulation_time,
+            "simulation_speed_multiple": self.simulation_speed_multiple,
+            "exclude_outliers_in_analysis": self.exclude_outliers,
+            "preload_analysis": self.preload
+        }
+        assert config_dict == redundant_dict, "Error! Attributes should *always* match config backend"
+        # NOTE: To troubleshoot, remove assertion and uncomment the following lines:
+        # for key in config_dict:
+        #     if config_dict[key] != redundant_dict[key]:
+        #         print(f"Key: {key} - Config: {config_dict[key]} - Redundant: {redundant_dict[key]}")
+        return config_dict
 
     def __repr__(self) -> str:
         return self.config.__repr__()
