@@ -667,14 +667,13 @@ class KeyParser:
             logging.error(f"An error occurred: {e}")
             return
 
-    def stats(self,
+    def get_stats(self,
               keystrokes: KeystrokeList | None = None,
               exclude_outliers: bool | None = None,
               km_id: str | None = None,
-              ) -> list[None | int | float] | None:
+              ) -> dict[str, int | float | None] | None:
         """Client facing.
         Print statistics for the given log.
-        PRECONDITION: km_id is valid if provided.
         """
         if keystrokes is None:
             if km_id is not None:
@@ -699,18 +698,16 @@ class KeyParser:
             self.get_only_times(
                 keystrokes, exclude_outliers))
         wpm = self.wpm(keystrokes, exclude_outliers)
-        # TODO: Handle Outliers
-        logging.info(f"Total keystrokes: {keystroke_count}")
-        logging.info(f"Average delay: {average_delay}")
-        logging.info(f"Standard deviation: {std_deviation}")
-        logging.info(f"Highest keystroke time: {highest_keystroke_time}")
-        logging.info(f"Average WPM: {wpm}")
-        return [
-            keystroke_count,
-            average_delay,
-            std_deviation,
-            highest_keystroke_time,
-            wpm]
+        # TODO: Add outlier count
+        # This will be implemented with detailed outlier stats.
+        stats_dict = {
+            "keystroke_count": keystroke_count,
+            "average_delay": average_delay,
+            "std_deviation": std_deviation,
+            "highest_keystroke_time": highest_keystroke_time,
+            "wpm": wpm
+        }
+        return stats_dict
 
     def __repr__(self) -> str:
         pretty_string = (

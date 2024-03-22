@@ -164,6 +164,22 @@ class Analyze:
             raise ValueError("Standard deviation not present.")
         return std_dev
 
+    def get_stats(self,
+              keystrokes: KeystrokeList | None = None,
+              exclude_outliers: bool | None = None,
+              km_id: str | None = None,
+              ):
+        """
+        Get the stats of the logfile or provided keystrokes/km_id.
+
+        Parameters
+        ----------
+        - keystrokes (`KeystrokeList`, optional): The keystrokes to check.
+        - km_id (`str`, optional): The id to check.
+        - exclude_outliers (`bool`, optional): Whether to exclude outliers.
+        """
+        return self.parser.get_stats(keystrokes, exclude_outliers, km_id)
+
     def visualize(
             self,
             mode: str | None = None,
