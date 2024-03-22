@@ -1,6 +1,6 @@
 # KeyMaster imports
 from pynput.keyboard import Key, KeyCode, Listener
-from utils.config import (
+from utils.settings import (
     SPECIAL_KEYS,
     STOP_KEY,
     STOP_CODE,

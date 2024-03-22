@@ -1,7 +1,7 @@
 # KeyMaster imports
 from utils.helpers import get_filepath, resolve_filename
 from utils.validation import KeystrokeDecoder, KeystrokeList, Log, KeystrokeEncoder
-from utils.config import STOP_KEY, OUTLIER_CUTOFF
+from utils.settings import STOP_KEY, OUTLIER_CUTOFF
 
 # Standard library imports
 from json import load as json_load

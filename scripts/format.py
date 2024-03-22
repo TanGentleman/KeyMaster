@@ -1,7 +1,7 @@
 # This script is for auto formatting parameters and attributes with a
 # bulletpoint
 from os import path
-from utils.config import ROOT
+from utils.settings import ROOT
 CLIENT_DIR = path.join(ROOT, "client")
 FILES = [
     'collect.py',

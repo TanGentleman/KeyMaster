@@ -1,8 +1,8 @@
 from classes.key_collector import KeyLogger
 from classes.key_analyzer import KeyParser
 from classes.key_generator import KeyGenerator
-from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_EXCLUDE_OUTLIERS, SIM_SPEED_MULTIPLE
-from utils.config import BANNED_KEYS, ROUND_DIGITS, SIM_MAX_DURATION
+from utils.settings import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_EXCLUDE_OUTLIERS, SIM_SPEED_MULTIPLE
+from utils.settings import BANNED_KEYS, ROUND_DIGITS, SIM_MAX_DURATION
 from utils.helpers import resolve_filename
 
 
@@ -42,7 +42,7 @@ class Configurator:
             preload_analysis: bool = True
     ) -> None:
         """
-        Initialize the Config class. All arguments are optional and have defaults in config.py
+        Initialize the Config class. All arguments are optional and have defaults in settings.py
         """
         self.disable = disable_simulation
         self.logging = logging

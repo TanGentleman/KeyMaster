@@ -8,7 +8,7 @@ from classes.key_collector import KeyLogger
 from classes.key_generator import KeyGenerator
 from utils.validation import KeystrokeList
 from utils.helpers import clean_string
-from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING, DEFAULT_SIM_INITIAL_LAG
+from utils.settings import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING, DEFAULT_SIM_INITIAL_LAG
 
 PRINT_KEYS = False
 

@@ -1,6 +1,6 @@
 from client.configurate import Config
 from scripts.simulate import simulate_from_string, listen_main, clipboard_main
-from utils.config import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING
+from utils.settings import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING
 import argparse
 
 

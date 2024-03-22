@@ -2,8 +2,13 @@ from os import path
 
 from pynput.keyboard import Key, KeyCode
 
-from utils.config import (LOG_DIR, ABSOLUTE_REG_FILEPATH, ABSOLUTE_SIM_FILEPATH,
-                          STOP_CODE, SPECIAL_KEYS, BANNED_KEYS)
+from utils.settings import (
+    LOG_DIR,
+    ABSOLUTE_REG_FILEPATH,
+    ABSOLUTE_SIM_FILEPATH,
+    STOP_CODE,
+    SPECIAL_KEYS,
+    BANNED_KEYS)
 from utils.constants import DEFAULT_LOG_ID, APOSTROPHE, KEYBOARD_CHARS
 
 REPLACE_WONKY_UNICODE = False
@@ -159,7 +164,8 @@ def get_filepath(filename: str | None) -> str | None:
         filepath = path.join(LOG_DIR, clean_filename(filename))
 
     if not path.exists(filepath):
-        print(f"Warning: This file does not exist. (Yet?)")
+        print(
+            f"Warning: File {clean_filename(filename)} does not exist. (Yet?)")
     return filepath
 
 

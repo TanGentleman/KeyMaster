@@ -2,7 +2,7 @@
 from pynput.keyboard import Controller
 from utils.validation import Keystroke, Key, KeystrokeList
 from utils.constants import SHIFTED_CHARS, APOSTROPHE, KEYBOARD_CHARS, SHIFT_KEY
-from utils.config import (
+from utils.settings import (
     SIM_SPEED_MULTIPLE,
     DEFAULT_DISABLE_SIMULATION,
     DEFAULT_ALLOW_NEWLINES,

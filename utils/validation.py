@@ -8,7 +8,7 @@ from typing import Iterator, TypedDict, Any, Union
 from pynput.keyboard import Key
 
 # KeyMaster imports
-from utils.config import MAX_KEY_LENGTH, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
+from utils.settings import MAX_KEY_LENGTH, SPECIAL_KEYS, STOP_KEY, STOP_CODE, ROUND_DIGITS
 from utils.constants import EMPTY_WRAPPED_CHAR, APOSTROPHE, KEYBOARD_CHARS
 from utils.helpers import is_valid_wrapped_char, is_valid_wrapped_special_key, unwrap_char, is_key_valid
 
@@ -30,7 +30,7 @@ class LegalKey:
         if is_special:
             if not is_valid_wrapped_special_key(key):
                 raise ValueError(
-                    'key must be a special key. These are defined in utils/config.py')
+                    'key must be a special key. These are defined in utils/settings.py')
         else:
             if len(key) != 1 or key not in KEYBOARD_CHARS:
                 raise ValueError('key must be typeable character')

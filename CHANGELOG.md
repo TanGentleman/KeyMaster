@@ -44,7 +44,7 @@ See GitHub [Issues](https://github.com/tangentleman/KeyMaster/issues) for featur
 - Strict validation of keystrokes with new `legalize` method that converts to object LegalKey
 - Use files test.py and note built-in logging for edge cases
     - Troubleshoot unicode characters like `Invalid character: ˜ -> 732`
-    - Customize list of banned characters in config.py
+    - Customize list of banned characters in config.py [now settings.py]
 
 ## [1.1.1] - 2023-October
 
@@ -58,7 +58,7 @@ See GitHub [Issues](https://github.com/tangentleman/KeyMaster/issues) for featur
 - Handle modifier key logic more elegantly when simulating presses (Like shift key being held down when typing "##")
 
 ### Fixed
-- Constants for listening/simulating duration and max words in config.py work consistently 
+- Constants for listening/simulating duration and max words in config.py [now settings.py] work consistently 
 - Certain unicode characters may present a discrepancy between input string and generated keystrokes
 - Compatibility of keystrokes from different sources (str, Key, Keycode) to and from logfile
 - Running KeyLogger.start_listener in jupyter notebook lacks perms and stalls, need separate thread to halt in x seconds

@@ -6,7 +6,7 @@ import ast
 from os import path, listdir, mkdir
 
 # KeyMaster imports
-from utils.config import ROOT
+from utils.settings import ROOT
 
 DOCS_DIR = path.join(ROOT, "docs")
 CLASSES_DIR = path.join(ROOT, "classes")
