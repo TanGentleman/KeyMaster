@@ -158,7 +158,7 @@ def seek_log_start(snippet: str) -> int:
 
 
 def prune_logfile(logfile_as_string: str) -> str:
-    # Remove all sequences of the strings in BANNED_STRINGS
+    # Remove all sequences of the strings in BANNED_CODES
     pattern = '|'.join(re.escape(code) for code in BANNED_CODES)
     logfile_as_string = re.sub(pattern, '', logfile_as_string)
     return logfile_as_string.strip()

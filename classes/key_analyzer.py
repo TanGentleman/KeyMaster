@@ -373,7 +373,7 @@ class KeyParser:
         Get the standard deviation of the time between keystrokes.
 
         `Args`:
-            `km_id (`str`, optional): The UUID or exact string to check for.
+            `km_id` (`str`, optional): The UUID or exact string to check for.
 
         Returns:
             `float` or `None`: If insufficient keystrokes are found, None is returned.
@@ -430,13 +430,15 @@ class KeyParser:
 
     def plot_bar(self,
                  character_times: dict[str, float],
-                 save_file=False,
-                 display=True) -> None:
+                 save_file: bool = False,
+                 display: bool = True) -> None:
         """Not client facing.
         Plots a bar chart of the average keystroke times for each character.
 
-        :param character_times: A dictionary mapping each character to its average keystroke time.
-        :type character_times: dict[str, float]
+        Args:
+            `character_times` (`dict[str, float]`): A dictionary mapping each character to its average keystroke time.
+            `save_file` (`bool`, optional): A flag indicating whether to save the plot as an image file.
+            `display` (`bool`, optional): A flag indicating whether to display the plot.
         """
         if plt is None:
             logging.warning("Matplotlib not installed. Cannot visualize.")
