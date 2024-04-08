@@ -7,6 +7,7 @@ from utils.constants import LEFT_SHIFT, RIGHT_SHIFT, SHIFT_CODES, CODES, BEGIN_S
 generator = Generate()
 generator.disable()
 
+# TODO: Add the timestamps from prune_logfile to the logs rather than generating new ones
 
 def get_keystroke(char: str) -> Keystroke:
     return generator.generate_keystroke(char)
@@ -157,11 +158,44 @@ def seek_log_start(snippet: str) -> int:
     return index + 2
 
 
+# def prune_logfile(logfile_as_string: str) -> str:
+#     # Remove all sequences of the strings in BANNED_CODES
+#     pattern = '|'.join(re.escape(code) for code in BANNED_CODES)
+#     logfile_as_string = re.sub(pattern, '', logfile_as_string)
+#     return logfile_as_string.strip()
+
 def prune_logfile(logfile_as_string: str) -> str:
-    # Remove all sequences of the strings in BANNED_CODES
-    pattern = '|'.join(re.escape(code) for code in BANNED_CODES)
-    logfile_as_string = re.sub(pattern, '', logfile_as_string)
-    return logfile_as_string.strip()
+    pruned_logfile = ''
+    keystrokes = []
+    chunks = logfile_as_string.strip().split('\n\n\n')
+    # print(len(chunks), "chunks found")
+    for chunk in chunks:
+        pruned_lines = []
+        if not chunk.startswith('Keystrokes '):
+            raise ValueError("Invalid intro to chunk")
+        # TODO: I should extract date at this step')
+        header, chunk = chunk.split('\n\n', 1)
+        # This splits the header from the keystrokes
+        lines = chunk.split('\n')
+        temp_time = None
+        for line in lines:
+            if re.match(r'^\d+\.\d+$', line):
+                # This regex matches a timestamp line
+                temp_time = float(line)
+            elif line in BANNED_CODES:
+                temp_time = None
+                continue
+            elif line not in BANNED_CODES:
+                pruned_lines.append(line)
+                if temp_time is None:
+                    print("No timestamp found for key:", line)
+                keystrokes.append((line, temp_time))
+        assert header, "No introduction found"
+        pruned_segment = header + '\n\n' + ''.join(pruned_lines) + '\n\n'
+        pruned_logfile += pruned_segment
+    # print(len(keystrokes), "keystrokes found")
+    # print(pruned_logfile)
+    return pruned_logfile
 
 
 def convert_chunk(snippet: str) -> Log | None:
