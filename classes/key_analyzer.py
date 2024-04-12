@@ -520,16 +520,16 @@ class KeyParser:
         """
         keystrokes = KeystrokeList()
         if km_id is not None:
-            isPresent = self.is_id_present(km_id)
-            if isPresent is False:
+            if not self.is_id_present(km_id):
                 logging.error("ID invalid.")
                 return keystrokes
         for log in self.logs:
-            if km_id is not None and self.is_id_present(km_id, log):
+            if km_id is not None:
+                if not self.is_id_present(km_id, log):
+                    continue
                 keystrokes.extend(log['keystrokes'])
                 return keystrokes
-            else:
-                keystrokes.extend(log['keystrokes'])
+            keystrokes.extend(log['keystrokes'])
 
         return keystrokes
 
