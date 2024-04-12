@@ -1,12 +1,13 @@
 import re
 from uuid import uuid4
 from client.generate import Generate
+from utils.settings import ROUND_DIGITS
 from utils.validation import Keystroke, KeystrokeList, Log
 from utils.constants import LEFT_SHIFT, RIGHT_SHIFT, SHIFT_CODES, CODES, BEGIN_SPECIAL_KEY, BANNED_CODES, SHIFT_MAP
-
 generator = Generate()
 generator.disable()
 
+KEYSTROKES_INTRO = "Keystrokes "
 # TODO: Add the timestamps from prune_logfile to the logs rather than generating new ones
 
 def get_keystroke(char: str) -> Keystroke:
@@ -164,38 +165,55 @@ def seek_log_start(snippet: str) -> int:
 #     logfile_as_string = re.sub(pattern, '', logfile_as_string)
 #     return logfile_as_string.strip()
 
-def prune_logfile(logfile_as_string: str) -> str:
+def prune_logfile(logfile_as_string: str) -> tuple[str, list[list[tuple[str, float | None]]]]:
     pruned_logfile = ''
-    keystrokes = []
+    original_keystrokes: list[list[tuple[str, float | None]]] = []
     chunks = logfile_as_string.strip().split('\n\n\n')
     # print(len(chunks), "chunks found")
     for chunk in chunks:
-        pruned_lines = []
-        if not chunk.startswith('Keystrokes '):
+        if not chunk.startswith(KEYSTROKES_INTRO):
             raise ValueError("Invalid intro to chunk")
         # TODO: I should extract date at this step')
         header, chunk = chunk.split('\n\n', 1)
+        assert header, "No introduction found"
+        assert chunk, "No keystrokes found"
         # This splits the header from the keystrokes
+        keystrokes: list[tuple[str, float | None]] = []
+        pruned_lines = []
         lines = chunk.split('\n')
-        temp_time = None
+        delay = None
+        set_null = False
         for line in lines:
+            # These are either a timestamp or a key (char or special key)
             if re.match(r'^\d+\.\d+$', line):
                 # This regex matches a timestamp line
-                temp_time = float(line)
+                delay = float(line)
             elif line in BANNED_CODES:
-                temp_time = None
+                delay = None
                 continue
-            elif line not in BANNED_CODES:
+            else:
                 pruned_lines.append(line)
-                if temp_time is None:
+                if delay is None:
+                    # This should never happen
                     print("No timestamp found for key:", line)
-                keystrokes.append((line, temp_time))
-        assert header, "No introduction found"
+                    # This should be only for the first key
+                    if set_null is True:
+                        raise ValueError("Can't set null twice")
+                    keystrokes.append((line, None))
+                    set_null = True
+                    
+                # Set the delay for each key
+                else:
+                    if delay < 0:
+                        raise ValueError("Negative delay")
+                    keystrokes.append((line, delay))
         pruned_segment = header + '\n\n' + ''.join(pruned_lines) + '\n\n'
         pruned_logfile += pruned_segment
-    # print(len(keystrokes), "keystrokes found")
+        original_keystrokes.append(keystrokes)
+    print(len(original_keystrokes), "chunks found")
+    # print(keystrokes[:3], '...', keystrokes[-2:])
     # print(pruned_logfile)
-    return pruned_logfile
+    return pruned_logfile, original_keystrokes
 
 
 def convert_chunk(snippet: str) -> Log | None:
@@ -257,14 +275,48 @@ def convert(logfile_as_string: str) -> list[Log]:
     logs: list[Log] = []
 
     # Iterate through the each character in the logfile
-    text = prune_logfile(logfile_as_string)
+    text, original_keystrokes = prune_logfile(logfile_as_string)
+    ignore_next_shift = False
+    all_clean_keystrokes = []
+    shift_count = 0
+    exclude_shift = True
+    for keystrokes in original_keystrokes:
+        clean_keystrokes = []
+        for key, delay in keystrokes:
+            # remove every other shift
+            if key in [LEFT_SHIFT, RIGHT_SHIFT]:
+                if exclude_shift:
+                    continue
+                if ignore_next_shift:
+                    ignore_next_shift = False
+                    continue
+                shift_count += 1
+                clean_keystrokes.append((key, delay))
+                ignore_next_shift = True
+                continue
+            clean_keystrokes.append((key, delay))
+        all_clean_keystrokes.append(clean_keystrokes)
 
     chunks = text.split('\n\n')
     for chunk in chunks:
-        if chunk.startswith('Keystrokes '):
+        if chunk.startswith(KEYSTROKES_INTRO):
             continue
         log = convert_chunk(chunk)
         if log is not None:
             logs.append(log)
+    # Validation
+    if len(logs) != len(all_clean_keystrokes):
+        raise ValueError("Invalid log count")
+    # Replace the delay for each keystroke
+    for i in range(len(logs)):
+        log = logs[i]
+        clean_keystrokes = all_clean_keystrokes[i]
+        if len(clean_keystrokes) != len(log['keystrokes']):
+            raise ValueError("Invalid keystroke count")
+        for keystroke, (key, delay) in zip(log['keystrokes'], clean_keystrokes):
+            keystroke.time = round(delay, ROUND_DIGITS)
+        print('recorded keys:', len(clean_keystrokes), 'logged keys:', len(log['keystrokes']))
+        # print(list(log['keystrokes']))
+
     # Return the list of dictionaries
     return logs
