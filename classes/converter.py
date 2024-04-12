@@ -158,16 +158,16 @@ def seek_log_start(snippet: str) -> int:
         raise ValueError("Invalid log message")
     return index + 2
 
-
+### LEGACY FUNCTION
 # def prune_logfile(logfile_as_string: str) -> str:
 #     # Remove all sequences of the strings in BANNED_CODES
 #     pattern = '|'.join(re.escape(code) for code in BANNED_CODES)
 #     logfile_as_string = re.sub(pattern, '', logfile_as_string)
 #     return logfile_as_string.strip()
 
-def prune_logfile(logfile_as_string: str) -> tuple[str, list[list[tuple[str, float | None]]]]:
+def prune_logfile(logfile_as_string: str) -> tuple[str, list[list[tuple[str, float]]]]:
     pruned_logfile = ''
-    original_keystrokes: list[list[tuple[str, float | None]]] = []
+    original_keystrokes: list[list[tuple[str, float]]] = []
     chunks = logfile_as_string.strip().split('\n\n\n')
     # print(len(chunks), "chunks found")
     for chunk in chunks:
@@ -178,11 +178,10 @@ def prune_logfile(logfile_as_string: str) -> tuple[str, list[list[tuple[str, flo
         assert header, "No introduction found"
         assert chunk, "No keystrokes found"
         # This splits the header from the keystrokes
-        keystrokes: list[tuple[str, float | None]] = []
+        keystrokes: list[tuple[str, float]] = []
         pruned_lines = []
         lines = chunk.split('\n')
         delay = None
-        set_null = False
         for line in lines:
             # These are either a timestamp or a key (char or special key)
             if re.match(r'^\d+\.\d+$', line):
@@ -194,14 +193,9 @@ def prune_logfile(logfile_as_string: str) -> tuple[str, list[list[tuple[str, flo
             else:
                 pruned_lines.append(line)
                 if delay is None:
-                    # This should never happen
                     print("No timestamp found for key:", line)
-                    # This should be only for the first key
-                    if set_null is True:
-                        raise ValueError("Can't set null twice")
-                    keystrokes.append((line, None))
-                    set_null = True
-                    
+                    raise ValueError("Can't set null")
+                    # keystrokes.append((line, None))
                 # Set the delay for each key
                 else:
                     if delay < 0:
@@ -314,7 +308,8 @@ def convert(logfile_as_string: str) -> list[Log]:
         if len(clean_keystrokes) != len(log['keystrokes']):
             raise ValueError("Invalid keystroke count")
         for keystroke, (key, delay) in zip(log['keystrokes'], clean_keystrokes):
-            keystroke.time = round(delay, ROUND_DIGITS)
+            if delay is not None:
+                keystroke.time = round(delay, ROUND_DIGITS)
         print('recorded keys:', len(clean_keystrokes), 'logged keys:', len(log['keystrokes']))
         # print(list(log['keystrokes']))
 
