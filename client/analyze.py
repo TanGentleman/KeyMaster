@@ -115,7 +115,7 @@ class Analyze:
     def get_highest_keystroke_times(
             self,
             exclude_outliers: bool | None = None,
-            km_id: str | None = None) -> list[float]:
+            km_id: str | None = None) -> list[tuple[str, float]]:
         """
         Get the highest keystroke times from the logs.
 
