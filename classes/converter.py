@@ -8,7 +8,9 @@ generator = Generate()
 generator.disable()
 
 KEYSTROKES_INTRO = "Keystrokes "
-# TODO: Add the timestamps from prune_logfile to the logs rather than generating new ones
+# TODO: Add the timestamps from prune_logfile to the logs rather than
+# generating new ones
+
 
 def get_keystroke(char: str) -> Keystroke:
     return generator.generate_keystroke(char)
@@ -158,14 +160,16 @@ def seek_log_start(snippet: str) -> int:
         raise ValueError("Invalid log message")
     return index + 2
 
-### LEGACY FUNCTION
+# LEGACY FUNCTION
 # def prune_logfile(logfile_as_string: str) -> str:
 #     # Remove all sequences of the strings in BANNED_CODES
 #     pattern = '|'.join(re.escape(code) for code in BANNED_CODES)
 #     logfile_as_string = re.sub(pattern, '', logfile_as_string)
 #     return logfile_as_string.strip()
 
-def prune_logfile(logfile_as_string: str) -> tuple[str, list[list[tuple[str, float]]]]:
+
+def prune_logfile(
+        logfile_as_string: str) -> tuple[str, list[list[tuple[str, float]]]]:
     pruned_logfile = ''
     original_keystrokes: list[list[tuple[str, float]]] = []
     chunks = logfile_as_string.strip().split('\n\n\n')
@@ -307,10 +311,12 @@ def convert(logfile_as_string: str) -> list[Log]:
         clean_keystrokes = all_clean_keystrokes[i]
         if len(clean_keystrokes) != len(log['keystrokes']):
             raise ValueError("Invalid keystroke count")
-        for keystroke, (key, delay) in zip(log['keystrokes'], clean_keystrokes):
+        for keystroke, (key, delay) in zip(
+                log['keystrokes'], clean_keystrokes):
             if delay is not None:
                 keystroke.time = round(delay, ROUND_DIGITS)
-        print('recorded keys:', len(clean_keystrokes), 'logged keys:', len(log['keystrokes']))
+        print('recorded keys:', len(clean_keystrokes),
+              'logged keys:', len(log['keystrokes']))
         # print(list(log['keystrokes']))
 
     # Return the list of dictionaries

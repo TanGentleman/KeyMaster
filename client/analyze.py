@@ -165,10 +165,10 @@ class Analyze:
         return std_dev
 
     def get_stats(self,
-              keystrokes: KeystrokeList | None = None,
-              exclude_outliers: bool | None = None,
-              km_id: str | None = None,
-              ):
+                  keystrokes: KeystrokeList | None = None,
+                  exclude_outliers: bool | None = None,
+                  km_id: str | None = None,
+                  ):
         """
         Get the stats of the logfile or provided keystrokes/km_id.
 

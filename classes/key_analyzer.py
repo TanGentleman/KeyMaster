@@ -166,7 +166,8 @@ class KeyParser:
             for log in self.logs:
                 if self.is_id_present(km_id, log):
                     return [log['string']]
-        # If no km_id is provided or no matching string is found, return all strings
+        # If no km_id is provided or no matching string is found, return all
+        # strings
         return [log['string'] for log in self.logs]
 
     def print_strings(self,
@@ -604,7 +605,8 @@ class KeyParser:
         if len(unique_logs) == len(self.logs):
             logging.info("No duplicates found.")
             return
-        logging.info(f"Removed {len(self.logs) - len(unique_logs)} duplicates.")
+        logging.info(
+            f"Removed {len(self.logs) - len(unique_logs)} duplicates.")
         logging.info(f"KeyParser allows confirm_nuke() to finalize changes.")
         self.logs = unique_logs
 
@@ -641,10 +643,10 @@ class KeyParser:
             return
 
     def get_stats(self,
-              keystrokes: KeystrokeList | None = None,
-              exclude_outliers: bool | None = None,
-              km_id: str | None = None,
-              ) -> dict[str, int | float | None] | None:
+                  keystrokes: KeystrokeList | None = None,
+                  exclude_outliers: bool | None = None,
+                  km_id: str | None = None,
+                  ) -> dict[str, int | float | None] | None:
         """Client facing.
         Print statistics for the given log.
         """
