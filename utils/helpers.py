@@ -136,7 +136,7 @@ def clean_filename(filename: str) -> str:
     """
 
     # Us os module to get the extension
-    if filename[-5:] != '.json':
+    if filename[-5:] != '.json' and filename[-4:] != '.log':
         filename = filename + '.json'
     # maximum length
     return filename[:255]
