@@ -1,7 +1,7 @@
 # KeyMaster imports
 from utils.helpers import get_filepath, resolve_filename
 from utils.validation import KeystrokeDecoder, KeystrokeList, Log, KeystrokeEncoder
-from utils.settings import STOP_KEY, OUTLIER_CUTOFF
+from utils.settings import ROUND_DIGITS, STOP_KEY, OUTLIER_CUTOFF
 
 # Standard library imports
 from json import load as json_load
@@ -98,7 +98,7 @@ class KeyParser:
             return False
         else:
             for unchecked_log in self.logs:
-                if self.is_id_present(km_id, unchecked_log):
+                if unchecked_log['id'] == km_id:
                     return True
             return False
 
@@ -157,14 +157,16 @@ class KeyParser:
         """
         if not self.logs:
             return []
+        # Check if km_id is provided and valid
         if km_id is not None:
-            isPresent = self.is_id_present(km_id)
-            if isPresent is False:
-                logging.error("ID invalid.")
-                return []
+            if not self.is_id_present(km_id):
+                raise ValueError("ID invalid.")
+
+            # If km_id is valid, find the associated string and return it
             for log in self.logs:
                 if self.is_id_present(km_id, log):
                     return [log['string']]
+        # If no km_id is provided or no matching string is found, return all strings
         return [log['string'] for log in self.logs]
 
     def print_strings(self,
@@ -181,13 +183,9 @@ class KeyParser:
             `km_id` (str, optional): The UUID or exact string to check for.
         """
         if km_id is not None:
-            isPresent = self.is_id_present(km_id)
-            if not isPresent:
-                logging.error("ID invalid.")
-                return
-            string_list = self.get_strings(km_id)
-        else:
-            string_list = self.get_strings()
+            if not self.is_id_present(km_id):
+                raise ValueError("ID invalid.")
+        string_list = self.get_strings(km_id)
         logging.info(f"Total strings: {len(string_list)}")
         count = 0
         for curr_string in string_list:
@@ -213,15 +211,10 @@ class KeyParser:
         Returns:
             `list[float]`: A list of float values.
         """
-        if keystrokes is None:
-            if km_id is not None:
-                isPresent = self.is_id_present(km_id)
-                if isPresent is False:
-                    logging.error("ID invalid.")
-                    return []
-                keystrokes = self.get_keystrokes(km_id)
-            else:
-                keystrokes = self.get_keystrokes()
+        if km_id is not None:
+            if not self.is_id_present(km_id):
+                raise ValueError("ID invalid.")
+        keystrokes = self.get_keystrokes(km_id)
         if keystrokes.is_empty():
             logging.warning("No keystrokes found.")
             return []
@@ -265,21 +258,18 @@ class KeyParser:
         if exclude_outliers is None:
             exclude_outliers = self.exclude_outliers
         if keystrokes is None:
+            # Prioritize keystrokes over km_id
             if not self.logs:
                 logging.warning("No logs found.")
                 return None
             if km_id is not None:
                 if not self.is_id_present(km_id):
-                    return None
-                times = self.get_only_times(
-                    exclude_outliers=exclude_outliers, km_id=km_id)
-                num_chars = len(times)
-                total_seconds = sum(times)  # type: ignore
+                    raise ValueError("ID invalid.")
+            times = self.get_only_times(
+                exclude_outliers=exclude_outliers, km_id=km_id)
+            num_chars = len(times)
+            total_seconds = sum(times)  # type: ignore
             # If id is not provided, calculate WPM for all logs
-            else:
-                times = self.get_only_times(exclude_outliers=exclude_outliers)
-                num_chars = len(times)
-                total_seconds = sum(times)  # type: ignore
         else:
             times = self.get_only_times(
                 keystrokes, exclude_outliers=exclude_outliers,)
@@ -297,7 +287,7 @@ class KeyParser:
     def get_highest_keystroke_times(
             self,
             exclude_outliers: bool | None = None,
-            km_id: str | None = None) -> list[float]:
+            km_id: str | None = None) -> list[tuple[str, float]]:
         """Client facing.
         Get the highest keystroke time for each log.
 
@@ -305,30 +295,28 @@ class KeyParser:
             `km_id` (str, optional): The UUID or exact string to check for.
 
         Returns:
-            `list`: A list of float values.
+            `list[tuple[str, float]]`: A list of tuples where the first item is log['id'] and the second item is the highest keystroke time.
         """
         if not self.logs:
             logging.warning("No logs found.")
             return []
         if km_id is not None:
-            isPresent = self.is_id_present(km_id)
-            if isPresent is False:
-                logging.error("ID invalid.")
-                return []
+            if not self.is_id_present(km_id):
+                raise ValueError("ID invalid.")
             times = self.get_only_times(
                 exclude_outliers=exclude_outliers, km_id=km_id)
             if len(times) == 0:
                 logging.warning("No keystroke times found.")
                 return []
-            return [max(times)]
-        highest_times: list[float] = []
+            return [(km_id, max(times))]
+        highest_times: list[tuple[str, float]] = []
         # iterate through logs
         for log in self.logs:
             keystrokes = log['keystrokes']
             times = self.get_only_times(
                 keystrokes, exclude_outliers=exclude_outliers)
             if times:
-                highest_times.append(max(times))
+                highest_times.append((log['id'], max(times)))
         return highest_times
 
     def get_average_delay(
@@ -348,17 +336,11 @@ class KeyParser:
         times = []
         if keystrokes is None:
             if km_id is not None:
-                isPresent = self.is_id_present(km_id)
-                if isPresent is False:
-                    logging.error("ID invalid.")
-                    return None
-                times = self.get_only_times(
-                    exclude_outliers=exclude_outliers, km_id=km_id)
-            else:
-                times = self.get_only_times(exclude_outliers=exclude_outliers)
-        else:
+                if not self.is_id_present(km_id):
+                    raise ValueError("ID invalid.")
             times = self.get_only_times(
-                keystrokes, exclude_outliers)
+                exclude_outliers=exclude_outliers, km_id=km_id)
+        times = self.get_only_times(keystrokes, exclude_outliers)
         if len(times) == 0:
             logging.warning("No keystrokes found.")
             return None
@@ -381,14 +363,10 @@ class KeyParser:
         times = []
         if keystrokes is None:
             if km_id is not None:
-                isPresent = self.is_id_present(km_id)
-                if isPresent is False:
-                    logging.error("ID invalid.")
-                    return None
-                times = self.get_only_times(
-                    exclude_outliers=exclude_outliers, km_id=km_id)
-            else:
-                times = self.get_only_times(exclude_outliers=exclude_outliers)
+                if not self.is_id_present(km_id):
+                    raise ValueError("ID invalid.")
+            times = self.get_only_times(
+                exclude_outliers=exclude_outliers, km_id=km_id)
         else:
             times = self.get_only_times(
                 keystrokes, exclude_outliers)
@@ -396,7 +374,7 @@ class KeyParser:
             logging.warning(
                 "Not enough keystrokes to calculate standard deviation.")
             return None
-        return round(statistics.stdev(times), 4)
+        return round(statistics.stdev(times), ROUND_DIGITS)
 
     def plot_boxplot(
             self,
@@ -479,15 +457,10 @@ class KeyParser:
             `keystrokes`: (`KeystrokeList`, optional): A list of Keystroke items.
             `exclude_outliers` (bool, optional): A flag indicating whether to exclude outliers.
         """
-        if keystrokes is not None:
-            if km_id is not None:
-                isPresent = self.is_id_present(km_id)
-                if isPresent is False:
-                    logging.error("ID invalid.")
-                    return
-                keystrokes = self.get_keystrokes(km_id)
-        else:
-            keystrokes = self.get_keystrokes()
+        if km_id is not None:
+            if not self.is_id_present(km_id):
+                raise ValueError("ID invalid.")
+        keystrokes = self.get_keystrokes(km_id)
 
         if keystrokes.is_empty():
             logging.warning("No keystrokes found.")
@@ -521,16 +494,14 @@ class KeyParser:
         keystrokes = KeystrokeList()
         if km_id is not None:
             if not self.is_id_present(km_id):
-                logging.error("ID invalid.")
-                return keystrokes
+                raise ValueError("ID invalid.")
         for log in self.logs:
-            if km_id is not None:
-                if not self.is_id_present(km_id, log):
-                    continue
+            if km_id is None:
                 keystrokes.extend(log['keystrokes'])
-                return keystrokes
-            keystrokes.extend(log['keystrokes'])
-
+            else:
+                if self.is_id_present(km_id, log):
+                    keystrokes.extend(log['keystrokes'])
+                    return keystrokes
         return keystrokes
 
     def refactor_special_key(self, key: str) -> str:
@@ -679,15 +650,9 @@ class KeyParser:
         """
         if keystrokes is None:
             if km_id is not None:
-                # In the future, I can have this line instead be:
-                # assert self.is_id_present(km_id), "ID invalid."
-                isPresent = self.is_id_present(km_id)
-                if isPresent is False:
-                    logging.error("ID invalid.")
-                    return None
-                keystrokes = self.get_keystrokes(km_id)
-            else:
-                keystrokes = self.get_keystrokes(km_id)
+                if not self.is_id_present(km_id):
+                    raise ValueError("ID invalid.")
+            keystrokes = self.get_keystrokes(km_id)
         if keystrokes.is_empty():
             logging.warning("No keystrokes found.")
             return None
