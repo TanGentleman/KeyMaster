@@ -1,6 +1,6 @@
 from client.configurate import Config
 from scripts.simulate import simulate_from_string, listen_main, clipboard_main
-from utils.settings import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_STRING
+from utils.settings import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_SIM_INITIAL_LAG, DEFAULT_STRING
 import argparse
 
 
@@ -25,7 +25,8 @@ class Script:
             logging: bool | None = None,
             allow_newlines: bool | None = None,
             allow_unicode: bool | None = None,
-            input_string: str | None = None) -> None:
+            input_string: str | None = None,
+            initial_lag: int | float = 3) -> None:
         """
         Initialize the Script class.
         """
@@ -41,13 +42,15 @@ class Script:
         if allow_unicode is not None:
             self.config.allow_unicode = allow_unicode
         self.input_string = input_string or DEFAULT_STRING
+        self.initial_lag = float(initial_lag)
 
     def listen_script(self) -> None:
         listen_main(
             self.config.disable,
             self.config.logging,
             self.config.allow_newlines,
-            self.config.allow_unicode)
+            self.config.allow_unicode,
+            self.initial_lag)
 
     def string_script(self) -> None:
         simulate_from_string(
@@ -55,14 +58,16 @@ class Script:
             self.config.disable,
             self.config.logging,
             self.config.allow_newlines,
-            self.config.allow_unicode)
+            self.config.allow_unicode,
+            self.initial_lag)
 
     def clipboard_script(self) -> None:
         clipboard_main(
             self.config.disable,
             self.config.logging,
             self.config.allow_newlines,
-            self.config.allow_unicode)
+            self.config.allow_unicode,
+            self.initial_lag)
 
 # UI-less Shortcuts integration.
 # Create a keyboard shortcut to run shell script `python -m
@@ -113,6 +118,11 @@ def main():
         "-s",
         default=DEFAULT_STRING,
         help="The string to simulate")
+    parser.add_argument(
+        "--initial-lag",
+        "-il",
+        default=DEFAULT_SIM_INITIAL_LAG,
+        help="The initial delay before starting the simulation")
 
     args = parser.parse_args()
 
@@ -121,6 +131,13 @@ def main():
     allow_newlines = not (args.no_newlines)
     allow_unicode = not (args.no_unicode)
     input_string = args.string
+    delay = args.initial_lag
+    try:
+        delay = float(delay)
+        if delay < 0 or delay > 30:
+            raise ValueError('initial lag must be a number between 0 and 30 seconds')
+    except ValueError:
+        raise ValueError('initial lag must be a number between 0 and 30 seconds')
 
     if disable:
         print("Simulation OFF.")
@@ -141,7 +158,8 @@ def main():
         logging,
         allow_newlines,
         allow_unicode,
-        input_string)
+        input_string,
+        delay)
 
     if args.clipboard:
         simulate.clipboard_script()
