@@ -317,7 +317,7 @@ def convert(logfile_as_string: str) -> list[Log]:
                 log['keystrokes'][i].time = round(delay, ROUND_DIGITS)
         print('recorded keys:', len(clean_keystrokes),
               'logged keys:', len(log['keystrokes']))
-        
+
         # Process the caps lock key
         print('processing caps lock')
         log['keystrokes'].process_caps_lock()

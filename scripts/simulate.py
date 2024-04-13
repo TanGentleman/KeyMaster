@@ -82,7 +82,7 @@ def listen_main(
         logging=DEFAULT_LOGGING,
         allow_newlines=DEFAULT_ALLOW_NEWLINES,
         allow_unicode=DEFAULT_ALLOW_UNICODE,
-        initial_lag=3) -> None:
+        initial_lag: int | float = 3) -> None:
     logger = KeyLogger()
     keystrokes = listen_for_keystrokes(logger)
     if keystrokes.is_empty():

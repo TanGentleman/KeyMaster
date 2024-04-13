@@ -281,7 +281,7 @@ class KeystrokeList:
                     else:
                         continue  # Ignore keys like Shift
         return output_string
-    
+
     def process_caps_lock(self) -> None:
         """
         Process the caps lock key in the list of keystrokes.

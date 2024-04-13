@@ -135,9 +135,11 @@ def main():
     try:
         delay = float(delay)
         if delay < 0 or delay > 30:
-            raise ValueError('initial lag must be a number between 0 and 30 seconds')
+            raise ValueError(
+                'initial lag must be a number between 0 and 30 seconds')
     except ValueError:
-        raise ValueError('initial lag must be a number between 0 and 30 seconds')
+        raise ValueError(
+            'initial lag must be a number between 0 and 30 seconds')
 
     if disable:
         print("Simulation OFF.")
