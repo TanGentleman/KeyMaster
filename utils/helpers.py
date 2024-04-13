@@ -42,7 +42,8 @@ def is_key_valid(key: Key | KeyCode | str,
     # Decode the character
     char = ''
     if len(key_string) != 1:
-        if (key_string[0] != APOSTROPHE) or (key_string[-1] != APOSTROPHE):
+        # Make sure it is a wrapped character
+        if not (len(key_string) == 3 and key_string[0] == APOSTROPHE and key_string[-1] == APOSTROPHE):
             print(f"Error - is_key_valid: Invalid key length: {key_string}<-")
             return False
         char = key_string[1]
