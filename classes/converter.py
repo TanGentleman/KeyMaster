@@ -311,12 +311,16 @@ def convert(logfile_as_string: str) -> list[Log]:
         clean_keystrokes = all_clean_keystrokes[i]
         if len(clean_keystrokes) != len(log['keystrokes']):
             raise ValueError("Invalid keystroke count")
-        for keystroke, (key, delay) in zip(
-                log['keystrokes'], clean_keystrokes):
+        for i in range(len(clean_keystrokes)):
+            key, delay = clean_keystrokes[i]
             if delay is not None:
-                keystroke.time = round(delay, ROUND_DIGITS)
+                log['keystrokes'][i].time = round(delay, ROUND_DIGITS)
         print('recorded keys:', len(clean_keystrokes),
               'logged keys:', len(log['keystrokes']))
+        
+        # Process the caps lock key
+        print('processing caps lock')
+        log['keystrokes'].process_caps_lock()
         # print(list(log['keystrokes']))
 
     # Return the list of dictionaries

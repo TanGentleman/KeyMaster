@@ -51,7 +51,17 @@ class LegalKey:
 class Keystroke:
     """
     A class used to represent a keystroke. The validity is held in Keystroke.valid
+
     Convention is to wrap the key in single quotes if it is a character.
+
+    Attributes
+    ----------
+    - key (`str`): A character or a special key.
+    - time (`float` | `None`): The delay (time since last keypress in seconds).
+    - valid (`bool`): Passes validation criteria set by is_key_valid().
+    - unicode_char (`str` | `None`): The unicode character representation.
+    - is_typeable_char (`bool`): Whether the key can be typed on a standard keyboard.
+    - legal_key (`LegalKey` | `None`): Exists if the key conforms to strict LegalKey criteria.
     """
 
     def __init__(self, key: str, time: float | None):
@@ -212,6 +222,26 @@ class KeystrokeList:
             return self.keystrokes == other.keystrokes
         return False
 
+    def __setitem__(self, index, value):
+        """
+        Set the value at the given index.
+
+        Parameters
+        ----------
+        - index (`int`): The index to set the value at.
+        - value (`Keystroke`): The Keystroke object to set.
+
+        Raises
+        ------
+        - TypeError: If the value is not an instance of Keystroke.
+        - IndexError: If the index is out of range.
+        """
+        if not isinstance(value, Keystroke):
+            raise TypeError('value must be an instance of Keystroke')
+        if index >= len(self.keystrokes):
+            raise IndexError('Index out of range')
+        self.keystrokes[index] = value
+
     def to_string(self) -> str:
         """
         Returns the string representation of the keystrokes.
@@ -251,6 +281,29 @@ class KeystrokeList:
                     else:
                         continue  # Ignore keys like Shift
         return output_string
+    
+    def process_caps_lock(self) -> None:
+        """
+        Process the caps lock key in the list of keystrokes.
+
+        This assumes that caps lock was OFF prior to the first instance of the key.
+        """
+        if self.is_empty():
+            return
+        caps_lock = False
+        swap_count = 0
+        for i in range(len(self.keystrokes)):
+            keystroke = self.keystrokes[i]
+            if keystroke.key == "Key.caps_lock":
+                caps_lock = not caps_lock
+            elif caps_lock:
+                if keystroke.is_typeable_char:
+                    swap_count += 1
+                    # switch the case of the key
+                    old_key = keystroke.key
+                    new_key = old_key.swapcase()
+                    self.keystrokes[i] = Keystroke(new_key, keystroke.time)
+        print(f"Switched case of {swap_count} characters.")
 
     def validate(self, input_string: str) -> bool:
         """
