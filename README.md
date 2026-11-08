@@ -19,6 +19,7 @@ uv run python -m scripts.cli -d -n -s "hello world"   # dry run: no typing, no l
 uv run python -m scripts.cli -s "hello world"         # types it into the focused window after 3 s
 uv run python -m scripts.cli -c                       # types your clipboard
 uv run python -m scripts.cli -l -d                    # records your typing (stop with Esc or *)
+uv run python -m scripts.cli --stats                  # WPM and delays for everything you recorded
 ```
 
 Recorded and simulated runs are appended to `logs/keystrokes.json` and `logs/simulated-keystrokes.json`.

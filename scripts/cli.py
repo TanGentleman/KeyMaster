@@ -1,3 +1,4 @@
+from classes.key_analyzer import KeyParser
 from client.configurate import Config
 from scripts.simulate import simulate_from_string, listen_main, clipboard_main
 from utils.settings import DEFAULT_DISABLE_SIMULATION, DEFAULT_LOGGING, DEFAULT_ALLOW_NEWLINES, DEFAULT_ALLOW_UNICODE, DEFAULT_SIM_INITIAL_LAG, DEFAULT_STRING
@@ -74,6 +75,20 @@ class Script:
 # scripts.simulate.py -c`
 
 
+def print_stats() -> None:
+    """Print typing stats for every log in logs/keystrokes.json."""
+    parser = KeyParser('REG')
+    stats = parser.get_stats() if parser.logs else None
+    if stats is None:
+        print("No recorded keystrokes yet. Record some with -l.")
+        return
+    print(f"Logs: {len(parser.logs)}")
+    print(f"Keystrokes: {stats['keystroke_count']}")
+    print(f"WPM: {stats['wpm']}")
+    print(f"Average delay: {stats['average_delay']} s (std {stats['std_deviation']} s)")
+    print(f"Longest delay: {stats['highest_keystroke_time']} s")
+
+
 def main():
     parser = argparse.ArgumentParser()
     # Add flags
@@ -124,7 +139,15 @@ def main():
         default=DEFAULT_SIM_INITIAL_LAG,
         help="The initial delay before starting the simulation")
 
+    parser.add_argument(
+        "--stats",
+        action='store_true',
+        help="Print stats for your recorded keystrokes and exit")
+
     args = parser.parse_args()
+    if args.stats:
+        print_stats()
+        return
 
     disable = args.disable
     logging = not (args.no_log)

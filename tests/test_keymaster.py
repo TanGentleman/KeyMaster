@@ -205,3 +205,21 @@ def test_cli_dry_run(monkeypatch, capsys, keyboard):
     cli.main()
     assert "Simulation disabled." in capsys.readouterr().out
     assert keyboard.taps == []
+
+
+def test_cli_stats(monkeypatch, capsys):
+    from scripts import cli
+
+    monkeypatch.setattr(sys, "argv", ["cli", "--stats"])
+    cli.main()
+    assert "No recorded keystrokes yet" in capsys.readouterr().out
+
+    ks = keystrokes(("'h'", None), ("'i'", 0.2), (" ", 0.2), ("'y'", 0.2), ("'o'", 0.2))
+    logger = KeyLogger(filename="REG")
+    assert logger.set_internal_log(ks, "hi yo")
+    assert logger.save_log()
+    cli.main()
+    out = capsys.readouterr().out
+    assert "Logs: 1" in out
+    assert "Keystrokes: 5" in out
+    assert "WPM: 60.0" in out
