@@ -16,7 +16,7 @@ from utils.constants import APOSTROPHE, KEYBOARD_CHARS
 # Standard library imports
 from json import dump as json_dump
 from json import load as json_load
-from time import time, perf_counter
+from time import perf_counter
 from uuid import uuid4
 from threading import Timer
 import logging
@@ -57,7 +57,7 @@ class KeyLogger:
         self.keystrokes = KeystrokeList()
         self.word_count = 0
         self.typed_string = ""
-        self.prev_time = time()
+        self.prev_time = perf_counter()
         self.timer: Timer | None = None
 
         self.only_typeable = only_typeable
@@ -75,7 +75,7 @@ class KeyLogger:
         self.keystrokes = KeystrokeList()
         self.word_count = 0
         self.typed_string = ""
-        self.prev_time = time()
+        self.prev_time = perf_counter()
         self.is_reset = True
 
     def set_filename(self, filename: str) -> None:
