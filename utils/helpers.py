@@ -1,4 +1,4 @@
-from os import path
+from os import makedirs, path
 
 from pynput.keyboard import Key, KeyCode
 
@@ -247,6 +247,7 @@ def update_log_id(log_id: str) -> None:
     except ValueError:
         print("Invalid log id. Using default.")
         pass
+    makedirs(LOG_DIR, exist_ok=True)
     filepath = path.join(LOG_DIR, "LOG_ID.txt")
     with open(filepath, "w") as f:
         f.write(new_id)

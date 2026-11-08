@@ -17,6 +17,7 @@ from utils.constants import APOSTROPHE, KEYBOARD_CHARS
 from json import dump as json_dump
 from json import load as json_load
 from time import perf_counter
+from os import makedirs, path
 from uuid import uuid4
 from threading import Timer
 import logging
@@ -366,6 +367,7 @@ class KeyLogger:
             if reset:
                 self.reset()
             return False
+        makedirs(path.dirname(filepath), exist_ok=True)
         log_id = get_log_id()
         log = self.create_log(log_id)
         if not log:

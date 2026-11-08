@@ -10,6 +10,7 @@ from classes.key_collector import KeyLogger
 from classes.key_generator import KeyGenerator
 from client.configurate import Config
 from client.generate import Generate
+import utils.helpers
 from utils.validation import Keystroke, KeystrokeList
 
 
@@ -119,6 +120,17 @@ def test_save_and_reload_log(log_dir):
     parser = KeyParser(filename=path)
     assert parser.get_strings() == ["hello world", "hello world"]
     assert parser.get_keystrokes("A001").to_string() == "hello world"
+
+
+def test_first_save_creates_the_log_dir(log_dir, monkeypatch):
+    fresh = log_dir / "logs"
+    monkeypatch.setattr(utils.helpers, "LOG_DIR", str(fresh))
+    monkeypatch.setattr(utils.helpers, "ABSOLUTE_REG_FILEPATH", str(fresh / "keystrokes.json"))
+    logger = KeyLogger(filename="REG")
+    assert logger.set_internal_log(KeyGenerator().keystrokes_from_string("hi there"), "hi there")
+    assert logger.save_log()
+    assert json.loads((fresh / "keystrokes.json").read_text())[0]["string"] == "hi there"
+    assert (fresh / "LOG_ID.txt").read_text() == "A001"
 
 
 # Analyze
