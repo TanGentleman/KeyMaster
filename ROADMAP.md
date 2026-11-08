@@ -72,7 +72,7 @@ uv sync --all-extras && uv run pytest   # Linux without a display: xvfb-run -a u
    not tested.
 4. CI has not run on GitHub: the workflow only triggers once it sits at the upstream repo root.
    Its steps were run locally on Python 3.10 and 3.13 (`uv sync --locked --all-extras`, then
-   `xvfb-run -a uv run pytest`: 25 passed).
+   `xvfb-run -a uv run pytest`: 23 passed on `-1`, 25 on `-4`).
 5. Python floor raised to 3.10 (code already used `X | None`); CI runs 3.10 and 3.13.
 6. pyperclip moved to an optional `clipboard` extra.
 7. `KeyMaster-3` deletes the generated `docs/client/` pages and the notebook. Drop that branch if
