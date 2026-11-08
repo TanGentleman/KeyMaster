@@ -34,7 +34,7 @@ from client.configurate import Config
 
 ks = Generate(Config(disable=True)).simulate_string("The quick brown fox")
 print(Analyze(Config(logging=False)).get_stats(ks))
-# {'keystroke_count': 19, 'average_delay': 0.04, 'std_deviation': 0.01, 'highest_keystroke_time': 0.08, 'wpm': 283.1}
+# delays are random; e.g. {'keystroke_count': 19, 'average_delay': 0.04, 'std_deviation': 0.01, 'highest_keystroke_time': 0.08, 'wpm': 283.1}
 
 Analyze().visualize()  # bar chart of your average delay per key, from logs/keystrokes.json
 ```
