@@ -1,47 +1,54 @@
-# KeyMaster - Keyboard Event Toolkit
+# KeyMaster
 
-## Quick Start
+Record your own typing, measure it (WPM, per-key delays, plots), and replay text as realistic keystrokes.
+A small Python toolkit built on [pynput](https://pynput.readthedocs.io/).
 
-Install dependencies, with pyperclip being optional for clipboard simulation:
+## Install
+
 ```bash
-pip install pynput matplotlib
-pip install pyperclip
-```
-Clone KeyMaster:
-```bash
-git clone https://github.com/TanGentleman/KeyMaster
-cd KeyMaster
+git clone https://github.com/TanGentleman/KeyMaster && cd KeyMaster
+uv sync --all-extras   # Python 3.10+, installs pynput, matplotlib and pyperclip
 ```
 
-## Features
+Without uv: `pip install pynput matplotlib pyperclip`.
 
-KeyMaster is a Python toolkit for collecting, analyzing, and simulating keyboard events. The object oriented framework has four simple classes:
+## Use
 
-- **Config**: Customize settings, simulation parameters, and data processing.
-- **Analyze**: Analyze data, visualize, and calculate metrics like WPM.
-- **Collect**: Record real-time keystrokes, save to logs, and filter events.
-- **Generate**: Create realistic typing simulations with custom parameters.
-
-## Usage
-
-For detailed usage, refer to the `notebook.ipynb` Jupyter notebook. To initiate a sample workflow, run:
 ```bash
-python -m scripts.cli
-```
-For automated simulation, utilize the many simple flags found in the docs:
-```bash
-python -m scripts.cli -s 'Use the -c flag instead to simulate your clipboard'
+uv run python -m scripts.cli -d -n -s "hello world"   # dry run: no typing, no log
+uv run python -m scripts.cli -s "hello world"         # types it into the focused window after 3 s
+uv run python -m scripts.cli -c                       # types your clipboard
+uv run python -m scripts.cli -l -d                    # records your typing (stop with Esc or *)
 ```
 
-## Docs & Contributing
+Recorded and simulated runs are appended to `logs/keystrokes.json` and `logs/simulated-keystrokes.json`.
+Pass `-n` to skip logging. Without `-d`, `-l` replays what you typed when you stop.
 
-- Docs: Check `docs/` folder and the notebook.
-- Contributions: Raise issues, fork, make changes, and submit pull requests.
+From Python:
+
+```python
+from client.analyze import Analyze
+from client.generate import Generate
+from client.configurate import Config
+
+ks = Generate(Config(disable=True)).simulate_string("The quick brown fox")
+print(Analyze(Config(logging=False)).get_stats(ks))
+# {'keystroke_count': 19, 'average_delay': 0.04, 'std_deviation': 0.01, 'highest_keystroke_time': 0.08, 'wpm': 283.1}
+
+Analyze().visualize()  # bar chart of your average delay per key, from logs/keystrokes.json
+```
+
+Recording and typing need OS permission: on macOS, allow your terminal under
+Privacy & Security > Accessibility (and Input Monitoring for `-l`). On Linux, pynput needs an X server.
+
+## Test
+
+```bash
+uv run pytest            # Linux without a display: xvfb-run -a uv run pytest
+```
+
+The tests fake the keyboard and never type or listen.
 
 ## License
 
-KeyMaster is MIT licensed. Use, modify, and distribute freely.
-
-Cheers,
-
-`Tan`
+MIT
