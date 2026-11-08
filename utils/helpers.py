@@ -167,7 +167,7 @@ def get_filepath(filename: str | None) -> str | None:
 
     if not path.exists(filepath):
         print(
-            f"Warning: File {clean_filename(filename)} does not exist. (Yet?)")
+            f"Warning: File {path.basename(filepath)} does not exist. (Yet?)")
     return filepath
 
 
