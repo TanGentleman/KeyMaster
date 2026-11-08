@@ -267,3 +267,39 @@ def test_box_plot_is_horizontal(plots):
     # The 5.0 s outlier is excluded, so the box spans 0.2..0.4 along x.
     assert ax.get_xlabel() == "Keystroke Time (s)"
     assert ax.get_xlim()[1] < 1
+
+
+@pytest.mark.parametrize("lag", ["-1", "31", "soon"])
+def test_cli_rejects_bad_initial_lag(monkeypatch, keyboard, lag):
+    from scripts import cli
+
+    monkeypatch.setattr(sys, "argv", ["cli", "-d", "-n", "-il", lag, "-s", "hi"])
+    with pytest.raises(ValueError, match="between 0 and 30"):
+        cli.main()
+
+
+@pytest.mark.parametrize(
+    "clipboard, out",
+    [
+        ("hi there", "Simulation disabled."),
+        ("", "No text found in clipboard."),
+    ],
+)
+def test_cli_clipboard(monkeypatch, capsys, keyboard, clipboard, out):
+    import types
+
+    from scripts import cli
+
+    monkeypatch.setitem(sys.modules, "pyperclip", types.SimpleNamespace(paste=lambda: clipboard))
+    monkeypatch.setattr(sys, "argv", ["cli", "-d", "-n", "-c"])
+    cli.main()
+    assert out in capsys.readouterr().out
+    assert keyboard.taps == []
+
+
+def test_cli_types_the_string(monkeypatch, keyboard):
+    from scripts import cli
+
+    monkeypatch.setattr(sys, "argv", ["cli", "-n", "-il", "0", "-s", "ok"])
+    cli.main()
+    assert keyboard.taps == ["o", "k"]
