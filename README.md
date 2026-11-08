@@ -39,7 +39,8 @@ Analyze().visualize()  # bar chart of your average delay per key, from logs/keys
 ```
 
 Recording and typing need OS permission: on macOS, allow your terminal under
-Privacy & Security > Accessibility (and Input Monitoring for `-l`). On Linux, pynput needs an X server.
+Privacy & Security > Accessibility (and Input Monitoring for `-l`). On Linux, pynput needs an X server,
+and its `evdev` dependency builds from source, so a system Python needs its headers (`python3-dev`).
 
 ## Test
 
