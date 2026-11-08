@@ -403,7 +403,7 @@ class KeyParser:
             logging.warning("No keystroke times found.")
             return
         plt.figure(figsize=(15, 10))
-        plt.boxplot(times, vert=False)
+        plt.boxplot(times, orientation='horizontal')
         plt.xlabel('Keystroke Time (s)')
         plt.title('Keystroke Times')
         plt.tight_layout()

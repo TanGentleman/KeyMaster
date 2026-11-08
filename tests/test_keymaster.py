@@ -223,3 +223,47 @@ def test_cli_stats(monkeypatch, capsys):
     assert "Logs: 1" in out
     assert "Keystrokes: 5" in out
     assert "WPM: 60.0" in out
+
+
+# Plots
+
+
+@pytest.fixture
+def plots(monkeypatch, tmp_path):
+    """Draw with Agg into tmp_path; plt.show records the figure instead of opening a window."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    shown = []
+    monkeypatch.setattr(plt, "show", lambda *a, **k: shown.append(plt.gcf()))
+    monkeypatch.chdir(tmp_path)
+    yield shown
+    plt.close("all")
+
+
+@pytest.mark.filterwarnings("error::matplotlib.MatplotlibDeprecationWarning")
+def test_bar_plot_saves_one_bar_per_key(plots, tmp_path):
+    from client.analyze import Analyze
+
+    ks = keystrokes(("'a'", None), ("'b'", 0.2), ("Key.space", 0.1), ("'b'", 0.4))
+    Analyze(Config(logging=False)).visualize(save_file=True, keystrokes=ks)
+    (fig,) = plots
+    (ax,) = fig.axes
+    assert [t.get_text() for t in ax.get_xticklabels()] == ["b", "Space"]
+    assert [round(p.get_height(), 4) for p in ax.patches] == [0.3, 0.1]
+    assert (tmp_path / "keystroke_times.png").stat().st_size > 0
+
+
+@pytest.mark.filterwarnings("error::matplotlib.MatplotlibDeprecationWarning")
+def test_box_plot_is_horizontal(plots):
+    from client.analyze import Analyze
+
+    ks = keystrokes(("'a'", None), ("'b'", 0.2), ("'c'", 0.4), ("'d'", 5.0))
+    Analyze(Config(logging=False)).visualize(mode="box", keystrokes=ks)
+    (fig,) = plots
+    (ax,) = fig.axes
+    # The 5.0 s outlier is excluded, so the box spans 0.2..0.4 along x.
+    assert ax.get_xlabel() == "Keystroke Time (s)"
+    assert ax.get_xlim()[1] < 1
