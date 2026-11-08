@@ -40,6 +40,9 @@ the generated `docs/client/` they produce.
 - `KeyMaster-3` (done): cut the converter, `UNUSED/`, notebook, `init.py` and generated docs
   (45 files to 31 on top of `-1`'s additions).
 
+- `KeyMaster-4` (done): `--stats` CLI flag prints WPM and delays for your recorded logs, so the
+  analysis half works without writing Python.
+
 ## Apply upstream
 
 In a clean upstream checkout, one branch at a time. The base of `KeyMaster-1` is the import commit
