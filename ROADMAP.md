@@ -34,15 +34,15 @@ the generated `docs/client/` they produce.
 
 ## Stack
 
-- `KeyMaster-1` (done): exact import, Analyze/collector fixes, pyproject + uv.lock, offline pytest
+- `KeyMaster-1`: exact import, Analyze/collector fixes, pyproject + uv.lock, offline pytest
   suite (fake keyboard controller, recorded events, temp log dir), GitHub Actions CI, README, this file.
-- `KeyMaster-2` (done): remove committed `logs/`, create `logs/` on first save.
-- `KeyMaster-3` (done): cut the converter, `UNUSED/`, notebook, `init.py` and generated docs.
-  Upstream had 45 tracked files; after `-3` there are 31, including the new tests, CI and lockfile.
-
-- `KeyMaster-4` (done): `--stats` CLI flag prints WPM and delays for your recorded logs, so the
-  analysis half works without writing Python.
-
+- `KeyMaster-2`: remove committed `logs/`, create `logs/` on first save.
+- `KeyMaster-3`: cut the converter, `UNUSED/`, notebook, `init.py` and generated docs.
+- `KeyMaster-4`: `--stats` CLI flag prints WPM and delays for your recorded logs.
+- `KeyMaster-5`: pynput 1.8.2, matplotlib 3.11.2, pyperclip 1.11.0, pytest 9.2.0; Python 3.11+;
+  CI on 3.11 and 3.14 with checkout v7.0.1, setup-uv v10.3.3 (SHA-pinned) and uv 0.13.7. Box plot
+  moves from the deprecated `vert=False` to `orientation='horizontal'`. Tests for both plots (Agg)
+  and the CLI's typing, clipboard and `--initial-lag` paths. README rewrite.
 - Not started, lower confidence: import pynput lazily so analysis runs without a display (the key
   model in `utils/validation.py` and `utils/settings.py` uses `pynput.keyboard.Key` directly), and
   package it as an installable `keymaster` command (needs renaming the top-level `classes`,
@@ -50,15 +50,16 @@ the generated `docs/client/` they produce.
 
 ## Apply upstream
 
-In a clean upstream checkout, one branch at a time. The base of `KeyMaster-1` is the import commit
-`6534d06`; the base of `KeyMaster-N` is `KeyMaster-(N-1)`.
+In a clean upstream checkout. The import commit is `6534d06`; to apply the whole stack:
 
 ```bash
 git -C <kranti-sandbox> fetch origin
-git -C <kranti-sandbox> format-patch --relative=KeyMaster --stdout 6534d06..origin/KeyMaster-1 > km1.patch
-git am km1.patch
-uv sync --all-extras && uv run pytest   # Linux without a display: xvfb-run -a uv run pytest
+git -C <kranti-sandbox> format-patch --relative=KeyMaster --stdout 6534d06..origin/KeyMaster-5 > km.patch
+git am km.patch
+uv sync --locked --all-extras && uv run pytest   # Linux without a display: xvfb-run -a uv run pytest
 ```
+
+For one branch, use `origin/KeyMaster-(N-1)..origin/KeyMaster-N` instead.
 
 ## Needs Tan
 
@@ -67,13 +68,10 @@ uv sync --all-extras && uv run pytest   # Linux without a display: xvfb-run -a u
    stay in upstream history. Decide whether to rewrite history (e.g. `git filter-repo --path logs
    --invert-paths`) or accept it; nothing looked like a password, but check.
 2. Live recording (`-l`) and typing into a real window were not verified (no desktop). Try
-   `uv run python -m scripts.cli -l -d` and `-s "hi"` on your Mac.
-3. macOS permission wording in the README (Accessibility, Input Monitoring) is from pynput's docs,
-   not tested.
-4. CI has not run on GitHub: the workflow only triggers once it sits at the upstream repo root.
-   Its steps were run locally on Python 3.10 and 3.13 (`uv sync --locked --all-extras`, then
-   `xvfb-run -a uv run pytest`: 23 passed on `-1`, 25 on `-4`).
-5. Python floor raised to 3.10 (code already used `X | None`); CI runs 3.10 and 3.13.
-6. pyperclip moved to an optional `clipboard` extra.
-7. `KeyMaster-3` deletes the generated `docs/client/` pages and the notebook. Drop that branch if
+   `uv run python -m scripts.cli -l -d` and `-s "hi"` on your Mac. The macOS permission wording in
+   the README is from pynput's docs, not tested.
+3. CI has not run on GitHub: the workflow only triggers once it sits at the upstream repo root.
+   Its commands were run locally on Python 3.11 and 3.14.
+4. `KeyMaster-5` drops Python 3.10 (end of life since 2026-10; matplotlib 3.11 needs 3.11).
+5. `KeyMaster-3` deletes the generated `docs/client/` pages and the notebook. Drop that branch if
    you want them; the notebook needs `visualize_keystroke_times` renamed to `visualize` first.
