@@ -75,3 +75,5 @@ uv sync --all-extras && uv run pytest   # Linux without a display: xvfb-run -a u
    `xvfb-run -a uv run pytest`: 23 passed).
 5. Python floor raised to 3.10 (code already used `X | None`); CI runs 3.10 and 3.13.
 6. pyperclip moved to an optional `clipboard` extra.
+7. `KeyMaster-3` deletes the generated `docs/client/` pages and the notebook. Drop that branch if
+   you want them; the notebook needs `visualize_keystroke_times` renamed to `visualize` first.
