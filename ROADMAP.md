@@ -37,7 +37,8 @@ the generated `docs/client/` they produce.
 - `KeyMaster-1` (done): exact import, Analyze/collector fixes, pyproject + uv.lock, offline pytest
   suite (fake keyboard controller, recorded events, temp log dir), GitHub Actions CI, README, this file.
 - `KeyMaster-2` (done): remove committed `logs/`, create `logs/` on first save.
-- `KeyMaster-3` (planned): cut dead code, experiments and generated docs listed above.
+- `KeyMaster-3` (done): cut the converter, `UNUSED/`, notebook, `init.py` and generated docs
+  (45 files to 31 on top of `-1`'s additions).
 
 ## Apply upstream
 
