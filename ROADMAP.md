@@ -20,7 +20,7 @@ typing-analytics tool for your own keyboard, for one person at a terminal, not a
 - Broken: `notebook.ipynb` calls `Analyze.visualize_keystroke_times()`, which does not exist.
   `scripts/convert.py` reads `logs/keystrokes.log`, a format nothing writes any more.
 - Links: README/CHANGELOG links (GitHub issues, keepachangelog.com, pynput docs) return 200/302.
-- Sensitive: `logs/` holds real keystroke logs (see Needs Tan).
+- Sensitive: `logs/` held real keystroke logs (see Needs Tan).
 
 ## Signal vs noise
 
@@ -36,7 +36,7 @@ the generated `docs/client/` they produce.
 
 - `KeyMaster-1` (done): exact import, Analyze/collector fixes, pyproject + uv.lock, offline pytest
   suite (fake keyboard controller, recorded events, temp log dir), GitHub Actions CI, README, this file.
-- `KeyMaster-2` (planned): remove committed `logs/`, create `logs/` on first write.
+- `KeyMaster-2` (done): remove committed `logs/`, create `logs/` on first save.
 - `KeyMaster-3` (planned): cut dead code, experiments and generated docs listed above.
 
 ## Apply upstream
