@@ -1,4 +1,4 @@
-"""Pins down the behaviour that README.md's "How it works" section describes."""
+"""Pins down the behaviour that IMPLEMENTATION.md's "How it works" section describes."""
 import random
 import re
 import statistics
@@ -13,7 +13,7 @@ from classes.key_collector import KeyLogger
 from classes.key_generator import KeyGenerator
 from utils.validation import Keystroke, KeystrokeList
 
-README = Path(__file__).resolve().parent.parent / "README.md"
+DOC = Path(__file__).resolve().parent.parent / "IMPLEMENTATION.md"
 
 
 def keystrokes(*pairs):
@@ -157,7 +157,7 @@ def test_a_log_is_saved_only_if_its_keystrokes_rebuild_the_text():
     assert not logger.set_internal_log(ks, "axb")
 
 
-# The demo in the README
+# The demo in IMPLEMENTATION.md
 
 
 def test_readme_demo_output_matches(capsys):
@@ -165,8 +165,8 @@ def test_readme_demo_output_matches(capsys):
 
     demo.walkthrough()
     out = capsys.readouterr().out
-    block = re.search(r"python -m scripts\.demo\n```\n\n```text\n(.*?)```", README.read_text(), re.S)
-    assert block, "README demo block not found"
+    block = re.search(r"python -m scripts\.demo\n```\n\n```text\n(.*?)```", DOC.read_text(), re.S)
+    assert block, "IMPLEMENTATION.md demo block not found"
     assert block.group(1) == out
 
 

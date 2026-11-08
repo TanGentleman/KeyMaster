@@ -48,6 +48,8 @@ the generated `docs/client/` they produce.
   generate on made-up keystrokes and redraws `docs/timing.png`; `tests/test_design.py` pins the
   described behaviour and the README's demo output. Fixes generated Shift insertion (behind
   `GENERATE_SHIFTS`, off by default), which put a Shift before every `#` in `##`.
+- `KeyMaster-7`: README cut to 70 words; details moved to IMPLEMENTATION.md (`tests/test_design.py` reads
+  the demo output from there).
 - Not started, lower confidence: import pynput lazily so analysis runs without a display (the key
   model in `utils/validation.py` and `utils/settings.py` uses `pynput.keyboard.Key` directly), and
   package it as an installable `keymaster` command (needs renaming the top-level `classes`,
@@ -59,7 +61,7 @@ In a clean upstream checkout. The import commit is `6534d06`; to apply the whole
 
 ```bash
 git -C <kranti-sandbox> fetch origin
-git -C <kranti-sandbox> format-patch --relative=KeyMaster --stdout 6534d06..origin/KeyMaster-6 > km.patch
+git -C <kranti-sandbox> format-patch --relative=KeyMaster --stdout 6534d06..origin/KeyMaster-7 > km.patch
 git am km.patch
 uv sync --locked --all-extras && uv run pytest   # Linux without a display: xvfb-run -a uv run pytest
 ```
@@ -74,7 +76,7 @@ For one branch, use `origin/KeyMaster-(N-1)..origin/KeyMaster-N` instead.
    --invert-paths`) or accept it; nothing looked like a password, but check.
 2. Live recording (`-l`) and typing into a real window were not verified (no desktop). Try
    `uv run python -m scripts.cli -l -d` and `-s "hi"` on your Mac. The macOS permission wording in
-   the README is from pynput's docs, not tested.
+   IMPLEMENTATION.md is from pynput's docs, not tested.
 3. CI has not run on GitHub: the workflow only triggers once it sits at the upstream repo root.
    Its commands were run locally on Python 3.11 and 3.14.
 4. `KeyMaster-5` drops Python 3.10 (end of life since 2026-10; matplotlib 3.11 needs 3.11).
