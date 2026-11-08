@@ -37,11 +37,16 @@ the generated `docs/client/` they produce.
 - `KeyMaster-1` (done): exact import, Analyze/collector fixes, pyproject + uv.lock, offline pytest
   suite (fake keyboard controller, recorded events, temp log dir), GitHub Actions CI, README, this file.
 - `KeyMaster-2` (done): remove committed `logs/`, create `logs/` on first save.
-- `KeyMaster-3` (done): cut the converter, `UNUSED/`, notebook, `init.py` and generated docs
-  (45 files to 31 on top of `-1`'s additions).
+- `KeyMaster-3` (done): cut the converter, `UNUSED/`, notebook, `init.py` and generated docs.
+  Upstream had 45 tracked files; after `-3` there are 31, including the new tests, CI and lockfile.
 
 - `KeyMaster-4` (done): `--stats` CLI flag prints WPM and delays for your recorded logs, so the
   analysis half works without writing Python.
+
+- Not started, lower confidence: import pynput lazily so analysis runs without a display (the key
+  model in `utils/validation.py` and `utils/settings.py` uses `pynput.keyboard.Key` directly), and
+  package it as an installable `keymaster` command (needs renaming the top-level `classes`,
+  `client`, `utils` and `scripts` packages).
 
 ## Apply upstream
 
