@@ -148,12 +148,13 @@ class KeyGenerator:
 
             if char == ' ':
                 word_count += 1
-            last_key = None
+            last_char = None
             if GENERATE_SHIFTS:
                 if not keystrokes.is_empty():
-                    last_key = keystrokes[-1].key
-                if (last_key is None or last_key in self.whitespace_dict or (
-                        last_key not in SHIFTED_CHARS and not last_key.isupper())):
+                    last_char = keystrokes[-1].unicode_char
+                # One shift covers a run of shifted chars, like "##" or "AB"
+                if (last_char is None or (
+                        last_char not in SHIFTED_CHARS and not last_char.isupper())):
                     # Check if a shift key needs to be added
                     if char.isupper() or (char in SHIFTED_CHARS):
                         if PRINT_SHIFT_INSERTIONS:

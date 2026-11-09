@@ -1,4 +1,4 @@
-from os import path
+from os import makedirs, path
 
 from pynput.keyboard import Key, KeyCode
 
@@ -167,7 +167,7 @@ def get_filepath(filename: str | None) -> str | None:
 
     if not path.exists(filepath):
         print(
-            f"Warning: File {clean_filename(filename)} does not exist. (Yet?)")
+            f"Warning: File {path.basename(filepath)} does not exist. (Yet?)")
     return filepath
 
 
@@ -247,6 +247,7 @@ def update_log_id(log_id: str) -> None:
     except ValueError:
         print("Invalid log id. Using default.")
         pass
+    makedirs(LOG_DIR, exist_ok=True)
     filepath = path.join(LOG_DIR, "LOG_ID.txt")
     with open(filepath, "w") as f:
         f.write(new_id)

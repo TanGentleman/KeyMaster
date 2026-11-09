@@ -212,10 +212,11 @@ class KeyParser:
         Returns:
             `list[float]`: A list of float values.
         """
-        if km_id is not None:
-            if not self.is_id_present(km_id):
-                raise ValueError("ID invalid.")
-        keystrokes = self.get_keystrokes(km_id)
+        if keystrokes is None:
+            if km_id is not None:
+                if not self.is_id_present(km_id):
+                    raise ValueError("ID invalid.")
+            keystrokes = self.get_keystrokes(km_id)
         if keystrokes.is_empty():
             logging.warning("No keystrokes found.")
             return []
@@ -341,7 +342,8 @@ class KeyParser:
                     raise ValueError("ID invalid.")
             times = self.get_only_times(
                 exclude_outliers=exclude_outliers, km_id=km_id)
-        times = self.get_only_times(keystrokes, exclude_outliers)
+        else:
+            times = self.get_only_times(keystrokes, exclude_outliers)
         if len(times) == 0:
             logging.warning("No keystrokes found.")
             return None
@@ -401,7 +403,7 @@ class KeyParser:
             logging.warning("No keystroke times found.")
             return
         plt.figure(figsize=(15, 10))
-        plt.boxplot(times, vert=False)
+        plt.boxplot(times, orientation='horizontal')
         plt.xlabel('Keystroke Time (s)')
         plt.title('Keystroke Times')
         plt.tight_layout()
@@ -458,10 +460,11 @@ class KeyParser:
             `keystrokes`: (`KeystrokeList`, optional): A list of Keystroke items.
             `exclude_outliers` (bool, optional): A flag indicating whether to exclude outliers.
         """
-        if km_id is not None:
-            if not self.is_id_present(km_id):
-                raise ValueError("ID invalid.")
-        keystrokes = self.get_keystrokes(km_id)
+        if keystrokes is None:
+            if km_id is not None:
+                if not self.is_id_present(km_id):
+                    raise ValueError("ID invalid.")
+            keystrokes = self.get_keystrokes(km_id)
 
         if keystrokes.is_empty():
             logging.warning("No keystrokes found.")
@@ -512,12 +515,12 @@ class KeyParser:
         """
         display_names = {
             "'STOP'": "Stop",
-            "'Key.space'": "Space",
-            "'Key.enter'": "Enter",
-            "'Key.backspace'": "Backspace",
-            "'Key.tab'": "Tab",
-            "'Key.caps_lock'": "Caps Lock",
-            "'Key.shift'": "Shift",
+            "'space'": "Space",
+            "'enter'": "Enter",
+            "'backspace'": "Backspace",
+            "'tab'": "Tab",
+            "'caps_lock'": "Caps Lock",
+            "'shift'": "Shift",
         }
         return display_names.get(key, key)
 
