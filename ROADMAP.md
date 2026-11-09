@@ -55,19 +55,6 @@ the generated `docs/client/` they produce.
   package it as an installable `keymaster` command (needs renaming the top-level `classes`,
   `client`, `utils` and `scripts` packages).
 
-## Apply upstream
-
-In a clean upstream checkout. The import commit is `6534d06`; to apply the whole stack:
-
-```bash
-git -C <kranti-sandbox> fetch origin
-git -C <kranti-sandbox> format-patch --relative=KeyMaster --stdout 6534d06..origin/KeyMaster-7 > km.patch
-git am km.patch
-uv sync --locked --all-extras && uv run pytest   # Linux without a display: xvfb-run -a uv run pytest
-```
-
-For one branch, use `origin/KeyMaster-(N-1)..origin/KeyMaster-N` instead.
-
 ## Needs Tan
 
 1. `logs/example.log`, `logs/keystrokes.json` and `logs/simulated-keystrokes.json` contain real
